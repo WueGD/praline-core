@@ -14,4 +14,12 @@
 
     <packaging>pom</packaging>
 
+    <distributionManagement>
+        <repository>
+            <id>praline</id>
+            <name>praline-repo</name>
+            <url>${env.MAVEN_REPO_URL}/praline</url>
+        </repository>
+    </distributionManagement>
+
 </project>
