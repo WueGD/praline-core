@@ -4,13 +4,13 @@ import de.uniwue.informatik.praline.datastructure.labels.EdgeLabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.paths.Path;
-import de.uniwue.informatik.praline.datastructure.util.InconsistentStateException;
+import de.uniwue.informatik.praline.datastructure.utils.InconsistentStateException;
 
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import static de.uniwue.informatik.praline.datastructure.util.GraphUtils.newArrayListNullSave;
+import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSave;
 
 public class Edge implements LabeledObject {
 

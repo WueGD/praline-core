@@ -6,13 +6,13 @@ import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
-import de.uniwue.informatik.praline.datastructure.util.InconsistentStateException;
+import de.uniwue.informatik.praline.datastructure.utils.InconsistentStateException;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static de.uniwue.informatik.praline.datastructure.util.GraphUtils.newArrayListNullSave;
+import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSave;
 
 public class Port implements PortComposition, ShapedObject, LabeledObject {
 

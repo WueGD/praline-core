@@ -1,4 +1,4 @@
-package de.uniwue.informatik.praline.datastructure.util;
+package de.uniwue.informatik.praline.datastructure.utils;
 
 import java.util.ArrayList;
 import java.util.Collection;

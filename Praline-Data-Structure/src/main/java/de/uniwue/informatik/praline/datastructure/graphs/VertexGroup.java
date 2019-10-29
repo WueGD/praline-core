@@ -9,7 +9,7 @@ import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
 import java.util.Collection;
 import java.util.List;
 
-import static de.uniwue.informatik.praline.datastructure.util.GraphUtils.newArrayListNullSave;
+import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSave;
 
 public class VertexGroup implements ShapedObject, LabeledObject {
 

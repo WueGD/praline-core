@@ -6,7 +6,7 @@ import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 
 import java.util.*;
 
-import static de.uniwue.informatik.praline.datastructure.util.GraphUtils.newArrayListNullSave;
+import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSave;
 
 public class EdgeBundle implements LabeledObject {
 
