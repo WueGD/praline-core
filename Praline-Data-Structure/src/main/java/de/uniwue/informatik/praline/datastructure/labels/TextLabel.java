@@ -20,7 +20,7 @@ public class TextLabel extends Label {
      * Default values
      *==========*/
 
-    public static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 10);
+    public static final Font DEFAULT_FONT = new Font(Font.SANS_SERIF, Font.PLAIN, 10);
     public static final boolean DEFAULT_NO_BREAK = false;
     public static final Color DEFAULT_COLOR = Color.BLACK;
 

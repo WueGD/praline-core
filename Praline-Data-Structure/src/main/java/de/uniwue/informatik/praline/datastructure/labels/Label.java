@@ -18,7 +18,7 @@ public abstract class Label implements ShapedObject {
      * Instance variables
      *==========*/
 
-    private LabeledObject associatedObject;
+    private LabelManager associatedLabelManager;
     private boolean showLabel;
     private Placement placement;
     private HorizontalPlacement horizontalPlacement;
@@ -29,19 +29,19 @@ public abstract class Label implements ShapedObject {
      * Constructors
      *==========*/
 
-    public Label() {
+    protected Label() {
         this(Placement.FREE, HorizontalPlacement.FREE, VerticalPlacement.FREE, Label.DEFAULT_SHOW_LABEL, null);
     }
 
-    public Label(Shape shape) {
+    protected Label(Shape shape) {
         this(Placement.FREE, HorizontalPlacement.FREE, VerticalPlacement.FREE, Label.DEFAULT_SHOW_LABEL, shape);
     }
 
-    public Label(Placement placement, HorizontalPlacement horizontalPlacement, VerticalPlacement verticalPlacement) {
+    protected Label(Placement placement, HorizontalPlacement horizontalPlacement, VerticalPlacement verticalPlacement) {
         this(placement, horizontalPlacement, verticalPlacement, Label.DEFAULT_SHOW_LABEL, null);
     }
 
-    public Label(Placement placement, HorizontalPlacement horizontalPlacement, VerticalPlacement verticalPlacement,
+    protected Label(Placement placement, HorizontalPlacement horizontalPlacement, VerticalPlacement verticalPlacement,
                  boolean showLabel, Shape shape) {
         this.shape = shape;
         this.showLabel = showLabel;
@@ -55,26 +55,29 @@ public abstract class Label implements ShapedObject {
      *==========*/
 
     /**
-     * This value should be changed from an instance of {@link LabeledObject}
-     * whenever a {@link Label} is added to a {@link LabeledObject}
-     * via {@link LabeledObject#addLabel(Label)}
-     * or {@link LabeledObject#removeLabel(Label)}
+     * This value should be changed from an instance of {@link LabelManager}
+     * whenever a {@link Label} is added to a {@link LabelManager} of a {@link LabeledObject}
+     * via {@link LabelManager#addLabel(Label)}
+     * or {@link LabelManager#removeLabel(Label)}.
+     *
+     * It can be used to find its associated {@link LabeledObject} via
+     * {@link LabelManager#getManagedLabeledObject}.
      */
-    public LabeledObject getAssociatedObject() {
-        return associatedObject;
+    public LabelManager getAssociatedLabelManager() {
+        return associatedLabelManager;
     }
 
     /**
-     * This value should be changed from an instance of {@link LabeledObject}
-     * whenever a {@link Label} is added to a {@link LabeledObject}
-     * via {@link LabeledObject#addLabel(Label)}
-     * or {@link LabeledObject#removeLabel(Label)}.
+     * This value should be changed from an instance of {@link LabelManager}
+     * whenever a {@link Label} is added to a {@link LabelManager} of a {@link LabeledObject}
+     * via {@link LabelManager#addLabel(Label)}
+     * or {@link LabelManager#removeLabel(Label)}.
      * This is the reason this method is "protected".
      *
-     * @param associatedObject
+     * @param associatedLabelManager
      */
-    protected void setAssociatedObject(LabeledObject associatedObject) {
-        this.associatedObject = associatedObject;
+    protected void setAssociatedLabelManager(LabelManager associatedLabelManager) {
+        this.associatedLabelManager = associatedLabelManager;
     }
 
     public boolean isShowLabel() {

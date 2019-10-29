@@ -21,11 +21,11 @@ public abstract class Path {
      * Constructors
      *==========*/
 
-    public Path() {
+    protected Path() {
         this(Path.UNSPECIFIED_THICKNESS);
     }
 
-    public Path(double thickness) {
+    protected Path(double thickness) {
         this.thickness = thickness;
     }
 

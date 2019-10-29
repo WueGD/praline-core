@@ -1,13 +1,13 @@
-package de.uniwue.informatik.praline.datastructure.graph;
+package de.uniwue.informatik.praline.datastructure.graphs;
 
 import de.uniwue.informatik.praline.datastructure.labels.Label;
+import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
 import de.uniwue.informatik.praline.datastructure.util.InconsistentStateException;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -27,34 +27,37 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
      *==========*/
 
     private List<Edge> edges;
-    private List<Label> labels;
+    private LabelManager labelManager;
     private Shape shape;
-    private Label mainLabel;
 
     /*==========
      * Constructors
      *==========*/
 
     public Port() {
-        this(null, null, null);
+        this(null, null, null, null);
     }
 
     public Port(Collection<Edge> edges) {
-        this(edges, null, null);
+        this(edges, null, null, null);
     }
 
     public Port(Collection<Edge> edges, Collection<Label> labels) {
-        this(edges, labels, null);
+        this(edges, labels, null, null);
     }
 
     public Port(Collection<Edge> edges, Shape shape) {
-        this(edges, null, shape);
+        this(edges, null, null, shape);
     }
 
     public Port(Collection<Edge> edges, Collection<Label> labels, Shape shape) {
+        this(edges, labels, null, shape);
+    }
+
+
+    public Port(Collection<Edge> edges, Collection<Label> labels, Label mainLabel, Shape shape) {
         this.edges = newArrayListNullSave(edges);
-        this.labels = new ArrayList<>();
-        this.addAllLabels(labels);
+        this.labelManager = new LabelManager(this, labels, mainLabel);
         if (shape == null) {
             this.shape = DEFAULT_SHAPE_TO_BE_CLONED.clone();
         }
@@ -81,77 +84,13 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
     }
 
     @Override
-    public Collection<Label> getLabels() {
-        return Collections.unmodifiableList(labels);
-    }
-
-
-    @Override
-    public Label getMainLabel() {
-        return mainLabel;
-    }
-
-    @Override
-    public boolean setMainLabel(Label mainLabel) {
-        if (!labels.contains(mainLabel)) {
-            if (!addLabel(mainLabel)) {
-                return false;
-            }
-        }
-        this.mainLabel = mainLabel;
-        return true;
+    public LabelManager getLabelManager() {
+        return labelManager;
     }
 
     /*==========
      * Modifiers
      *==========*/
-
-    /**
-     *
-     * @param labels
-     * @return
-     *      true if all labels are added
-     *      false if not all (but maybe some!) are added
-     */
-    public boolean addAllLabels(Collection<Label> labels) {
-        boolean success = true;
-        for (Label label : labels) {
-            success = success & this.addLabel(label);
-        }
-        return success;
-    }
-
-    @Override
-    public boolean addLabel(Label l) {
-        if (!labels.contains(l)) {
-            labels.add(l);
-            LabeledObject.changeAssociatedObject(l, this);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean removeLabel(Label l) {
-        if (labels.contains(l)) {
-            labels.remove(l);
-            LabeledObject.justRemoveAssociatedObject(l);
-
-            if (mainLabel.equals(l)) {
-                findNewMainLabel();
-            }
-            return true;
-        }
-        return false;
-    }
-
-    private void findNewMainLabel() {
-        if (labels.size() == 1) {
-            mainLabel = labels.get(0);
-        } else {
-            mainLabel = null;
-        }
-    }
 
     /**
      * this {@link Port} is also added to the list of {@link Port}s of the passed {@link Edge} e

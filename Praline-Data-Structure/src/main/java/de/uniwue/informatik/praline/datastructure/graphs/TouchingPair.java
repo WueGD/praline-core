@@ -1,4 +1,4 @@
-package de.uniwue.informatik.praline.datastructure.graph;
+package de.uniwue.informatik.praline.datastructure.graphs;
 
 import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
 import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;

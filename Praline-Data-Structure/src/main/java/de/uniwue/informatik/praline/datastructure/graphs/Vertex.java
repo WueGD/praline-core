@@ -1,13 +1,12 @@
-package de.uniwue.informatik.praline.datastructure.graph;
+package de.uniwue.informatik.praline.datastructure.graphs;
 
 import de.uniwue.informatik.praline.datastructure.labels.Label;
+import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
 
 import java.util.*;
-
-import static de.uniwue.informatik.praline.datastructure.util.GraphUtils.newArrayListNullSave;
 
 public class Vertex implements ShapedObject, LabeledObject {
 
@@ -20,8 +19,7 @@ public class Vertex implements ShapedObject, LabeledObject {
      */
     private List<PortComposition> portCompositions;
     private HashSet<Port> ports;
-    private List<Label> labels;
-    private Label mainLabel;
+    private LabelManager labelManager;
     private Shape shape;
 
 
@@ -30,19 +28,23 @@ public class Vertex implements ShapedObject, LabeledObject {
      *==========*/
 
     public Vertex() {
-        this(null, null, null);
+        this(null, null, null, null);
     }
 
     public Vertex(Collection<PortComposition> portCompositions) {
-        this(portCompositions, null, null);
+        this(portCompositions, null, null, null);
     }
 
     public Vertex(Collection<PortComposition> portCompositions, Shape shape) {
-        this(portCompositions, null, shape);
+        this(portCompositions, null, null, shape);
     }
 
     public Vertex(Collection<PortComposition> portCompositions, Collection<Label> labels) {
-        this(portCompositions, labels, null);
+        this(portCompositions, labels, null, null);
+    }
+
+    public Vertex(Collection<PortComposition> portCompositions, Collection<Label> labels, Shape shape) {
+        this(portCompositions, labels, null, shape);
     }
 
     /**
@@ -51,9 +53,11 @@ public class Vertex implements ShapedObject, LabeledObject {
      * @param portCompositions
      *      It suffices to only have the top-level {@link PortGroup}s and {@link Port}s in this {@link Collection}
      * @param labels
+     * @param mainLabel
      * @param shape
      */
-    public Vertex(Collection<PortComposition> portCompositions, Collection<Label> labels, Shape shape) {
+    public Vertex(Collection<PortComposition> portCompositions, Collection<Label> labels, Label mainLabel,
+                  Shape shape) {
         this.ports = new HashSet<>();
         this.portCompositions = new ArrayList<>();
         if (portCompositions != null) {
@@ -70,8 +74,7 @@ public class Vertex implements ShapedObject, LabeledObject {
                 }
             }
         }
-        this.labels = new ArrayList<>();
-        this.addAllLabels(labels);
+        this.labelManager = new LabelManager(this, labels, mainLabel);
         this.shape = shape;
     }
 
@@ -94,6 +97,7 @@ public class Vertex implements ShapedObject, LabeledObject {
         }
     }
 
+
     /*==========
      * Getters & Setters
      *==========*/
@@ -110,11 +114,6 @@ public class Vertex implements ShapedObject, LabeledObject {
     }
 
     @Override
-    public List<Label> getLabels() {
-        return Collections.unmodifiableList(labels);
-    }
-
-    @Override
     public Shape getShape() {
         return shape;
     }
@@ -124,75 +123,17 @@ public class Vertex implements ShapedObject, LabeledObject {
     }
 
     @Override
-    public Label getMainLabel() {
-        return mainLabel;
+    public LabelManager getLabelManager() {
+        return labelManager;
     }
 
-    @Override
-    public boolean setMainLabel(Label mainLabel) {
-        if (!labels.contains(mainLabel)) {
-            if (!addLabel(mainLabel)) {
-                return false;
-            }
-        }
-        this.mainLabel = mainLabel;
-        return true;
-    }
 
     /*==========
      * Modifiers
      *
      * Modificiations of the lists currently by List get***()
-     * (except for labels)
      * this maybe changed later:
      * make explicit add() and remove() methods and
      * add "Collections.unmodifiableList(...)" to getters
      *==========*/
-
-    /**
-     *
-     * @param labels
-     * @return
-     *      true if all labels are added
-     *      false if not all (but maybe some!) are added
-     */
-    public boolean addAllLabels(Collection<Label> labels) {
-        boolean success = true;
-        for (Label label : labels) {
-            success = success & this.addLabel(label);
-        }
-        return success;
-    }
-
-    @Override
-    public boolean addLabel(Label l) {
-        if (!labels.contains(l)) {
-            labels.add(l);
-            LabeledObject.changeAssociatedObject(l, this);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean removeLabel(Label l) {
-        if (labels.contains(l)) {
-            labels.remove(l);
-            LabeledObject.justRemoveAssociatedObject(l);
-
-            if (mainLabel.equals(l)) {
-                findNewMainLabel();
-            }
-            return true;
-        }
-        return false;
-    }
-
-    private void findNewMainLabel() {
-        if (labels.size() == 1) {
-            mainLabel = labels.get(0);
-        } else {
-            mainLabel = null;
-        }
-    }
 }
