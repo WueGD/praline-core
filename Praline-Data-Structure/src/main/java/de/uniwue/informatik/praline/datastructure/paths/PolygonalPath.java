@@ -75,7 +75,7 @@ public class PolygonalPath extends Path {
     public String toString() {
         StringBuilder sb = new StringBuilder(startPoint.toString());
         for (Point2D.Double bendPoint : bendPoints) {
-            sb.append("-").append(bendPoint.toString())
+            sb.append("-").append(bendPoint.toString());
         }
         return sb.append("-").append(endPoint.toString()).toString();
     }
