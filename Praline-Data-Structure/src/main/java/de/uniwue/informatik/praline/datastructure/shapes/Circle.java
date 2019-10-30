@@ -33,6 +33,7 @@ public class Circle extends Ellipse2D.Double implements Shape {
         this.color = color != null ? color : DEFAULT_COLOR;
     }
 
+
     /*==========
      * Getters & Setters
      *==========*/

@@ -44,7 +44,9 @@ public class LabelManager {
         if (labels != null) {
             this.addAllLabels(labels);
         }
-        this.mainLabel = mainLabel;
+        if (mainLabel != null) {
+            this.mainLabel = mainLabel;
+        }
     }
 
 
@@ -87,22 +89,26 @@ public class LabelManager {
      *      false if not all (but maybe some!) are added
      */
     public boolean addAllLabels(Collection<Label> labels) {
-        return addAllLabelsInternally(this.labels, labels);
+        boolean returnValue = addAllLabelsInternally(this.labels, labels);
+        if (getLabels().size() == 1 && mainLabel == null) {
+            findNewMainLabel();
+        }
+        return returnValue;
     }
 
     protected boolean addAllLabelsInternally(List<Label> toThisList, Collection<Label> toBeAdded) {
         boolean success = true;
         for (Label label : toBeAdded) {
-            success = success & addLabelInternally(toThisList, label);
+            success = success & addLabelInternally(toThisList, label, false);
         }
         return success;
     }
 
     public boolean addLabel(Label l) {
-        return addLabelInternally(labels, l);
+        return addLabelInternally(labels, l, true);
     }
 
-    protected  boolean addLabelInternally(List<Label> toThisList, Label l) {
+    protected  boolean addLabelInternally(List<Label> toThisList, Label l, boolean checkMainLabel) {
         if (!toThisList.contains(l)) {
             toThisList.add(l);
             //change value associated object at the label
@@ -113,6 +119,10 @@ public class LabelManager {
                 currentlyAssociatedManager.removeLabel(l);
             }
             l.setAssociatedLabelManager(this);
+            //check if it becomes main label
+            if (checkMainLabel && this.getLabels().size() == 1) {
+                findNewMainLabel();
+            }
             return true;
         }
         return false;
@@ -141,5 +151,35 @@ public class LabelManager {
         } else {
             mainLabel = null;
         }
+    }
+
+
+    /*==========
+     * Other
+     *==========*/
+
+    /**
+     *
+     * @return
+     *      A String that depends on the main label and the class name of the labeled object.
+     *      It says if there is no main label.
+     *      So the returned names are usually not unique for the same object.
+     */
+    public String getStringForLabeledObject() {
+        String mainLabelText = "(no main label)" + managedLabeledObject.hashCode();
+        if (mainLabel != null) {
+            mainLabelText = mainLabel.toString();
+        }
+        return managedLabeledObject.getClass().getSimpleName() + "[" + mainLabelText + "]";
+    }
+
+
+    /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "_of_" + managedLabeledObject.toString();
     }
 }

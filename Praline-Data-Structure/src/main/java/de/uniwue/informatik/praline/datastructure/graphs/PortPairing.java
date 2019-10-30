@@ -9,6 +9,7 @@ public class PortPairing {
     private Port port0;
     private Port port1;
 
+
     /*==========
      * Constructors
      *==========*/
@@ -17,6 +18,7 @@ public class PortPairing {
         this.port0 = port0;
         this.port1 = port1;
     }
+
 
     /*==========
      * Getters & Setters
@@ -36,5 +38,15 @@ public class PortPairing {
 
     public void setPort1(Port port1) {
         this.port1 = port1;
+    }
+
+
+    /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        return "[" + getPort0() + "--" + getPort1() + "]";
     }
 }

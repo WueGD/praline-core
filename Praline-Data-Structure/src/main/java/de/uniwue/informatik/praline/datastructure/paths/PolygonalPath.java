@@ -16,6 +16,7 @@ public class PolygonalPath extends Path {
     private Point2D.Double endPoint;
     private List<Point2D.Double> bendPoints;
 
+
     /*==========
      * Constructors
      *==========*/
@@ -40,6 +41,7 @@ public class PolygonalPath extends Path {
         this.bendPoints = newArrayListNullSave(bendPoints);
     }
 
+
     /*==========
      * Getters & Setters
      *==========*/
@@ -62,5 +64,19 @@ public class PolygonalPath extends Path {
 
     public List<Point2D.Double> getBendPoints() {
         return bendPoints;
+    }
+
+
+    /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder(startPoint.toString());
+        for (Point2D.Double bendPoint : bendPoints) {
+            sb.append("-").append(bendPoint.toString())
+        }
+        return sb.append("-").append(endPoint.toString()).toString();
     }
 }

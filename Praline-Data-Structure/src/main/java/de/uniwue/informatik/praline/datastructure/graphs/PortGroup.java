@@ -1,8 +1,6 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSave;
 
@@ -14,12 +12,14 @@ public class PortGroup implements PortComposition {
 
     public static final boolean DEFAULT_IS_ORDERED = false;
 
+
     /*==========
      * Instance variables
      *==========*/
 
     private List<PortComposition> portCompositions;
     private boolean ordered;
+
 
     /*==========
      * Constructors
@@ -43,12 +43,13 @@ public class PortGroup implements PortComposition {
         this.ordered = ordered;
     }
 
+
     /*==========
      * Getters & Setters
      *==========*/
 
     public List<PortComposition> getPortCompositions() {
-        return portCompositions;
+        return Collections.unmodifiableList(portCompositions);
     }
 
     public boolean isOrdered() {
@@ -59,12 +60,38 @@ public class PortGroup implements PortComposition {
         this.ordered = ordered;
     }
 
+
     /*==========
      * Modifiers
-     *
-     * Modificiations of the lists currently by List get***()
-     * this maybe changed later:
-     * make explicit add() and remove() methods and
-     * add "Collections.unmodifiableList(...)" to getters
      *==========*/
+
+    public void addPortComposition(PortComposition pc) {
+        portCompositions.add(pc);
+    }
+
+    public void addPortComposition(int position, PortComposition pc) {
+        portCompositions.add(position, pc);
+    }
+
+    public boolean removePortComposition(PortComposition pc) {
+        return portCompositions.remove(pc);
+    }
+
+
+    /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        Iterator<PortComposition> pcIterator = portCompositions.iterator();
+        StringBuilder contained = new StringBuilder(pcIterator.hasNext() ? pcIterator.next().toString() : "");
+        while (pcIterator.hasNext()) {
+            contained.append(",").append(pcIterator.next().toString());
+        }
+        if (ordered) {
+            return "(" + contained.toString() + ")";
+        }
+        return "{" + contained.toString() + "}";
+    }
 }

@@ -22,6 +22,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
 
     public static final Shape DEFAULT_SHAPE_TO_BE_CLONED = new Rectangle();
 
+
     /*==========
      * Instance variables
      *==========*/
@@ -29,6 +30,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
     private List<Edge> edges;
     private LabelManager labelManager;
     private Shape shape;
+
 
     /*==========
      * Constructors
@@ -66,6 +68,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
         }
     }
 
+
     /*==========
      * Getters & Setters
      *==========*/
@@ -87,6 +90,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
     public LabelManager getLabelManager() {
         return labelManager;
     }
+
 
     /*==========
      * Modifiers
@@ -136,5 +140,15 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
     }
     protected boolean removeEdgeButNotPort(Edge e) {
         return edges.remove(e);
+    }
+
+
+    /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        return labelManager.getStringForLabeledObject();
     }
 }

@@ -43,6 +43,7 @@ public class TouchingPair {
         this.verticalPlacementVertex1 = verticalPlacementVertex1;
     }
 
+
     /*==========
      * Getters & Setters
      *==========*/
@@ -93,5 +94,15 @@ public class TouchingPair {
 
     public void setVerticalPlacementVertex1(VerticalPlacement verticalPlacementVertex1) {
         this.verticalPlacementVertex1 = verticalPlacementVertex1;
+    }
+
+
+    /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        return "[" + getVertex0() + "|" + getVertex1() + "]";
     }
 }

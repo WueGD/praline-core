@@ -64,6 +64,7 @@ public class ArrowHeadTriangle implements Shape {
         this.color = color != null ? color : DEFAULT_COLOR;
     }
 
+
     /*==========
      * Getters & Setters
      *==========*/

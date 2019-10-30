@@ -65,7 +65,7 @@ public class Vertex implements ShapedObject, LabeledObject {
             //moreover find all "real" ports
             HashSet<PortComposition> allLowerLevelPortCompositions = new HashSet<>();
             for (PortComposition portComposition : portCompositions) {
-                getContainedPortCompositionsAndAddAllPorts(allLowerLevelPortCompositions, portComposition);
+                getContainedPortCompositionsAndAllPorts(allLowerLevelPortCompositions, this.ports, portComposition);
             }
             //add only the top level ones to our list
             for (PortComposition portComposition : portCompositions) {
@@ -78,35 +78,13 @@ public class Vertex implements ShapedObject, LabeledObject {
         this.shape = shape;
     }
 
-    private void getContainedPortCompositionsAndAddAllPorts(HashSet<PortComposition> allLowerLevelPortCompositions,
-                                                            PortComposition portComposition) {
-        //add Port if possible
-        if (portComposition instanceof Port) {
-            if (!ports.contains(portComposition)) {
-                ports.add((Port) portComposition);
-            }
-        }
-        //add lower level PortCompositions and go into recursion
-        if (portComposition instanceof PortGroup) {
-            for (PortComposition lowerLevelComposition : ((PortGroup) portComposition).getPortCompositions()) {
-                if (!allLowerLevelPortCompositions.contains(lowerLevelComposition)) {
-                    allLowerLevelPortCompositions.add(lowerLevelComposition);
-                }
-                getContainedPortCompositionsAndAddAllPorts(allLowerLevelPortCompositions, lowerLevelComposition);
-            }
-        }
-    }
-
 
     /*==========
      * Getters & Setters
      *==========*/
 
-    /* TODO: Attention! By modifying this list, the state may become inconsistent (containing not only top level
-    elements any more). Change this by making this gotten list unmodifiable and add save modification methods.
-     */
     public List<PortComposition> getPortCompositions() {
-        return portCompositions;
+        return Collections.unmodifiableList(portCompositions);
     }
 
     public Set<Port> getPorts() {
@@ -130,10 +108,124 @@ public class Vertex implements ShapedObject, LabeledObject {
 
     /*==========
      * Modifiers
-     *
-     * Modificiations of the lists currently by List get***()
-     * this maybe changed later:
-     * make explicit add() and remove() methods and
-     * add "Collections.unmodifiableList(...)" to getters
      *==========*/
+
+    /**
+     * Adds {@link PortComposition} if it is not already contained (on a top or lower level)
+     *
+     * @param pc
+     * @return
+     */
+    public boolean addPortComposition(PortComposition pc) {
+        //check if already contained
+        HashSet<PortComposition> allAlreadyContainedPortCompositions = new HashSet<>();
+        for (PortComposition currPortComposition : portCompositions) {
+            getContainedPortCompositionsAndAllPorts(allAlreadyContainedPortCompositions, new HashSet<>(),
+                    currPortComposition);
+            allAlreadyContainedPortCompositions.add(currPortComposition);
+        }
+
+        //is already contained -> do nothing
+        if (allAlreadyContainedPortCompositions.contains(pc)) {
+            return false;
+        }
+        //not yet conateind -> add it
+        portCompositions.add(pc);
+        //find ports of newly added PortComposition
+        HashSet<Port> newPorts = new HashSet<>();
+        getContainedPortCompositionsAndAllPorts(new HashSet<>(), newPorts, pc);
+        for (Port newPort : newPorts) {
+            if (!this.ports.contains(newPort)) {
+                this.ports.add(newPort);
+            }
+        }
+        return true;
+    }
+
+    /**
+     *
+     * @param pc
+     * @return
+     *      if false is returned there is no such {@link PortComposition} or something else went wrong (e. g. failed
+     *      by removing {@link Port}s contained in the passed {@link PortComposition})
+     */
+    public boolean removePortComposition(PortComposition pc) {
+        boolean success = false;
+        //check if top-level-composition
+        if (portCompositions.contains(pc)) {
+            success = portCompositions.remove(pc);
+        }
+        //check if lower-level-composition contains it
+        for (PortComposition topLevelPortComposition : portCompositions) {
+            success = success | removeIfContained(pc, topLevelPortComposition);
+        }
+
+        //remove contained ports if necessary
+        if (success) {
+            //find ports that are now alive after the previous removal
+            HashSet<Port> currentPorts = new HashSet<>();
+            for (PortComposition topLevelPortComposition : portCompositions) {
+                getContainedPortCompositionsAndAllPorts(new HashSet<>(), currentPorts, topLevelPortComposition);
+            }
+            //compare this newly alive ports with the previously alive ports
+            for (Port oldPort : new ArrayList<>(ports)) {
+                if (!currentPorts.contains(oldPort)) {
+                    success = success & this.ports.remove(oldPort);
+                }
+            }
+        }
+
+        return  success;
+    }
+
+
+    /*==========
+     * Internal
+     *==========*/
+
+    private void getContainedPortCompositionsAndAllPorts(HashSet<PortComposition> allLowerLevelPortCompositions,
+                                                         HashSet<Port> allPorts,
+                                                         PortComposition portComposition) {
+        //add Port if possible
+        if (portComposition instanceof Port) {
+            if (!allPorts.contains(portComposition)) {
+                allPorts.add((Port) portComposition);
+            }
+        }
+        //add lower level PortCompositions and go into recursion
+        if (portComposition instanceof PortGroup) {
+            for (PortComposition lowerLevelComposition : ((PortGroup) portComposition).getPortCompositions()) {
+                if (!allLowerLevelPortCompositions.contains(lowerLevelComposition)) {
+                    allLowerLevelPortCompositions.add(lowerLevelComposition);
+                }
+                getContainedPortCompositionsAndAllPorts(allLowerLevelPortCompositions, allPorts, lowerLevelComposition);
+            }
+        }
+    }
+
+    private boolean removeIfContained(PortComposition removeThis, PortComposition fromThis) {
+        if (fromThis instanceof PortGroup) {
+            boolean success = false;
+            //is contained
+            if (((PortGroup) fromThis).getPortCompositions().contains(removeThis)) {
+                return ((PortGroup) fromThis).getPortCompositions().remove(removeThis);
+            }
+            //not on this level contained but possibly on a lower level -> go into recursion
+            for (PortComposition portComposition : ((PortGroup) fromThis).getPortCompositions()) {
+                success = success | removeIfContained(removeThis, fromThis);
+            }
+            return success;
+        }
+        return false;
+    }
+
+
+    /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        return labelManager.getStringForLabeledObject();
+    }
 }

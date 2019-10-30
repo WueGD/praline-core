@@ -14,6 +14,7 @@ public abstract class Label implements ShapedObject {
 
     public static final boolean DEFAULT_SHOW_LABEL = true;
 
+
     /*==========
      * Instance variables
      *==========*/
@@ -24,6 +25,7 @@ public abstract class Label implements ShapedObject {
     private HorizontalPlacement horizontalPlacement;
     private VerticalPlacement verticalPlacement;
     private Shape shape;
+
 
     /*==========
      * Constructors
@@ -49,6 +51,7 @@ public abstract class Label implements ShapedObject {
         this.horizontalPlacement = horizontalPlacement;
         this.verticalPlacement = verticalPlacement;
     }
+
 
     /*==========
      * Getters & Setters

@@ -80,7 +80,6 @@ public class Graph {
         return vertices.remove(v);
     }
 
-
     public void addVertexGroup(VertexGroup vg) {
         vertexGroups.add(vg);
     }
@@ -96,7 +95,6 @@ public class Graph {
     public boolean removeEdge(Edge e) {
         return edges.remove(e);
     }
-
 
     public void addEdgeBundle(EdgeBundle eb) {
         edgeBundles.add(eb);

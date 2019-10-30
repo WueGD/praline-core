@@ -19,6 +19,7 @@ public class VertexGroup implements ShapedObject, LabeledObject {
 
     public static final boolean DEFAULT_DRAW_FRAME = false;
 
+
     /*==========
      * Instance variables
      *==========*/
@@ -66,6 +67,8 @@ public class VertexGroup implements ShapedObject, LabeledObject {
 
     /*==========
      * Getters & Setters
+     *
+     * Currently: Modify a list by its getter
      *==========*/
 
     public List<Vertex> getContainedVertices() {
@@ -106,12 +109,26 @@ public class VertexGroup implements ShapedObject, LabeledObject {
         return labelManager;
     }
 
+
     /*==========
+     * TODO:
      * Modifiers
      *
      * Modificiations of the lists currently by List get***()
      * this maybe changed later:
      * make explicit add() and remove() methods and
      * add "Collections.unmodifiableList(...)" to getters
+     *
+     * Add consistency checks in add/remove methods (e. g. Ports of PortPairings are contained etc.)
      *==========*/
+
+
+    /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        return labelManager.getStringForLabeledObject();
+    }
 }

@@ -140,7 +140,7 @@ public class EdgeLabelManager extends LabelManager {
         if (!this.portLabels.containsKey(p)) {
             portLabels.put(p, new ArrayList<>(labels.size()));
         }
-        return super.addLabelInternally(this.portLabels.get(p), l);
+        return super.addLabelInternally(this.portLabels.get(p), l, true);
     }
 
     public boolean removePortLabel(Port p, Label l) {
@@ -175,5 +175,15 @@ public class EdgeLabelManager extends LabelManager {
         else {
             mainLabel = null;
         }
+    }
+
+
+    /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        return super.toString();
     }
 }

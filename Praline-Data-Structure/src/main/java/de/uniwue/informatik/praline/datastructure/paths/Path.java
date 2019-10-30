@@ -8,6 +8,7 @@ public abstract class Path {
 
     public static final double UNSPECIFIED_THICKNESS = -1;
 
+
     /*==========
      * Instance variables
      *==========*/
@@ -16,6 +17,7 @@ public abstract class Path {
      * -1 for unspecified
      */
     private double thickness;
+
 
     /*==========
      * Constructors
@@ -28,6 +30,7 @@ public abstract class Path {
     protected Path(double thickness) {
         this.thickness = thickness;
     }
+
 
     /*==========
      * Getters & Setters

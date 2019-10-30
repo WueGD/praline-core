@@ -18,6 +18,7 @@ public class EdgeBundle implements LabeledObject {
     private List<EdgeBundle> containedEdgeBundles;
     private LabelManager labelManager;
 
+
     /*==========
      * Constructors
      *==========*/
@@ -42,16 +43,17 @@ public class EdgeBundle implements LabeledObject {
         this.labelManager = new LabelManager(this, labels, mainlabel);
     }
 
+
     /*==========
      * Getters
      *==========*/
 
     public List<Edge> getContainedEdges() {
-        return containedEdges;
+        return Collections.unmodifiableList(containedEdges);
     }
 
     public List<EdgeBundle> getContainedEdgeBundles() {
-        return containedEdgeBundles;
+        return Collections.unmodifiableList(containedEdgeBundles);
     }
 
     @Override
@@ -59,12 +61,34 @@ public class EdgeBundle implements LabeledObject {
         return labelManager;
     }
 
+
     /*==========
      * Modifiers
-     *
-     * Modificiations of the lists currently by List get***()
-     * this maybe changed later:
-     * make explicit add() and remove() methods and
-     * add "Collections.unmodifiableList(...)" to getters
      *==========*/
+
+    public void addEdge(Edge e) {
+        containedEdges.add(e);
+    }
+
+    public boolean removeEdge(Edge e) {
+        return containedEdges.remove(e);
+    }
+
+    public void addEdgeBundle(EdgeBundle eb) {
+        containedEdgeBundles.add(eb);
+    }
+
+    public boolean removeEdgeBundle(EdgeBundle eb) {
+        return containedEdgeBundles.remove(eb);
+    }
+
+
+    /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        return labelManager.getStringForLabeledObject();
+    }
 }

@@ -21,6 +21,7 @@ public class Edge implements LabeledObject {
     public static final double UNSPECIFIED_THICKNESS = -1;
     public static final Color DEFAULT_COLOR = Color.BLACK;
 
+
     /*==========
      * Instance variables
      *==========*/
@@ -62,6 +63,7 @@ public class Edge implements LabeledObject {
         this.color = color;
     }
 
+
     /*==========
      * Getters & Setters
      *==========*/
@@ -99,14 +101,9 @@ public class Edge implements LabeledObject {
         return labelManager;
     }
 
+
     /*==========
      * Modifiers
-     *
-     * Modificiations of the lists currently by List get***()
-     * (except for ports)
-     * this maybe changed later:
-     * make explicit add() and remove() methods and
-     * add "Collections.unmodifiableList(...)" to getters
      *==========*/
 
     /**
@@ -154,5 +151,15 @@ public class Edge implements LabeledObject {
 
     protected boolean removePortButNotEdge(Port p) {
         return ports.remove(p);
+    }
+
+
+    /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        return labelManager.getStringForLabeledObject();
     }
 }

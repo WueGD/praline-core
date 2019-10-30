@@ -24,6 +24,7 @@ public class TextLabel extends Label {
     public static final boolean DEFAULT_NO_BREAK = false;
     public static final Color DEFAULT_COLOR = Color.BLACK;
 
+
     /*==========
      * Instance variables
      *==========*/
@@ -33,6 +34,7 @@ public class TextLabel extends Label {
     private boolean noBreak;
     private Color color;
     private String layoutText;
+
 
     /*==========
      * Constructors
@@ -84,6 +86,7 @@ public class TextLabel extends Label {
         this.color = color;
     }
 
+
     /*==========
      * Getters & Setters
      *==========*/
@@ -126,5 +129,15 @@ public class TextLabel extends Label {
 
     public void setLayoutText(String layoutText) {
         this.layoutText = layoutText;
+    }
+
+
+    /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        return inputText;
     }
 }
