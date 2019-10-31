@@ -83,8 +83,7 @@ public class Rectangle extends Rectangle2D.Double implements Shape {
      *==========*/
 
     @Override
-    public Shape clone() {
-        return new Rectangle(this.getXPosition(), this.getYPosition(), this.getWidth(), this.getHeight(),
-                this.getColor());
+    public Rectangle clone() {
+        return (Rectangle) super.clone();
     }
 }

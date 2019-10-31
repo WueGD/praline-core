@@ -2,7 +2,7 @@ package de.uniwue.informatik.praline.datastructure.shapes;
 
 import java.awt.*;
 
-public class ArrowHeadTriangle implements Shape {
+public class ArrowHeadTriangle implements Shape, Cloneable {
 
     /*==========
      * Default values
@@ -127,8 +127,11 @@ public class ArrowHeadTriangle implements Shape {
      *==========*/
 
     @Override
-    public Shape clone() {
-        return new ArrowHeadTriangle(this.getXPosition(), this.getYPosition(), this.getLength(), this.getWidth(),
-                this.getAngle(), this.getColor());
+    public ArrowHeadTriangle clone() {
+        try {
+            return (ArrowHeadTriangle) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new InternalError(e);
+        }
     }
 }

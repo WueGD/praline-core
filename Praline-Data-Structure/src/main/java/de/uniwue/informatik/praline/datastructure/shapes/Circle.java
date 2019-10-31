@@ -68,7 +68,7 @@ public class Circle extends Ellipse2D.Double implements Shape {
      *==========*/
 
     @Override
-    public Shape clone() {
-        return new Circle(this.getXPosition(), this.getYPosition(), this.getRadius(), this.getColor());
+    public Circle clone() {
+        return (Circle) super.clone();
     }
 }

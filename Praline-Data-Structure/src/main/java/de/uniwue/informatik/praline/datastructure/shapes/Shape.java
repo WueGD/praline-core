@@ -2,7 +2,7 @@ package de.uniwue.informatik.praline.datastructure.shapes;
 
 import java.awt.*;
 
-public interface Shape {
+public interface Shape extends Cloneable {
 
     /*==========
      * Default values
