@@ -135,11 +135,7 @@ public class Vertex implements ShapedObject, LabeledObject {
         //find ports of newly added PortComposition
         HashSet<Port> newPorts = new HashSet<>();
         getContainedPortCompositionsAndAllPorts(new HashSet<>(), newPorts, pc);
-        for (Port newPort : newPorts) {
-            if (!this.ports.contains(newPort)) {
-                this.ports.add(newPort);
-            }
-        }
+        this.ports.addAll(newPorts);
         return true;
     }
 
@@ -196,9 +192,7 @@ public class Vertex implements ShapedObject, LabeledObject {
         //add lower level PortCompositions and go into recursion
         if (portComposition instanceof PortGroup) {
             for (PortComposition lowerLevelComposition : ((PortGroup) portComposition).getPortCompositions()) {
-                if (!allLowerLevelPortCompositions.contains(lowerLevelComposition)) {
-                    allLowerLevelPortCompositions.add(lowerLevelComposition);
-                }
+                allLowerLevelPortCompositions.add(lowerLevelComposition);
                 getContainedPortCompositionsAndAllPorts(allLowerLevelPortCompositions, allPorts, lowerLevelComposition);
             }
         }

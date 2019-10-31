@@ -85,8 +85,7 @@ public class EdgeLabelManager extends LabelManager {
 
     @Override
     public List<Label> getLabels() {
-        ArrayList<Label> labels = new ArrayList<>();
-        labels.addAll(getInnerLabels());
+        ArrayList<Label> labels = new ArrayList<>(getInnerLabels());
         for (Port port : portLabels.keySet()) {
             if (portLabels.get(port) != null) {
                 labels.addAll(portLabels.get(port));
