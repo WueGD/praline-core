@@ -166,8 +166,10 @@ public class LabelManager {
      *      So the returned names are usually not unique for the same object.
      */
     public String getStringForLabeledObject() {
-        String mainLabelText = "(no main label)" + managedLabeledObject.hashCode();
-        if (mainLabel != null) {
+        String mainLabelText;
+        if (mainLabel == null) {
+            mainLabelText = "(no main label)" + managedLabeledObject.hashCode();
+        } else {
             mainLabelText = mainLabel.toString();
         }
         return managedLabeledObject.getClass().getSimpleName() + "[" + mainLabelText + "]";
