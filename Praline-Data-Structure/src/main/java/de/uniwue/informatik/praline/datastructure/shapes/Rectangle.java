@@ -58,16 +58,6 @@ public class Rectangle extends Rectangle2D.Double implements Shape {
     }
 
     @Override
-    public double getWidth() {
-        return super.getWidth();
-    }
-
-    @Override
-    public double getHeight() {
-        return super.getHeight();
-    }
-
-    @Override
     public Color getColor() {
         return color;
     }

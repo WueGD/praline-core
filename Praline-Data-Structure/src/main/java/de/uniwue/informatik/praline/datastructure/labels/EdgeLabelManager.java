@@ -177,14 +177,4 @@ public class EdgeLabelManager extends LabelManager {
             mainLabel = null;
         }
     }
-
-
-    /*==========
-     * toString
-     *==========*/
-
-    @Override
-    public String toString() {
-        return super.toString();
-    }
 }
