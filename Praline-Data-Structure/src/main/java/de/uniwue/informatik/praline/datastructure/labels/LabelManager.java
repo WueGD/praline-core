@@ -11,8 +11,8 @@ public class LabelManager {
      * Instance variables
      *==========*/
 
-    private LabeledObject managedLabeledObject;
-    protected List<Label> labels;
+    private final LabeledObject managedLabeledObject;
+    protected final List<Label> labels;
     protected Label mainLabel;
 
 

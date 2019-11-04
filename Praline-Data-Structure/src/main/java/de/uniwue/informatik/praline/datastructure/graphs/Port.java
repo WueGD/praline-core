@@ -27,8 +27,8 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
      * Instance variables
      *==========*/
 
-    private List<Edge> edges;
-    private LabelManager labelManager;
+    private final List<Edge> edges;
+    private final LabelManager labelManager;
     private Shape shape;
 
 
@@ -82,6 +82,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
         return shape;
     }
 
+    @Override
     public void setShape(Shape shape) {
         this.shape = shape;
     }

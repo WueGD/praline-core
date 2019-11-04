@@ -12,10 +12,10 @@ public class Graph {
      * Instance variables
      *==========*/
 
-    private List<Vertex> vertices;
-    private List<VertexGroup> vertexGroups;
-    private List<Edge> edges;
-    private List<EdgeBundle> edgeBundles;
+    private final List<Vertex> vertices;
+    private final List<VertexGroup> vertexGroups;
+    private final List<Edge> edges;
+    private final List<EdgeBundle> edgeBundles;
 
 
     /*==========

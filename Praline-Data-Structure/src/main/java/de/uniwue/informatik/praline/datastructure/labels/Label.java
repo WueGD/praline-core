@@ -120,6 +120,7 @@ public abstract class Label implements ShapedObject {
         return shape;
     }
 
+    @Override
     public void setShape(Shape shape) {
         this.shape = shape;
     }

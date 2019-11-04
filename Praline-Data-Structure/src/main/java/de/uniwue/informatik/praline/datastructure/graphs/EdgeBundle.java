@@ -14,9 +14,9 @@ public class EdgeBundle implements LabeledObject {
      * Instance variables
      *==========*/
 
-    private List<Edge> containedEdges;
-    private List<EdgeBundle> containedEdgeBundles;
-    private LabelManager labelManager;
+    private final List<Edge> containedEdges;
+    private final List<EdgeBundle> containedEdgeBundles;
+    private final LabelManager labelManager;
 
 
     /*==========

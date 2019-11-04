@@ -24,11 +24,11 @@ public class VertexGroup implements ShapedObject, LabeledObject {
      * Instance variables
      *==========*/
 
-    private List<Vertex> containedVertices;
-    private List<VertexGroup> containedVertexGroups;
-    private List<TouchingPair> touchingPairs;
-    private List<PortPairing> portPairings;
-    private LabelManager labelManager;
+    private final List<Vertex> containedVertices;
+    private final List<VertexGroup> containedVertexGroups;
+    private final List<TouchingPair> touchingPairs;
+    private final List<PortPairing> portPairings;
+    private final LabelManager labelManager;
     /**
      * null if this group has no specific shape
      */
@@ -92,6 +92,7 @@ public class VertexGroup implements ShapedObject, LabeledObject {
         return shape;
     }
 
+    @Override
     public void setShape(Shape shape) {
         this.shape = shape;
     }

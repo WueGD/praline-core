@@ -26,7 +26,7 @@ public class LeaderedLabel extends Label implements LabeledObject {
     private Shape arrowHead;
     private double pathThickness;
     private Path path;
-    private LabelManager labelManager;
+    private final LabelManager labelManager;
 
 
     /*==========

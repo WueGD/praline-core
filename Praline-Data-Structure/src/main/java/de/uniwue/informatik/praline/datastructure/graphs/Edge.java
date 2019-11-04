@@ -26,14 +26,14 @@ public class Edge implements LabeledObject {
      * Instance variables
      *==========*/
 
-    private List<Port> ports;
+    private final List<Port> ports;
     private List<Path> paths;
     /**
      * -1 for not specified
      */
     private double thickness;
     private Color color;
-    private EdgeLabelManager labelManager;
+    private final EdgeLabelManager labelManager;
 
 
     /*==========

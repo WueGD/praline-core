@@ -17,7 +17,7 @@ public class PortGroup implements PortComposition {
      * Instance variables
      *==========*/
 
-    private List<PortComposition> portCompositions;
+    private final List<PortComposition> portCompositions;
     private boolean ordered;
 
 

@@ -16,7 +16,7 @@ public class EdgeLabelManager extends LabelManager {
      * Instance variables
      *==========*/
 
-    private Map<Port, List<Label>> portLabels;
+    private final Map<Port, List<Label>> portLabels;
 
 
     /*==========
@@ -108,6 +108,7 @@ public class EdgeLabelManager extends LabelManager {
      *      true if all labels are added
      *      false if not all (but maybe some!) are added
      */
+    @Override
     public boolean addAllLabels(Collection<Label> labels) {
         return super.addAllLabels(labels);
     }
@@ -118,6 +119,7 @@ public class EdgeLabelManager extends LabelManager {
      * @param l
      * @return
      */
+    @Override
     public boolean addLabel(Label l){
         return super.addLabel(l);
     }

@@ -14,7 +14,7 @@ public class PolygonalPath extends Path {
 
     private Point2D.Double startPoint;
     private Point2D.Double endPoint;
-    private List<Point2D.Double> bendPoints;
+    private final List<Point2D.Double> bendPoints;
 
 
     /*==========

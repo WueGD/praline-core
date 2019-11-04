@@ -17,9 +17,9 @@ public class Vertex implements ShapedObject, LabeledObject {
     /**
      * contains only top level {@link PortGroup}s and {@link Port}s (and in them possibly contained elements)
      */
-    private List<PortComposition> portCompositions;
-    private HashSet<Port> ports;
-    private LabelManager labelManager;
+    private final List<PortComposition> portCompositions;
+    private final HashSet<Port> ports;
+    private final LabelManager labelManager;
     private Shape shape;
 
 
@@ -96,6 +96,7 @@ public class Vertex implements ShapedObject, LabeledObject {
         return shape;
     }
 
+    @Override
     public void setShape(Shape shape) {
         this.shape = shape;
     }
@@ -129,7 +130,7 @@ public class Vertex implements ShapedObject, LabeledObject {
         if (allAlreadyContainedPortCompositions.contains(pc)) {
             return false;
         }
-        //not yet conateind -> add it
+        //not yet contained -> add it
         portCompositions.add(pc);
         //find ports of newly added PortComposition
         HashSet<Port> newPorts = new HashSet<>();
