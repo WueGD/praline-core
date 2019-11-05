@@ -2,7 +2,7 @@ package de.uniwue.informatik.praline.datastructure.shapes;
 
 import java.awt.*;
 
-public class ArrowHeadTriangle implements Shape, Cloneable {
+public class ArrowHeadTriangle implements Shape {
 
     /*==========
      * Default values
