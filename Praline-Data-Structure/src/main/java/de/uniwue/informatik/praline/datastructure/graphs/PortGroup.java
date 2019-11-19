@@ -11,6 +11,7 @@ public class PortGroup implements PortComposition {
      *==========*/
 
     private Vertex vertex;
+    private PortGroup portGroup;
     public static final boolean DEFAULT_IS_ORDERED = false;
 
 
@@ -42,6 +43,9 @@ public class PortGroup implements PortComposition {
     public PortGroup(Collection<PortComposition> portCompositions, boolean ordered) {
         this.portCompositions = newArrayListNullSave(portCompositions);
         this.ordered = ordered;
+        for (PortComposition portComposition : this.portCompositions) {
+            portComposition.setPortGroup(this);
+        }
     }
 
 
@@ -76,18 +80,31 @@ public class PortGroup implements PortComposition {
         this.vertex = vertex;
     }
 
+    @Override
+    public PortGroup getPortGroup() {
+        return portGroup;
+    }
+
+    @Override
+    public void setPortGroup(PortGroup portGroup) {
+        this.portGroup = portGroup;
+    }
+
     public void addPortComposition(PortComposition pc) {
         portCompositions.add(pc);
         pc.setVertex(this.getVertex());
+        pc.setPortGroup(this);
     }
 
     public void addPortComposition(int position, PortComposition pc) {
         portCompositions.add(position, pc);
         pc.setVertex(this.getVertex());
+        pc.setPortGroup(this);
     }
 
     public boolean removePortComposition(PortComposition pc) {
         pc.setVertex(null);
+        pc.setPortGroup(null);
         return portCompositions.remove(pc);
     }
 

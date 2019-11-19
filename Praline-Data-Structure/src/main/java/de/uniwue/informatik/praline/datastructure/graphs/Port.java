@@ -28,6 +28,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
      *==========*/
 
     private Vertex vertex;
+    private PortGroup portGroup;
     private final List<Edge> edges;
     private final LabelManager labelManager;
     private Shape shape;
@@ -82,6 +83,16 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
     @Override
     public void setVertex(Vertex vertex) {
         this.vertex = vertex;
+    }
+
+    @Override
+    public PortGroup getPortGroup() {
+        return portGroup;
+    }
+
+    @Override
+    public void setPortGroup(PortGroup portGroup) {
+        this.portGroup = portGroup;
     }
 
     public List<Edge> getEdges() {
