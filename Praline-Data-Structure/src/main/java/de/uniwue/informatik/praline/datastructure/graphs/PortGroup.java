@@ -10,6 +10,7 @@ public class PortGroup implements PortComposition {
      * Default values
      *==========*/
 
+    private Vertex vertex;
     public static final boolean DEFAULT_IS_ORDERED = false;
 
 
@@ -65,15 +66,28 @@ public class PortGroup implements PortComposition {
      * Modifiers
      *==========*/
 
+    @Override
+    public Vertex getVertex() {
+        return vertex;
+    }
+
+    @Override
+    public void setVertex(Vertex vertex) {
+        this.vertex = vertex;
+    }
+
     public void addPortComposition(PortComposition pc) {
         portCompositions.add(pc);
+        pc.setVertex(this.getVertex());
     }
 
     public void addPortComposition(int position, PortComposition pc) {
         portCompositions.add(position, pc);
+        pc.setVertex(this.getVertex());
     }
 
     public boolean removePortComposition(PortComposition pc) {
+        pc.setVertex(null);
         return portCompositions.remove(pc);
     }
 

@@ -67,10 +67,11 @@ public class Vertex implements ShapedObject, LabeledObject {
             for (PortComposition portComposition : portCompositions) {
                 getContainedPortCompositionsAndAllPorts(allLowerLevelPortCompositions, this.ports, portComposition);
             }
-            //add only the top level ones to our list
+            //add only the top level ones to our list + reference this vertex at each port composition
             for (PortComposition portComposition : portCompositions) {
                 if (!allLowerLevelPortCompositions.contains(portComposition)) {
                     portCompositions.add(portComposition);
+                    assignPortCompositionRecursivelyToVertex(portComposition, this);
                 }
             }
         }
@@ -132,6 +133,7 @@ public class Vertex implements ShapedObject, LabeledObject {
         }
         //not yet contained -> add it
         portCompositions.add(pc);
+        assignPortCompositionRecursivelyToVertex(pc, this);
         //find ports of newly added PortComposition
         HashSet<Port> newPorts = new HashSet<>();
         getContainedPortCompositionsAndAllPorts(new HashSet<>(), newPorts, pc);
@@ -159,6 +161,8 @@ public class Vertex implements ShapedObject, LabeledObject {
 
         //remove contained ports if necessary
         if (success) {
+            //un-link from this vertex
+            assignPortCompositionRecursivelyToVertex(pc, null);
             //find ports that are now alive after the previous removal
             HashSet<Port> currentPorts = new HashSet<>();
             for (PortComposition topLevelPortComposition : portCompositions) {
@@ -212,6 +216,16 @@ public class Vertex implements ShapedObject, LabeledObject {
             return success;
         }
         return false;
+    }
+
+    private static void assignPortCompositionRecursivelyToVertex(PortComposition topLevelPortComposition,
+                                                                    Vertex vertex) {
+        topLevelPortComposition.setVertex(vertex);
+        if (topLevelPortComposition instanceof PortGroup) {
+            for (PortComposition childPortComposition : ((PortGroup) topLevelPortComposition).getPortCompositions()) {
+                assignPortCompositionRecursivelyToVertex(childPortComposition, vertex);
+            }
+        }
     }
 
 

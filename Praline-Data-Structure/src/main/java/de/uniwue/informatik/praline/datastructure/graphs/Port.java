@@ -27,6 +27,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
      * Instance variables
      *==========*/
 
+    private Vertex vertex;
     private final List<Edge> edges;
     private final LabelManager labelManager;
     private Shape shape;
@@ -72,6 +73,16 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
     /*==========
      * Getters & Setters
      *==========*/
+
+    @Override
+    public Vertex getVertex() {
+        return vertex;
+    }
+
+    @Override
+    public void setVertex(Vertex vertex) {
+        this.vertex = vertex;
+    }
 
     public List<Edge> getEdges() {
         return Collections.unmodifiableList(edges);
