@@ -39,6 +39,9 @@ public class EdgeBundle implements LabeledObject {
     public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles,
                       Collection<Label> labels, Label mainlabel) {
         this.containedEdges = newArrayListNullSave(containedEdges);
+        for (Edge e : containedEdges) {
+            e.setEdgeBundle(this);
+        }
         this.containedEdgeBundles = newArrayListNullSave(containedEdgeBundles);
         this.labelManager = new LabelManager(this, labels, mainlabel);
     }
@@ -68,10 +71,15 @@ public class EdgeBundle implements LabeledObject {
 
     public void addEdge(Edge e) {
         containedEdges.add(e);
+        e.setEdgeBundle(this);
     }
 
     public boolean removeEdge(Edge e) {
-        return containedEdges.remove(e);
+        boolean success = containedEdges.remove(e);
+        if (success) {
+            e.setEdgeBundle(null);
+        }
+        return success;
     }
 
     public void addEdgeBundle(EdgeBundle eb) {

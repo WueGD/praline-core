@@ -33,6 +33,7 @@ public class Edge implements LabeledObject {
      */
     private double thickness;
     private Color color;
+    private EdgeBundle edgeBundle;
     private final EdgeLabelManager labelManager;
 
 
@@ -94,6 +95,14 @@ public class Edge implements LabeledObject {
 
     public void setColor(Color color) {
         this.color = color;
+    }
+
+    public EdgeBundle getEdgeBundle() {
+        return edgeBundle;
+    }
+
+    protected void setEdgeBundle(EdgeBundle edgeBundle) {
+        this.edgeBundle = edgeBundle;
     }
 
     @Override

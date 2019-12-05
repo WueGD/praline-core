@@ -19,6 +19,7 @@ public class Vertex implements ShapedObject, LabeledObject {
      */
     private final List<PortComposition> portCompositions;
     private final HashSet<Port> ports;
+    private VertexGroup vertexGroup;
     private final LabelManager labelManager;
     private Shape shape;
 
@@ -90,6 +91,14 @@ public class Vertex implements ShapedObject, LabeledObject {
 
     public Set<Port> getPorts() {
         return Collections.unmodifiableSet(ports);
+    }
+
+    public VertexGroup getVertexGroup() {
+        return vertexGroup;
+    }
+
+    protected void setVertexGroup(VertexGroup vertexGroup) {
+        this.vertexGroup = vertexGroup;
     }
 
     @Override
