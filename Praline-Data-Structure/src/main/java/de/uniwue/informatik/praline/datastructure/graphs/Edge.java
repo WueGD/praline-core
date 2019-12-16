@@ -59,6 +59,9 @@ public class Edge implements LabeledObject {
     public Edge(Collection<Port> ports, Collection<Label> innerLabels, Map<Port, List<Label>> portLabels,
                 Label mainLabel, double thickness, Color color) {
         this.ports = newArrayListNullSave(ports);
+        for (Port port : this.ports) {
+            port.addEdgeButNotPort(this);
+        }
         this.labelManager = new EdgeLabelManager(this, innerLabels, portLabels, mainLabel);
         this.thickness = thickness;
         this.color = color;

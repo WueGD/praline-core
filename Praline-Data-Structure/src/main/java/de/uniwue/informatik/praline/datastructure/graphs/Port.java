@@ -61,6 +61,9 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
 
     public Port(Collection<Edge> edges, Collection<Label> labels, Label mainLabel, Shape shape) {
         this.edges = newArrayListNullSave(edges);
+        for (Edge edge : this.edges) {
+            edge.addPortButNotEdge(this);
+        }
         this.labelManager = new LabelManager(this, labels, mainLabel);
         if (shape == null) {
             this.shape = DEFAULT_SHAPE_TO_BE_CLONED.clone();
