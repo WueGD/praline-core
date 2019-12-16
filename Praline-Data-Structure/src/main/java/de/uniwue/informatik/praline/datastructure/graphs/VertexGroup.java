@@ -58,7 +58,7 @@ public class VertexGroup implements ShapedObject, LabeledObject {
                        Collection<TouchingPair> touchingPairs, Collection<PortPairing> portPairings,
                        Collection<Label> labels, Label mainLabel, Shape shape, boolean drawnFrame) {
         this.containedVertices = newArrayListNullSave(containedVertices);
-        for (Vertex v : containedVertices) {
+        for (Vertex v : this.containedVertices) {
             v.setVertexGroup(this);
         }
         this.containedVertexGroups = newArrayListNullSave(containedVertexGroups);
