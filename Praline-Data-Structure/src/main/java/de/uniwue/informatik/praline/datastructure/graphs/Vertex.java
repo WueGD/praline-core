@@ -220,7 +220,7 @@ public class Vertex implements ShapedObject, LabeledObject {
             }
             //not on this level contained but possibly on a lower level -> go into recursion
             for (PortComposition portComposition : ((PortGroup) fromThis).getPortCompositions()) {
-                success = success | removeIfContained(removeThis, fromThis);
+                success = success | removeIfContained(removeThis, portComposition);
             }
             return success;
         }
