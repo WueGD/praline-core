@@ -1,5 +1,6 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
+import com.fasterxml.jackson.annotation.*;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
@@ -8,12 +9,12 @@ import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
 import de.uniwue.informatik.praline.datastructure.utils.InconsistentStateException;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSave;
+import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
+@JsonIgnoreProperties({ "vertex", "portGroup", "edges" })
+@JsonPropertyOrder({ "shape", "labelManager" })
 public class Port implements PortComposition, ShapedObject, LabeledObject {
 
     /*==========
@@ -58,9 +59,16 @@ public class Port implements PortComposition, ShapedObject, LabeledObject {
         this(edges, labels, null, shape);
     }
 
+    @JsonCreator
+    private Port(
+            @JsonProperty("labelManager") final LabelManager labelManager,
+            @JsonProperty("shape") final Shape shape
+    ) {
+        this(null, labelManager.getLabels(), labelManager.getMainLabel(), shape);
+    }
 
     public Port(Collection<Edge> edges, Collection<Label> labels, Label mainLabel, Shape shape) {
-        this.edges = newArrayListNullSave(edges);
+        this.edges = newArrayListNullSafe(edges);
         for (Edge edge : this.edges) {
             edge.addPortButNotEdge(this);
         }

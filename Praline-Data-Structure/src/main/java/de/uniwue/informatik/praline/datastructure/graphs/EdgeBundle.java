@@ -1,13 +1,18 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 
 import java.util.*;
 
-import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSave;
+import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
+@JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public class EdgeBundle implements LabeledObject {
 
     /*==========
@@ -27,6 +32,10 @@ public class EdgeBundle implements LabeledObject {
         this(null, null, null, null);
     }
 
+    public EdgeBundle(Collection<Edge> containedEdges) {
+        this(containedEdges, null, null, null);
+    }
+
     public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles) {
         this(containedEdges, containedEdgeBundles, null, null);
     }
@@ -36,13 +45,22 @@ public class EdgeBundle implements LabeledObject {
         this(containedEdges, containedEdgeBundles, labels, null);
     }
 
+    @JsonCreator
+    private EdgeBundle(
+            @JsonProperty("containedEdges") final Collection<Edge> containedEdges,
+            @JsonProperty("containedEdgeBundles") final Collection<EdgeBundle> containedEdgeBundles,
+            @JsonProperty("labelManager") final LabelManager labelManager
+    ) {
+        this(containedEdges, containedEdgeBundles, labelManager.getLabels(), labelManager.getMainLabel());
+    }
+
     public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles,
                       Collection<Label> labels, Label mainlabel) {
-        this.containedEdges = newArrayListNullSave(containedEdges);
+        this.containedEdges = newArrayListNullSafe(containedEdges);
         for (Edge e : containedEdges) {
             e.setEdgeBundle(this);
         }
-        this.containedEdgeBundles = newArrayListNullSave(containedEdgeBundles);
+        this.containedEdgeBundles = newArrayListNullSafe(containedEdgeBundles);
         this.labelManager = new LabelManager(this, labels, mainlabel);
     }
 

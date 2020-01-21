@@ -1,15 +1,23 @@
 package de.uniwue.informatik.praline.datastructure.labels;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.uniwue.informatik.praline.datastructure.graphs.Edge;
 import de.uniwue.informatik.praline.datastructure.graphs.Port;
 
 import java.util.*;
+
+import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
 /**
  * the list of {@link Label}s from the super class {@link LabelManager} becomes
  * the list of inner {@link Label}s of this object.
  * Beside this internal list, there is a list of {@link Label}s for each {@link Port}.
  */
+@JsonIgnoreProperties({ "labels", "portLabels", "registeredPorts", "managedLabeledObject", "stringForLabeledObject" })
+//Note for
+// @JsonIgnoreProperties: instead of "labels" we use "innerLabels" and instead of "portLabels" we use "allPortLabels"
 public class EdgeLabelManager extends LabelManager {
 
     /*==========
@@ -33,6 +41,18 @@ public class EdgeLabelManager extends LabelManager {
         findNewMainLabel();
     }
 
+    @JsonCreator
+    private EdgeLabelManager(
+            @JsonProperty("innerLabels") final List<Label> innerLabels,
+            @JsonProperty("allPortLabels") final Set<PairPort2Labels> allPortLabels,
+            @JsonProperty("mainLabel") final Label mainLabel
+    ) {
+        this(null, innerLabels, null, mainLabel);
+        for (PairPort2Labels pair : allPortLabels) {
+            this.addPortLabels(pair.port, pair.labels);
+        }
+    }
+
     /**
      *
      * @param managedLabeledObject
@@ -48,12 +68,11 @@ public class EdgeLabelManager extends LabelManager {
                         Map<Port, List<Label>> portLabels, Label mainLabel) {
 
         super(managedLabeledObject, innerLabels, mainLabel);
-        this.portLabels = new HashMap<>(portLabels == null ?
-                managedLabeledObject.getPorts().size() : portLabels.size());
+        this.portLabels = new HashMap<>(portLabels == null ? 2 : portLabels.size());
         if (portLabels != null) {
             for (Port port : portLabels.keySet()) {
                 if (portLabels.get(port) != null) {
-                    addAllPortLabels(port, portLabels.get(port));
+                    addPortLabels(port, portLabels.get(port));
                 }
             }
         }
@@ -79,6 +98,38 @@ public class EdgeLabelManager extends LabelManager {
         return null;
     }
 
+    public static class PairPort2Labels {
+        @JsonProperty
+        public final Port port;
+        @JsonProperty
+        public final List<Label> labels;
+        @JsonCreator
+        PairPort2Labels(
+                @JsonProperty("port") final Port p,
+                @JsonProperty("labels") final Collection<Label> l
+        ){
+            port = p;
+            labels = newArrayListNullSafe(l);
+        }
+    }
+
+    /**
+     *
+     * @return
+     *      A new set of pairs of ports with their port labels.
+     *      If you do not need this complete set, you should rather call {@link EdgeLabelManager#getPortLabels(Port)}
+     *      to avoid unnecessary full copying!
+     */
+    public Set<PairPort2Labels> getAllPortLabels() {
+        HashSet<PairPort2Labels> allPortLabels = new HashSet<>();
+        for (Port port : this.getRegisteredPorts()) {
+            if (this.getPortLabels(port) != null) {
+                allPortLabels.add(new PairPort2Labels(port, this.getPortLabels(port)));
+            }
+        }
+        return allPortLabels;
+    }
+
     public Set<Port> getRegisteredPorts() {
         return portLabels.keySet();
     }
@@ -86,9 +137,11 @@ public class EdgeLabelManager extends LabelManager {
     @Override
     public List<Label> getLabels() {
         ArrayList<Label> labels = new ArrayList<>(getInnerLabels());
-        for (Port port : portLabels.keySet()) {
-            if (portLabels.get(port) != null) {
-                labels.addAll(portLabels.get(port));
+        if (portLabels != null) {
+            for (Port port : portLabels.keySet()) {
+                if (portLabels.get(port) != null) {
+                    labels.addAll(portLabels.get(port));
+                }
             }
         }
         return labels;
@@ -130,7 +183,7 @@ public class EdgeLabelManager extends LabelManager {
      *      true if all labels are added
      *      false if not all (but maybe some!) are added
      */
-    public boolean addAllPortLabels(Port p, Collection<Label> labels) {
+    public boolean addPortLabels(Port p, Collection<Label> labels) {
         if (!this.portLabels.containsKey(p)) {
             portLabels.put(p, new ArrayList<>(labels.size()));
         }

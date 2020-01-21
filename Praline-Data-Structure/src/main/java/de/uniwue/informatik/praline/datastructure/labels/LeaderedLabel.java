@@ -1,5 +1,7 @@
 package de.uniwue.informatik.praline.datastructure.labels;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.uniwue.informatik.praline.datastructure.paths.Path;
 import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
 import de.uniwue.informatik.praline.datastructure.placements.Placement;
@@ -51,6 +53,23 @@ public class LeaderedLabel extends Label implements LabeledObject {
     public LeaderedLabel(Shape arrowHead, double pathThickness) {
         this(arrowHead, pathThickness, Placement.FREE, HorizontalPlacement.FREE,
                 VerticalPlacement.FREE, Label.DEFAULT_SHOW_LABEL, null, null, null);
+    }
+
+    @JsonCreator
+    private LeaderedLabel(
+            @JsonProperty("path") final Path path,
+            @JsonProperty("arrowHead") final Shape arrowHead,
+            @JsonProperty("pathThickness") final double pathThickness,
+            @JsonProperty("placement") final Placement placement,
+            @JsonProperty("horizontalPlacement") final HorizontalPlacement horizontalPlacement,
+            @JsonProperty("verticalPlacement") final VerticalPlacement verticalPlacement,
+            @JsonProperty("showLabel") final boolean showLabel,
+            @JsonProperty("shape") final  Shape shape,
+            @JsonProperty("labelManager") final LabelManager labelManager
+    ) {
+        this(arrowHead, pathThickness, placement, horizontalPlacement, verticalPlacement, showLabel, shape,
+                labelManager.getLabels(), labelManager.getMainLabel());
+        this.setPath(path);
     }
 
     public LeaderedLabel(Shape arrowHead, double pathThickness, Placement placement,

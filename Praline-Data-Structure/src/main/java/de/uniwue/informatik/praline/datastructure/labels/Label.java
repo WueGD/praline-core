@@ -1,11 +1,19 @@
 package de.uniwue.informatik.praline.datastructure.labels;
 
+import com.fasterxml.jackson.annotation.*;
 import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
 import de.uniwue.informatik.praline.datastructure.placements.Placement;
 import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = TextLabel.class, name = "text"),
+        @JsonSubTypes.Type(value = IconLabel.class, name = "icon"),
+        @JsonSubTypes.Type(value = LeaderedLabel.class, name = "leadered"),
+})
+@JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public abstract class Label implements ShapedObject {
 
     /*==========
@@ -47,9 +55,9 @@ public abstract class Label implements ShapedObject {
                  boolean showLabel, Shape shape) {
         this.shape = shape;
         this.showLabel = showLabel;
-        this.placement = placement;
-        this.horizontalPlacement = horizontalPlacement;
-        this.verticalPlacement = verticalPlacement;
+        this.placement = placement == null ? Placement.FREE : placement;
+        this.horizontalPlacement = horizontalPlacement == null ? HorizontalPlacement.FREE : horizontalPlacement;
+        this.verticalPlacement = verticalPlacement == null ? VerticalPlacement.FREE : verticalPlacement;
     }
 
 
@@ -66,6 +74,7 @@ public abstract class Label implements ShapedObject {
      * It can be used to find its associated {@link LabeledObject} via
      * {@link LabelManager#getManagedLabeledObject}.
      */
+    @JsonIgnore
     public LabelManager getAssociatedLabelManager() {
         return associatedLabelManager;
     }

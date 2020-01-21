@@ -5,8 +5,7 @@ import java.util.Collection;
 
 public class GraphUtils {
 
-
-    public static <T> ArrayList<T> newArrayListNullSave(Collection<T> elements) {
+    public static <T> ArrayList<T> newArrayListNullSafe(Collection<T> elements) {
         if (elements == null) {
             return new ArrayList<>();
         }

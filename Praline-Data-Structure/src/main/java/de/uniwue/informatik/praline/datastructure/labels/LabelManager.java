@@ -1,10 +1,15 @@
 package de.uniwue.informatik.praline.datastructure.labels;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@JsonIgnoreProperties({ "managedLabeledObject", "stringForLabeledObject" })
 public class LabelManager {
 
     /*==========
@@ -27,6 +32,14 @@ public class LabelManager {
     public LabelManager(LabeledObject managedLabeledObject, Collection<Label> labels) {
         this(managedLabeledObject, labels, null);
         findNewMainLabel();
+    }
+
+    @JsonCreator
+    private LabelManager(
+            @JsonProperty("labels") final List<Label> labels,
+            @JsonProperty("mainLabel") final Label mainLabel
+    ) {
+        this(null, labels, mainLabel);
     }
 
     /**
@@ -67,7 +80,7 @@ public class LabelManager {
     }
 
     public boolean setMainLabel(Label mainLabel) {
-        if (!labels.contains(mainLabel)) {
+        if (mainLabel != null && !labels.contains(mainLabel)) {
             if (!addLabel(mainLabel)) {
                 return false;
             }
@@ -89,6 +102,10 @@ public class LabelManager {
      *      false if not all (but maybe some!) are added
      */
     public boolean addAllLabels(Collection<Label> labels) {
+        if (labels == null) {
+            return false;
+        }
+
         boolean returnValue = addAllLabelsInternally(this.labels, labels);
         if (getLabels().size() == 1 && mainLabel == null) {
             findNewMainLabel();
@@ -98,7 +115,7 @@ public class LabelManager {
 
     protected boolean addAllLabelsInternally(List<Label> toThisList, Collection<Label> toBeAdded) {
         boolean success = true;
-        for (Label label : toBeAdded) {
+        for (Label label : new ArrayList<>(toBeAdded)) {
             success = success & addLabelInternally(toThisList, label, false);
         }
         return success;
@@ -112,7 +129,7 @@ public class LabelManager {
         if (!toThisList.contains(l)) {
             toThisList.add(l);
             //change value associated object at the label
-            //and remove it from the list of labels if this label was previously attached to another LabeldObject
+            //and remove it from the list of labels if this label was previously attached to another LabeledObject
             if (l.getAssociatedLabelManager() != null) {
                 LabelManager currentlyAssociatedManager = l.getAssociatedLabelManager();
                 l.setAssociatedLabelManager(null);
@@ -137,7 +154,7 @@ public class LabelManager {
             fromThisList.remove(l);
             l.setAssociatedLabelManager(null);
 
-            if (mainLabel.equals(l)) {
+            if (mainLabel != null && mainLabel.equals(l)) {
                 findNewMainLabel();
             }
             return true;

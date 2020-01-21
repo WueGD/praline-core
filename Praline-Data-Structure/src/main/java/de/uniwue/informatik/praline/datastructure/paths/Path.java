@@ -1,5 +1,12 @@
 package de.uniwue.informatik.praline.datastructure.paths;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = PolygonalPath.class, name = "polygonalPath")
+})
 public abstract class Path {
 
     /*==========

@@ -1,5 +1,8 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class PortPairing {
 
     /*==========
@@ -14,7 +17,11 @@ public class PortPairing {
      * Constructors
      *==========*/
 
-    public PortPairing(Port port0, Port port1) {
+    @JsonCreator
+    public PortPairing(
+            @JsonProperty("port0") final Port port0,
+            @JsonProperty("port1") final Port port1
+    ) {
         this.port0 = port0;
         this.port1 = port1;
     }

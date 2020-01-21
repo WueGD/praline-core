@@ -1,5 +1,7 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
 import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
 
@@ -32,15 +34,25 @@ public class TouchingPair {
                 VerticalPlacement.FREE);
     }
 
-    public TouchingPair(Vertex vertex0, HorizontalPlacement horizontalPlacementVertex0,
-                        VerticalPlacement verticalPlacementVertex0, Vertex vertex1,
-                        HorizontalPlacement horizontalPlacementVertex1, VerticalPlacement verticalPlacementVertex1) {
+    @JsonCreator
+    public TouchingPair(
+            @JsonProperty("vertex0") final Vertex vertex0,
+            @JsonProperty("horizontalPlacementVertex0") final HorizontalPlacement horizontalPlacementVertex0,
+            @JsonProperty("verticalPlacementVertex0") final VerticalPlacement verticalPlacementVertex0,
+            @JsonProperty("vertex1") final Vertex vertex1,
+            @JsonProperty("horizontalPlacementVertex1") final HorizontalPlacement horizontalPlacementVertex1,
+            @JsonProperty("verticalPlacementVertex1") final VerticalPlacement verticalPlacementVertex1
+    ) {
         this.vertex0 = vertex0;
-        this.horizontalPlacementVertex0 = horizontalPlacementVertex0;
-        this.verticalPlacementVertex0 = verticalPlacementVertex0;
+        this.horizontalPlacementVertex0 = horizontalPlacementVertex0 == null ? HorizontalPlacement.FREE :
+                horizontalPlacementVertex0;
+        this.verticalPlacementVertex0 = verticalPlacementVertex0 == null ? VerticalPlacement.FREE :
+                verticalPlacementVertex0;
         this.vertex1 = vertex1;
-        this.horizontalPlacementVertex1 = horizontalPlacementVertex1;
-        this.verticalPlacementVertex1 = verticalPlacementVertex1;
+        this.horizontalPlacementVertex1 = horizontalPlacementVertex1 == null ? HorizontalPlacement.FREE :
+                horizontalPlacementVertex1;
+        this.verticalPlacementVertex1 = verticalPlacementVertex1 == null ? VerticalPlacement.FREE :
+                verticalPlacementVertex1;
     }
 
 

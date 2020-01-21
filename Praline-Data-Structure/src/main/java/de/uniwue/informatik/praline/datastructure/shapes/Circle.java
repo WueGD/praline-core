@@ -1,8 +1,13 @@
 package de.uniwue.informatik.praline.datastructure.shapes;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
+@JsonIgnoreProperties({ "width", "height" })
 public class Circle extends Ellipse2D.Double implements Shape {
 
     /*==========
@@ -28,7 +33,13 @@ public class Circle extends Ellipse2D.Double implements Shape {
         this(UNDEFINED_POSITION, UNDEFINED_POSITION, radius, null);
     }
 
-    public Circle(double x, double y, double radius, Color color) {
+    @JsonCreator
+    public Circle(
+            @JsonProperty("xposition") final double x,
+            @JsonProperty("yposition") final double y,
+            @JsonProperty("radius") final double radius,
+            @JsonProperty("color") final Color color
+    ) {
         super(x, y, 2.0 * radius, 2.0 * radius);
         this.color = color != null ? color : DEFAULT_COLOR;
     }

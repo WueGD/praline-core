@@ -1,8 +1,13 @@
 package de.uniwue.informatik.praline.datastructure.shapes;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
+@JsonPropertyOrder({ "xposition", "yposition", "width", "height", "color" })
 public class Rectangle extends Rectangle2D.Double implements Shape {
 
 
@@ -37,7 +42,14 @@ public class Rectangle extends Rectangle2D.Double implements Shape {
         this(UNDEFINED_POSITION, UNDEFINED_POSITION, width, height, null);
     }
 
-    public Rectangle(double x, double y, double width, double height, Color color) {
+    @JsonCreator
+    public Rectangle(
+            @JsonProperty("xposition") final double x,
+            @JsonProperty("yposition") final double y,
+            @JsonProperty("width") final double width,
+            @JsonProperty("height") final double height,
+            @JsonProperty("color") final Color color
+    ) {
         super(x, y, width, height);
         this.color = color != null ? color : DEFAULT_COLOR;
     }
@@ -66,7 +78,6 @@ public class Rectangle extends Rectangle2D.Double implements Shape {
     public void setColor(Color c) {
         this.color = c;
     }
-
 
     /*==========
      * Clone

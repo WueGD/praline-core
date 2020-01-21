@@ -1,5 +1,8 @@
 package de.uniwue.informatik.praline.datastructure.shapes;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.awt.*;
 
 public class ArrowHeadTriangle implements Shape {
@@ -55,7 +58,15 @@ public class ArrowHeadTriangle implements Shape {
         this(UNDEFINED_POSITION, UNDEFINED_POSITION, length, width, angle, null);
     }
 
-    public ArrowHeadTriangle(double x, double y, double length, double width, double angle, Color color) {
+    @JsonCreator
+    public ArrowHeadTriangle(
+            @JsonProperty("xposition") final double x,
+            @JsonProperty("yposition") final double y,
+            @JsonProperty("length") final double length,
+            @JsonProperty("width") final double width,
+            @JsonProperty("angle") final double angle,
+            @JsonProperty("color") final Color color
+    ) {
         this.xPosition = x;
         this.yPosition = y;
         this.length = length;

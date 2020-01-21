@@ -1,10 +1,13 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSave;
+import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
 public class Graph {
 
@@ -34,16 +37,29 @@ public class Graph {
      * Set parameter to null if a {@link Graph} should be initialized without these objects (e.g. without edgeBundles)
      *
      * @param vertices
+     *      should contain all vertices of this graph once -- regardless of whether they are in a (sub-)vertex group
+     *      passed by the parameter {@link Graph#vertexGroups} or not
      * @param vertexGroups
+     *      should form a tree structure (or better said forest structure), but this collection should only contain
+     *      the top level elements (i.e., roots)
      * @param edges
+     *      should contain all edges of this graph once -- regardless of whether they are in a (sub-)edge bundle
+     *      passed by the parameter {@link Graph#edgeBundles} or not
      * @param edgeBundles
+     *      should form a tree structure (or better said forest structure), but this collection should only contain
+     *      the top level elements (i.e., roots)
      */
-    public Graph(Collection<Vertex> vertices, Collection<VertexGroup> vertexGroups, Collection<Edge> edges,
-                 Collection<EdgeBundle> edgeBundles) {
-        this.vertices = newArrayListNullSave(vertices);
-        this.vertexGroups = newArrayListNullSave(vertexGroups);
-        this.edges = newArrayListNullSave(edges);
-        this.edgeBundles = newArrayListNullSave(edgeBundles);
+    @JsonCreator
+    public Graph(
+            @JsonProperty("vertices") final Collection<Vertex> vertices,
+            @JsonProperty("vertexGroups") final Collection<VertexGroup> vertexGroups,
+            @JsonProperty("edges") final Collection<Edge> edges,
+            @JsonProperty("edgeBundles") final Collection<EdgeBundle> edgeBundles
+    ) {
+        this.vertices = newArrayListNullSafe(vertices);
+        this.vertexGroups = newArrayListNullSafe(vertexGroups);
+        this.edges = newArrayListNullSafe(edges);
+        this.edgeBundles = newArrayListNullSafe(edgeBundles);
     }
 
 
@@ -102,5 +118,15 @@ public class Graph {
 
     public boolean removeEdgeBundle(EdgeBundle eb) {
         return edgeBundles.remove(eb);
+    }
+
+    /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        return "Graph{vertices:" + vertices + ", vertexGroups:" + vertexGroups + ", edges:" + edges + ", edgeBundles:"
+                + edgeBundles + "}";
     }
 }

@@ -1,10 +1,13 @@
 package de.uniwue.informatik.praline.datastructure.paths;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.awt.geom.Point2D;
 import java.util.Collection;
 import java.util.List;
 
-import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSave;
+import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
 public class PolygonalPath extends Path {
 
@@ -33,12 +36,17 @@ public class PolygonalPath extends Path {
         this(startPoint, endPoint, bendPoints, UNSPECIFIED_THICKNESS);
     }
 
-    public PolygonalPath(Point2D.Double startPoint, Point2D.Double endPoint, Collection<Point2D.Double> bendPoints,
-                         double thickness) {
+    @JsonCreator
+    public PolygonalPath(
+            @JsonProperty("startPoint") final Point2D.Double startPoint,
+            @JsonProperty("endPoint") final Point2D.Double endPoint,
+            @JsonProperty("bendPoints") final Collection<Point2D.Double> bendPoints,
+            @JsonProperty("thickness") final double thickness
+    ) {
         super(thickness);
         this.startPoint = startPoint;
         this.endPoint = endPoint;
-        this.bendPoints = newArrayListNullSave(bendPoints);
+        this.bendPoints = newArrayListNullSafe(bendPoints);
     }
 
 

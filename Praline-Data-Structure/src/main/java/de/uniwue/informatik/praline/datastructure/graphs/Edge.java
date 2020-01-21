@@ -1,5 +1,6 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
+import com.fasterxml.jackson.annotation.*;
 import de.uniwue.informatik.praline.datastructure.labels.EdgeLabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
@@ -10,8 +11,10 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSave;
+import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
+@JsonIgnoreProperties({ "edgeBundle" })
+@JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public class Edge implements LabeledObject {
 
     /*==========
@@ -45,6 +48,24 @@ public class Edge implements LabeledObject {
         this(ports, null, null, null, Edge.UNSPECIFIED_THICKNESS, Edge.DEFAULT_COLOR);
     }
 
+
+    @JsonCreator
+    private Edge(
+            @JsonProperty("ports") final Collection<Port> ports,
+            @JsonProperty("labelManager") final EdgeLabelManager labelManager,
+            @JsonProperty("thickness") final double thickness,
+            @JsonProperty("color") final Color color,
+            @JsonProperty("paths") final Collection<Path> paths
+    ) {
+        //do not add port labels first because they are in the wrong format
+        this(ports, labelManager.getInnerLabels(), null, labelManager.getMainLabel(), thickness, color);
+        //but do it more manually here
+        for (EdgeLabelManager.PairPort2Labels pair : labelManager.getAllPortLabels()) {
+            labelManager.addPortLabels(pair.port, pair.labels);
+        }
+        this.addPaths(paths);
+    }
+
     /**
      * leave value as null if it should be empty initially (e.g. no labels)
      *
@@ -56,15 +77,18 @@ public class Edge implements LabeledObject {
      *      -1 for not specified
      * @param color
      */
-    public Edge(Collection<Port> ports, Collection<Label> innerLabels, Map<Port, List<Label>> portLabels,
-                Label mainLabel, double thickness, Color color) {
-        this.ports = newArrayListNullSave(ports);
+    public Edge(
+            Collection<Port> ports, Collection<Label> innerLabels, Map<Port, List<Label>> portLabels, Label mainLabel,
+            double thickness, Color color
+    ) {
+        this.ports = newArrayListNullSafe(ports);
         for (Port port : this.ports) {
             port.addEdgeButNotPort(this);
         }
         this.labelManager = new EdgeLabelManager(this, innerLabels, portLabels, mainLabel);
         this.thickness = thickness;
         this.color = color;
+        this.paths = new LinkedList<>();
     }
 
 
@@ -77,11 +101,7 @@ public class Edge implements LabeledObject {
     }
 
     public List<Path> getPaths() {
-        return paths;
-    }
-
-    public void setPaths(List<Path> paths) {
-        this.paths = paths;
+        return Collections.unmodifiableList(paths);
     }
 
     public double getThickness() {
@@ -117,6 +137,18 @@ public class Edge implements LabeledObject {
     /*==========
      * Modifiers
      *==========*/
+
+    public void addPath(Path path) {
+        this.paths.add(path);
+    }
+
+    public void addPaths(Collection<Path> paths) {
+        this.paths.addAll(paths);
+    }
+
+    public boolean removePath(Path path) {
+        return this.paths.remove(path);
+    }
 
     /**
      * this {@link Edge} is also added to the list of {@link Edge}s of the passed {@link Port} p

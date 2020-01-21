@@ -1,5 +1,7 @@
 package de.uniwue.informatik.praline.datastructure.labels;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
 import de.uniwue.informatik.praline.datastructure.placements.Placement;
 import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
@@ -8,7 +10,7 @@ import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import java.awt.*;
 
 /**
- * Currentely there is no transformation from {@link TextLabel#inputText}
+ * Currently there is no transformation from {@link TextLabel#inputText}
  * to {@link TextLabel#layoutText} handled internally.
  * So if not touched, {@link TextLabel#getLayoutText()} will return null.
  * It should be determined/computed and set via {@link TextLabel#setLayoutText(String)}
@@ -76,9 +78,18 @@ public class TextLabel extends Label {
                 Label.DEFAULT_SHOW_LABEL, null);
     }
 
-    public TextLabel(String inputText, Font font, boolean noBreak, Color color, Placement placement,
-                     HorizontalPlacement horizontalPlacement, VerticalPlacement verticalPlacement,
-                     boolean showLabel, Shape shape) {
+    @JsonCreator
+    public TextLabel(
+            @JsonProperty("inputText") final String inputText,
+            @JsonProperty("font") final Font font,
+            @JsonProperty("noBreak") final boolean noBreak,
+            @JsonProperty("color") final Color color,
+            @JsonProperty("placement") final Placement placement,
+            @JsonProperty("horizontalPlacement") final HorizontalPlacement horizontalPlacement,
+            @JsonProperty("verticalPlacement") final VerticalPlacement verticalPlacement,
+            @JsonProperty("showLabel") final boolean showLabel,
+            @JsonProperty("shape") final Shape shape
+    ) {
         super(placement, horizontalPlacement, verticalPlacement, showLabel, shape);
         this.inputText = inputText;
         this.font = font;

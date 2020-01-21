@@ -1,5 +1,6 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
+import com.fasterxml.jackson.annotation.*;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
@@ -8,6 +9,9 @@ import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
 
 import java.util.*;
 
+@JsonIgnoreProperties({ "ports", "vertexGroup", "containedPortCompositionsAndAllPorts" })
+@JsonPropertyOrder({ "shape", "labelManager", "portCompositions" })
+@JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public class Vertex implements ShapedObject, LabeledObject {
 
     /*==========
@@ -48,6 +52,15 @@ public class Vertex implements ShapedObject, LabeledObject {
         this(portCompositions, labels, null, shape);
     }
 
+    @JsonCreator
+    private Vertex(
+            @JsonProperty("portCompositions") final Collection<PortComposition> portCompositions,
+            @JsonProperty("labelManager") final LabelManager labelManager,
+            @JsonProperty("shape") final Shape shape
+    ) {
+        this(portCompositions, labelManager.getLabels(), labelManager.getMainLabel(), shape);
+    }
+
     /**
      * leave value as null if it should be empty initially (e.g. no labels)
      *
@@ -70,8 +83,9 @@ public class Vertex implements ShapedObject, LabeledObject {
             }
             //add only the top level ones to our list + reference this vertex at each port composition
             for (PortComposition portComposition : portCompositions) {
-                if (!allLowerLevelPortCompositions.contains(portComposition)) {
-                    portCompositions.add(portComposition);
+                if (!allLowerLevelPortCompositions.contains(portComposition) &&
+                        !this.portCompositions.contains(portComposition)) {
+                    this.portCompositions.add(portComposition);
                     assignPortCompositionRecursivelyToVertex(portComposition, this);
                 }
             }

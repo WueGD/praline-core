@@ -1,5 +1,6 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
+import com.fasterxml.jackson.annotation.*;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
@@ -11,8 +12,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSave;
+import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
+@JsonIgnoreProperties({ "allRecursivelyContainedVertices" })
+@JsonPropertyOrder({ "drawnFrame", "labelManager", "shape", "containedVertices", "containedVertexGroups",
+        "touchingPairs", "portPairings" })
+@JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public class VertexGroup implements ShapedObject, LabeledObject {
 
     /*==========
@@ -50,6 +55,20 @@ public class VertexGroup implements ShapedObject, LabeledObject {
         this(containedVertices, null, null, null, null, null, null, DEFAULT_DRAW_FRAME);
     }
 
+    @JsonCreator
+    private VertexGroup(
+            @JsonProperty("drawnFrame") final boolean drawnFrame,
+            @JsonProperty("labelManager") final LabelManager labelManager,
+            @JsonProperty("shape") final Shape shape,
+            @JsonProperty("containedVertices") final Collection<Vertex> containedVertices,
+            @JsonProperty("containedVertexGroups") final Collection<VertexGroup> containedVertexGroups,
+            @JsonProperty("touchingPairs") final Collection<TouchingPair> touchingPairs,
+            @JsonProperty("portPairings") final Collection<PortPairing> portPairings
+    ) {
+        this(containedVertices, containedVertexGroups, touchingPairs, portPairings, labelManager.getLabels(),
+                labelManager.getMainLabel(), shape, drawnFrame);
+    }
+
     /**
      * Set parameter to null if a {@link VertexGroup} should be initialized without these objects (e.g. without
      * portPairings)
@@ -57,13 +76,13 @@ public class VertexGroup implements ShapedObject, LabeledObject {
     public VertexGroup(Collection<Vertex> containedVertices, Collection<VertexGroup> containedVertexGroups,
                        Collection<TouchingPair> touchingPairs, Collection<PortPairing> portPairings,
                        Collection<Label> labels, Label mainLabel, Shape shape, boolean drawnFrame) {
-        this.containedVertices = newArrayListNullSave(containedVertices);
+        this.containedVertices = newArrayListNullSafe(containedVertices);
         for (Vertex v : this.containedVertices) {
             v.setVertexGroup(this);
         }
-        this.containedVertexGroups = newArrayListNullSave(containedVertexGroups);
-        this.touchingPairs = newArrayListNullSave(touchingPairs);
-        this.portPairings = newArrayListNullSave(portPairings);
+        this.containedVertexGroups = newArrayListNullSafe(containedVertexGroups);
+        this.touchingPairs = newArrayListNullSafe(touchingPairs);
+        this.portPairings = newArrayListNullSafe(portPairings);
         this.labelManager = new LabelManager(this, labels, mainLabel);
         this.shape = shape;
         this.drawnFrame = drawnFrame;

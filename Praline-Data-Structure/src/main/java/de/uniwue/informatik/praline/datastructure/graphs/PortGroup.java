@@ -1,9 +1,14 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.util.*;
 
-import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSave;
+import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
+@JsonPropertyOrder({ "ordered", "portCompositions" })
 public class PortGroup implements PortComposition {
 
     /*==========
@@ -40,8 +45,12 @@ public class PortGroup implements PortComposition {
         this(portCompositions, DEFAULT_IS_ORDERED);
     }
 
-    public PortGroup(Collection<PortComposition> portCompositions, boolean ordered) {
-        this.portCompositions = newArrayListNullSave(portCompositions);
+    @JsonCreator
+    public PortGroup(
+            @JsonProperty("portCompositions") final Collection<PortComposition> portCompositions,
+            @JsonProperty("ordered") final boolean ordered
+    ) {
+        this.portCompositions = newArrayListNullSafe(portCompositions);
         this.ordered = ordered;
         for (PortComposition portComposition : this.portCompositions) {
             portComposition.setPortGroup(this);
