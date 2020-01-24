@@ -14,6 +14,22 @@ import java.util.List;
 
 import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
+/**
+ * A {@link VertexGroup} provides the possibility to arrange several instances of {@link Vertex} together.
+ * There are different levels of connectedness.
+ * If you use a {@link VertexGroup} just with a list of {@link Vertex}es (vertices) it represents a loose connection of
+ * them and
+ * a layouting algorithm should take care to place them close to each other.
+ * You can have frame around these {@link Vertex}es, which is handled with a {@link Shape}.
+ *
+ * If you add {@link TouchingPair}s, it pairs two {@link Vertex}es together, i.e., within this group, the algorithm
+ * should draw them such that they touch (see there for more).
+ *
+ * Moreover, you can define a connection between two {@link Port}s (of possibly different {@link Vertex}es) within this
+ * {@link VertexGroup}. They should be drawn on the same horizontal or vertical line.
+ *
+ * A {@link VertexGroup} may have {@link Label}s.
+ */
 @JsonIgnoreProperties({ "allRecursivelyContainedVertices" })
 @JsonPropertyOrder({ "drawnFrame", "labelManager", "shape", "containedVertices", "containedVertexGroups",
         "touchingPairs", "portPairings" })

@@ -9,6 +9,25 @@ import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
 
 import java.util.*;
 
+/**
+ * Represents a vertex in the graph.
+ * In the application of circuit plans or network plans this is typically a device.
+ * Note that vertices (devices) can be combined in {@link VertexGroup}. See there for more.
+ * A vertex should have {@link Port}s -- in particular it accesses its edges always via {@link Port}s.
+ * Such a port can be set to size zero, which gives the effect as if there were no {@link Port}s.
+ * Via a {@link PortGroup} several {@link Port}s and {@link PortGroup}s can be grouped together.
+ * Note that the {@link PortGroup}s should build a tree-structure (and not something more complicated).
+ *
+ * A {@link Vertex} can be labeled.
+ * In particular, if you want to assign a name or an ID to a {@link Vertex} you should use a
+ * {@link de.uniwue.informatik.praline.datastructure.labels.TextLabel} attached to this {@link Vertex} and make it
+ * the main label of this {@link Vertex}.
+ *
+ * A {@link Vertex} should have {@link Shape} in the end -- typically a
+ * {@link de.uniwue.informatik.praline.datastructure.shapes.Rectangle}.
+ * The idea is that a layouting algorithm will take a {@link Graph} and will set the coordinates and sizes of this
+ * {@link Shape}, so there is no need to set this in the forehand.
+ */
 @JsonIgnoreProperties({ "ports", "vertexGroup", "containedPortCompositionsAndAllPorts" })
 @JsonPropertyOrder({ "shape", "labelManager", "portCompositions" })
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")

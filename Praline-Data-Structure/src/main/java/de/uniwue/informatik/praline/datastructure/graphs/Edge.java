@@ -13,6 +13,21 @@ import java.util.List;
 
 import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
+/**
+ * In typical applications, {@link Edge}s of the {@link Graph} are wires or logical connections.
+ * They connect a set of {@link Vertex} -- typically two, but we also allow hyperedges connection more than two
+ * {@link Vertex}es -- via {@link Port}s.
+ * Their course is determined by the algorithm which sets the {@link Path}s of this edge.
+ * Their course may be the unification of several {@link Path}s since we allow hyperedges,
+ * but on a classical edge one should expect just one path.
+ *
+ * The thickness may be set by the user and will then be taken as thickness for the {@link Path}s.
+ *
+ * Several {@link Edge}s may be grouped together via {@link EdgeBundle}s.
+ *
+ * You can add {@link Label}s to the interior of an {@link Edge}e or to the end of an {@link Edge} at any of its
+ * ports. See {@link EdgeLabelManager}.
+ */
 @JsonIgnoreProperties({ "edgeBundle" })
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public class Edge implements LabeledObject {

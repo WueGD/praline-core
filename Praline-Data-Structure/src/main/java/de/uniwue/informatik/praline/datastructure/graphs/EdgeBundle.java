@@ -12,6 +12,18 @@ import java.util.*;
 
 import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
+/**
+ * Via an {@link EdgeBundle} you may group {@link Edge}s and further {@link EdgeBundle}s together.
+ * {@link EdgeBundle}s should build a tree-structure (and not something more complicated).
+ * In typical applications they may represent bundles of wires or cables.
+ *
+ * {@link EdgeBundle}s do not have an own course via {@link de.uniwue.informatik.praline.datastructure.paths.Path}s,
+ * but a layouting algorithm should place the {@link de.uniwue.informatik.praline.datastructure.paths.Path}s of all
+ * {@link Edge}s of an {@link EdgeBundle} close together to obtain the effect of a bundled set of edges.
+ *
+ * An {@link EdgeBundle} may have labels, but just for the whole thing -- for placing {@link Label}s close to
+ * {@link Port}s use the labeling of its contained {@link Edge}s.
+ */
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public class EdgeBundle implements LabeledObject {
 
