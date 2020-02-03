@@ -7,6 +7,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
+/**
+ * Most typical implementation of {@link Shape}.
+ * A {@link Rectangle} has a position ({@link Rectangle#getXPosition()} + {@link Rectangle#getYPosition()}) and a
+ * size ({@link Rectangle#getWidth()} + {@link Rectangle#getHeight()}).
+ * The position is relative to the top left corner of the {@link Rectangle}.
+ */
 @JsonPropertyOrder({ "xposition", "yposition", "width", "height", "color" })
 public class Rectangle extends Rectangle2D.Double implements Shape {
 

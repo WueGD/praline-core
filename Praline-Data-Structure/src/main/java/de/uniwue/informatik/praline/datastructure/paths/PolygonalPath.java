@@ -4,11 +4,20 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.awt.geom.Point2D;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
+/**
+ * Implementation of {@link Path} for polygonal chains, i. e., a sequence of points determining a path with a
+ * straight line segment between each two consecutive points.
+ * This sequence of points begins with {@link PolygonalPath#getStartPoint()}, continues with
+ * {@link PolygonalPath#getBendPoints()} and ends with {@link PolygonalPath#getEndPoint()}).
+ *
+ * This class maybe used to model straight line segments (if {@link PolygonalPath#getBendPoints()} is an empty list)
+ * or orthogonal paths, i. e. only horizontal and vertical segments, if the choice of points is done accordingly
+ * (alternatingly changing only the x- or y- coordinate between each two consecutive points).
+ */
 public class PolygonalPath extends Path {
 
     /*==========
@@ -70,8 +79,29 @@ public class PolygonalPath extends Path {
         this.endPoint = endPoint;
     }
 
+    /**
+     * Take care: this list does not contain the start and end point.
+     * You may query them separately via {@link PolygonalPath#getStartPoint()} and
+     * {@link PolygonalPath#getEndPoint()} or you may call {@link PolygonalPath#getTerminalAndBendPoints()} instead.
+     *
+     * @return
+     *      all bend points of this {@link PolygonalPath} in sequence as a list
+     */
     public List<Point2D.Double> getBendPoints() {
         return bendPoints;
+    }
+
+    /**
+     *
+     * @return
+     *      concatenation of {@link PolygonalPath#getStartPoint()} + {@link PolygonalPath#getBendPoints()} +
+     *      {@link PolygonalPath#getEndPoint()}.
+     */
+    public List<Point2D.Double> getTerminalAndBendPoints() {
+        List<Point2D.Double> allPoints = Arrays.asList(getStartPoint());
+        allPoints.addAll(getBendPoints());
+        allPoints.add(getEndPoint());
+        return Collections.unmodifiableList(allPoints);
     }
 
 

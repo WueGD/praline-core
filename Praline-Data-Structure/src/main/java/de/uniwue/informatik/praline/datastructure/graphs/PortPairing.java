@@ -3,6 +3,19 @@ package de.uniwue.informatik.praline.datastructure.graphs;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+
+/**
+ * A {@link PortPairing} represents a coupling between two {@link Port}s of the same {@link Vertex} or of different
+ * vertices in the way that they appear on the same vertical or horizontal line.
+ * {@link PortPairing}s are stored in {@link VertexGroup}s.
+ * The concrete realization depends on the algorithm.
+ * The user should take care that such a {@link PortPairing} is realizable and consistent.
+ * E. g. if there is a {@link PortPairing} of two {@link Port}s at the same {@link Vertex}, they should end up on
+ * different sides of the {@link Vertex} so they should not be in the same {@link PortGroup}.
+ * If there is a {@link PortPairing} of two {@link Port}s of two different {@link Vertex}es, they should be in the
+ * same {@link VertexGroup} (precisely the {@link VertexGroup} this {@link PortPairing} is stored in) and there
+ * should be a {@link TouchingPair} between these two {@link Vertex}es stored in the same {@link VertexGroup}.
+ */
 public class PortPairing {
 
     /*==========

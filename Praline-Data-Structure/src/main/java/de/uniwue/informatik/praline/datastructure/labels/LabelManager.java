@@ -9,6 +9,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Manages the {@link Label}s of and for a {@link LabeledObject}.
+ * There is one {@link LabelManager} per {@link LabeledObject}.
+ *
+ * The {@link LabelManager#mainLabel} may be set, but does not need to be set.
+ * If there is just one {@link Label} added and there is no other {@link Label} yet, this {@link Label} is
+ * automatically set to be the {@link LabelManager#mainLabel} of this {@link LabeledObject}.
+ * Typically the {@link LabelManager#getMainLabel()} provides something like the name or the ID of the
+ * {@link LabeledObject} -- the {@link LabeledObject#toString()} method derives the String from
+ * {@link LabelManager#getMainLabel()}.
+ */
 @JsonIgnoreProperties({ "managedLabeledObject", "stringForLabeledObject" })
 public class LabelManager {
 

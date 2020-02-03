@@ -5,6 +5,23 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
 import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
 
+/**
+ * A {@link TouchingPair} specifies two vertices ({@link Vertex}) that must be drawn such that their boundaries touch
+ * each other.
+ * They are stored in {@link VertexGroup}s.
+ *
+ * The user who give the input has to take care that the information provided by a {@link TouchingPair} is consistent.
+ * So e. g. the {@link Vertex}es connected via a {@link TouchingPair} must be in the same {@link VertexGroup}, which is
+ * also the same {@link VertexGroup} where this {@link TouchingPair} is stored.
+ * The {@link HorizontalPlacement} and {@link VerticalPlacement} of the one {@link Vertex} in this
+ * {@link TouchingPair} must be consistent with the {@link HorizontalPlacement} and {@link VerticalPlacement} of the
+ * other {@link Vertex}.
+ * So e. g. if they should be drawn above and below each other (while touching) it should be
+ * {@link TouchingPair#getVerticalPlacementVertex0()} == {@link VerticalPlacement#TOP},
+ * {@link TouchingPair#getHorizontalPlacementVertex0()} == {@link HorizontalPlacement#FREE},
+ * {@link TouchingPair#getVerticalPlacementVertex1()} == {@link VerticalPlacement#BOTTOM} and
+ * {@link TouchingPair#getHorizontalPlacementVertex1()} == {@link HorizontalPlacement#FREE}.
+ */
 public class TouchingPair {
 
     /*==========

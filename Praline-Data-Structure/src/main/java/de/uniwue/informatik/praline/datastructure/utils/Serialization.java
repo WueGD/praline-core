@@ -12,6 +12,12 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * Here are some static methods for serialization provided.
+ * It uses jackson to transform to and from JSON.
+ *
+ * For {@link Font} and {@link Color} we use the serializer and deserializer that are in subpackage utils.subserializer
+ */
 public class Serialization {
 
     private final static ObjectMapper mapper =

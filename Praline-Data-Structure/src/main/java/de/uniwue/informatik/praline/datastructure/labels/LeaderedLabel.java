@@ -11,6 +11,16 @@ import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 
 import java.util.Collection;
 
+/**
+ * Rather special version of {@link Label} (see there for more).
+ *
+ * A {@link LeaderedLabel} connects another {@link Label} (e. g. a {@link TextLabel}) via a {@link Path} with its
+ * {@link LabeledObject}. The {@link Label} used here has this {@link LeaderedLabel} as its {@link LabeledObject}.
+ * Therefore, {@link LeaderedLabel} implements {@link LabeledObject}.
+ *
+ * At the end of the {@link Path}, which should be set by the drawing algorithm, there is the
+ * {@link LeaderedLabel#arrowHead}. This is typically a {@link ArrowHeadTriangle} but may be any {@link Shape}.
+ */
 public class LeaderedLabel extends Label implements LabeledObject {
 
     /*==========

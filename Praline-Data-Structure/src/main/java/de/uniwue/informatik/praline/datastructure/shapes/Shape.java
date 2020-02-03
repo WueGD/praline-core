@@ -6,6 +6,14 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.awt.*;
 
+/**
+ * Some geometric 2D object covering some area in a drawing for a {@link ShapedObject}.
+ * Typically position and size of the {@link Shape} are determined by the drawing algorithm.
+ * However they may be specified in the forehand by the input of the user -- in particular the size of the
+ * {@link Shape}.
+ *
+ * Implementations are {@link Rectangle}, {@link Circle} and {@link ArrowHeadTriangle}.
+ */
 @JsonIgnoreProperties({ "bounds", "bounds2D", "x", "y", "empty", "minX", "minY", "maxX", "maxY", "centerX", "centerY",
         "frame", "pathIterator" })
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")

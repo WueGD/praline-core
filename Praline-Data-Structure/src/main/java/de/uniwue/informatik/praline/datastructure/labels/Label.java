@@ -7,6 +7,22 @@ import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
 
+/**
+ * Can be attached to a {@link LabeledObject} (e. g. a
+ * {@link de.uniwue.informatik.praline.datastructure.graphs.Vertex}, a
+ * {@link de.uniwue.informatik.praline.datastructure.graphs.Port}, an
+ * {@link de.uniwue.informatik.praline.datastructure.graphs.Edge} or a
+ * {@link de.uniwue.informatik.praline.datastructure.graphs.VertexGroup}) to provide additional information about
+ * this object.
+ *
+ * A {@link LabeledObject} can have an arbitrary number of {@link Label}s, which are managed by the
+ * {@link LabelManager} of the {@link LabeledObject}.
+ *
+ * A {@link Label} is supposed to be visualized by the drawing algorithm unless {@link Label#isShowLabel()} is set to
+ * false. Therefore, a {@link Label} is a {@link ShapedObject}.
+ * The position of the {@link Label} relative to its {@link LabeledObject} is specified by
+ * {@link Label#getPlacement()}, {@link Label#getHorizontalPlacement()} and {@link Label#getVerticalPlacement()}.
+ */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = TextLabel.class, name = "text"),

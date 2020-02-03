@@ -5,6 +5,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.awt.*;
 
+/**
+ * Implementation of {@link Shape}.
+ * It is like a "normal" isosceles triangle, but its designated purpose is representing arrow heads for
+ * {@link de.uniwue.informatik.praline.datastructure.labels.LeaderedLabel}s -- hence the name.
+ * The size is specified via {@link ArrowHeadTriangle#getWidth()}, which is the length of the base side in the
+ * isosceles triangle, which is the length of the back side of the arrow head triangle, and by
+ * {@link ArrowHeadTriangle#getLength()}, which is the altitude of the isosceles triangle (a line segment
+ * perpendicular from the base to the apex).
+ * The vertex angle at the apex (which is the top of the head of the arrow head triangle) is implicitly defined by the
+ * former two values.
+ * The position ({@link ArrowHeadTriangle#getXPosition()} + {@link ArrowHeadTriangle#getYPosition()}) is relative to
+ * the apex of the isosceles triangle, i. e., the pointing top vertex of the {@link ArrowHeadTriangle}.
+ */
 public class ArrowHeadTriangle implements Shape {
 
     /*==========
@@ -13,7 +26,6 @@ public class ArrowHeadTriangle implements Shape {
 
     public static final double UNDEFINED_TRIANGLE_LENGTH = java.lang.Double.NaN;
     public static final double UNDEFINED_TRIANGLE_WIDTH = java.lang.Double.NaN;
-    public static final double UNDEFINED_ANGLE = java.lang.Double.NaN;
 
 
     /*==========
@@ -24,7 +36,6 @@ public class ArrowHeadTriangle implements Shape {
     private double yPosition;
     private double length;
     private double width;
-    private double angle;
     private Color color;
 
 
@@ -33,8 +44,7 @@ public class ArrowHeadTriangle implements Shape {
      *==========*/
 
     public ArrowHeadTriangle() {
-        this(UNDEFINED_POSITION, UNDEFINED_POSITION, UNDEFINED_TRIANGLE_LENGTH, UNDEFINED_TRIANGLE_WIDTH,
-                UNDEFINED_ANGLE, null);
+        this(UNDEFINED_POSITION, UNDEFINED_POSITION, UNDEFINED_TRIANGLE_LENGTH, UNDEFINED_TRIANGLE_WIDTH, null);
     }
 
     /**
@@ -47,15 +57,11 @@ public class ArrowHeadTriangle implements Shape {
      *      width.
      */
     public ArrowHeadTriangle(double x, double y, Color color) {
-        this(x, y, UNDEFINED_TRIANGLE_LENGTH, UNDEFINED_TRIANGLE_WIDTH, UNDEFINED_ANGLE, color);
+        this(x, y, UNDEFINED_TRIANGLE_LENGTH, UNDEFINED_TRIANGLE_WIDTH, color);
     }
 
     public ArrowHeadTriangle(double length, double width) {
-        this(UNDEFINED_POSITION, UNDEFINED_POSITION, length, width, UNDEFINED_ANGLE, null);
-    }
-
-    public ArrowHeadTriangle(double length, double width, double angle) {
-        this(UNDEFINED_POSITION, UNDEFINED_POSITION, length, width, angle, null);
+        this(UNDEFINED_POSITION, UNDEFINED_POSITION, length, width, null);
     }
 
     @JsonCreator
@@ -64,14 +70,12 @@ public class ArrowHeadTriangle implements Shape {
             @JsonProperty("yposition") final double y,
             @JsonProperty("length") final double length,
             @JsonProperty("width") final double width,
-            @JsonProperty("angle") final double angle,
             @JsonProperty("color") final Color color
     ) {
         this.xPosition = x;
         this.yPosition = y;
         this.length = length;
         this.width = width;
-        this.angle = angle;
         this.color = color != null ? color : DEFAULT_COLOR;
     }
 
@@ -112,14 +116,6 @@ public class ArrowHeadTriangle implements Shape {
 
     public void setWidth(double width) {
         this.width = width;
-    }
-
-    public double getAngle() {
-        return angle;
-    }
-
-    public void setAngle(double angle) {
-        this.angle = angle;
     }
 
     @Override

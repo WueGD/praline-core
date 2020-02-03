@@ -11,9 +11,15 @@ import java.util.*;
 import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
 /**
- * the list of {@link Label}s from the super class {@link LabelManager} becomes
+ * Special type of {@link LabelManager} to handle the more options you have when placing {@link Label}s along
+ * {@link Edge}s.
+ * More concrete, an {@link EdgeLabelManager} has a list of  {@link Label}s assigned to any of the {@link Port}s of the
+ * corresponding {@link Edge} and a list of {@link Label}s that should be drawn at the inner course of an edge (e. g.
+ * in the middle of an edge).
+ * The former are called port labels and the latter inner labels of an {@link Edge}.
+ *
+ * The list of {@link Label}s from the super class {@link LabelManager} becomes
  * the list of inner {@link Label}s of this object.
- * Beside this internal list, there is a list of {@link Label}s for each {@link Port}.
  */
 @JsonIgnoreProperties({ "labels", "portLabels", "registeredPorts", "managedLabeledObject", "stringForLabeledObject" })
 //Note for

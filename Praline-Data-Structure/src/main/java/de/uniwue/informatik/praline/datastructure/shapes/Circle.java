@@ -7,6 +7,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
+/**
+ * Implementation of {@link Shape}.
+ * A {@link Circle} has a position ({@link Circle#getXPosition()} + {@link Circle#getYPosition()}) and a
+ * size ({@link Circle#getRadius()}).
+ * The position is relative to the upper-left corner of the framing rectangle of the {@link Circle}
+ * (by inheritance from {@link Ellipse2D.Double} -- maybe change this to the center point of the {@link Circle} later).
+ */
 @JsonIgnoreProperties({ "width", "height" })
 public class Circle extends Ellipse2D.Double implements Shape {
 

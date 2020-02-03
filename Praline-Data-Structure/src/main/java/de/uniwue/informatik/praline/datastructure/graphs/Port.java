@@ -13,6 +13,32 @@ import java.util.*;
 
 import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
+/**
+ * A {@link Port} is part of a {@link Vertex}.
+ * It is something like the access points of a {@link Vertex} to the {@link Edge}s.
+ * A {@link Vertex} is never directly connected to an {@link Edge} but only via {@link Port}s.
+ * Typically there is one {@link Edge} per {@link Port}, but you may have arbitrarily many {@link Edge}s per
+ * {@link Port} and you can also have {@link Port}s without {@link Edge}s.
+ *
+ * You may wish to have a set of {@link Port}s of a {@link Vertex} next to each other.
+ * You can do this by using a {@link PortGroup} containing these {@link Port}s; see there for more.
+ *
+ * You may wish to have a coupling between two {@link Port}s of the same {@link Vertex} or of different vertices in the
+ * way that they appear on the same vertical or horizontal line.
+ * This can be done by using {@link PortPairing}s, which are stored in {@link VertexGroup}s.
+ *
+ * A {@link Port} can be labeled.
+ * In particular, if you want to assign a name or an ID to a {@link Port} you should use a
+ * {@link de.uniwue.informatik.praline.datastructure.labels.TextLabel} attached to this {@link Port} and make it
+ * the main label of this {@link Port}.
+ *
+ * A {@link Port} should have a {@link Shape} in the end -- typically a
+ * {@link de.uniwue.informatik.praline.datastructure.shapes.Rectangle}.
+ * The idea is that a layouting algorithm will take a {@link Graph} and will set the coordinates and sizes of this
+ * {@link Port}, so there is no need to set this in the forehand.
+ * If this {@link Port} should not be visible (later a viewer should get the impression that an {@link Edge} / the
+ * {@link Edge}s are directly accessing the {@link Vertex}), then use a {@link Shape} of size 0 for this port.
+ */
 @JsonIgnoreProperties({ "vertex", "portGroup", "edges" })
 @JsonPropertyOrder({ "shape", "labelManager" })
 public class Port implements PortComposition, ShapedObject, LabeledObject {

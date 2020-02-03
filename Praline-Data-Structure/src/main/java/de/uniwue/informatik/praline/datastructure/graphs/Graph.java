@@ -9,6 +9,22 @@ import java.util.List;
 
 import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
+/**
+ * This is the top-level class of the praline data structure containing all elements of a network.
+ * The network represented by an instance of {@link Graph} may in practice e. g. be a circuit diagram or a computer
+ * network of a company.
+ * It contains a list of all vertices ({@link Vertex}) and a list of all edges ({@link Edge}) of this graph.
+ * Note that an {@link Edge} connects usually two vertices, but it is also possible to connect more than two
+ * vertices, so you may represent hypergraphs.
+ *
+ * Moreover, a {@link Graph} stores all {@link VertexGroup}s and {@link EdgeBundle}s of the network.
+ * Note that these lists of {@link VertexGroup}s and {@link EdgeBundle}s should only contain the top-level elements,
+ * i. e., {@link VertexGroup}s that are *not* contained in another {@link VertexGroup} and {@link EdgeBundle}s that
+ * are *not* contained in another {@link EdgeBundle}.
+ * Lower-level elements are contained hierarchically in higher-level elements.
+ * {@link Port}s are contained in the vertices, {@link PortPairing}s are contained in {@link VertexGroup}s and
+ * similar with other elements of the network.
+ */
 public class Graph {
 
     /*==========

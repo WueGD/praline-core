@@ -10,6 +10,13 @@ import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import java.awt.*;
 
 /**
+ * Version of {@link Label} that provides text (see {@link Label} for more).
+ * So in this sense maybe the most typical "label".
+ * The text may be formatted via {@link TextLabel#getFont()} and {@link TextLabel#getColor()}.
+ *
+ * The user should set the {@link TextLabel#inputText} and from this the algorithm should generate something for
+ * {@link TextLabel#setLayoutText(String)} (respecting {@link TextLabel#isNoBreak()}.
+ *
  * Currently there is no transformation from {@link TextLabel#inputText}
  * to {@link TextLabel#layoutText} handled internally.
  * So if not touched, {@link TextLabel#getLayoutText()} will return null.
