@@ -1,6 +1,7 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
 import com.fasterxml.jackson.annotation.*;
+import de.uniwue.informatik.praline.datastructure.ReferenceObject;
 import de.uniwue.informatik.praline.datastructure.labels.EdgeLabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
@@ -30,7 +31,7 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  */
 @JsonIgnoreProperties({ "edgeBundle" })
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
-public class Edge implements LabeledObject {
+public class Edge implements LabeledObject, ReferenceObject {
 
     /*==========
      * Default values
@@ -53,6 +54,7 @@ public class Edge implements LabeledObject {
     private Color color;
     private EdgeBundle edgeBundle;
     private final EdgeLabelManager labelManager;
+    private String reference;
 
 
     /*==========
@@ -146,6 +148,18 @@ public class Edge implements LabeledObject {
     @Override
     public EdgeLabelManager getLabelManager() {
         return labelManager;
+    }
+
+    @Override
+    public String getReference()
+    {
+        return this.reference;
+    }
+
+    @Override
+    public void setReference(String reference)
+    {
+        this.reference = reference;
     }
 
 

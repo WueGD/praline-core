@@ -1,6 +1,7 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
 import com.fasterxml.jackson.annotation.*;
+import de.uniwue.informatik.praline.datastructure.ReferenceObject;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
@@ -31,7 +32,7 @@ import java.util.*;
 @JsonIgnoreProperties({ "ports", "vertexGroup", "containedPortCompositionsAndAllPorts" })
 @JsonPropertyOrder({ "shape", "labelManager", "portCompositions" })
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
-public class Vertex implements ShapedObject, LabeledObject {
+public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
 
     /*==========
      * Instance variables
@@ -45,6 +46,7 @@ public class Vertex implements ShapedObject, LabeledObject {
     private VertexGroup vertexGroup;
     private final LabelManager labelManager;
     private Shape shape;
+    private String reference;
 
 
     /*==========
@@ -147,6 +149,18 @@ public class Vertex implements ShapedObject, LabeledObject {
     @Override
     public LabelManager getLabelManager() {
         return labelManager;
+    }
+
+    @Override
+    public String getReference()
+    {
+        return this.reference;
+    }
+
+    @Override
+    public void setReference(String reference)
+    {
+        this.reference = reference;
     }
 
 
