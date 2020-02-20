@@ -5,6 +5,7 @@ import de.uniwue.informatik.praline.datastructure.ReferenceObject;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
+import de.uniwue.informatik.praline.datastructure.placements.Orientation;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
@@ -49,6 +50,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
      *==========*/
 
     public static final Shape DEFAULT_SHAPE_TO_BE_CLONED = new Rectangle();
+    public static final Orientation DEFAULT_ORIENTATION_AT_VERTEX = Orientation.FREE;
 
 
     /*==========
@@ -56,6 +58,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
      *==========*/
 
     private Vertex vertex;
+    private Orientation orientationAtVertex = DEFAULT_ORIENTATION_AT_VERTEX;
     private PortGroup portGroup;
     private final List<Edge> edges;
     private final LabelManager labelManager;
@@ -165,6 +168,13 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
         this.reference = reference;
     }
 
+    public Orientation getOrientationAtVertex() {
+        return orientationAtVertex;
+    }
+
+    public void setOrientationAtVertex(Orientation orientationAtVertex) {
+        this.orientationAtVertex = orientationAtVertex;
+    }
 
     /*==========
      * Modifiers
