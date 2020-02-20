@@ -3,6 +3,7 @@ package de.uniwue.informatik.praline.datastructure.graphs;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import de.uniwue.informatik.praline.datastructure.ReferenceObject;
 
 import java.util.*;
 
@@ -31,7 +32,7 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  * They are also not {@link de.uniwue.informatik.praline.datastructure.labels.LabeledObject}s.
  */
 @JsonPropertyOrder({ "ordered", "portCompositions" })
-public class PortGroup implements PortComposition {
+public class PortGroup implements PortComposition, ReferenceObject {
 
     /*==========
      * Default values
@@ -47,6 +48,7 @@ public class PortGroup implements PortComposition {
     private PortGroup portGroup;
     private final List<PortComposition> portCompositions;
     private boolean ordered;
+    private String reference;
 
 
     /*==========
@@ -93,6 +95,18 @@ public class PortGroup implements PortComposition {
 
     public void setOrdered(boolean ordered) {
         this.ordered = ordered;
+    }
+
+    @Override
+    public String getReference()
+    {
+        return this.reference;
+    }
+
+    @Override
+    public void setReference(String reference)
+    {
+        this.reference = reference;
     }
 
 

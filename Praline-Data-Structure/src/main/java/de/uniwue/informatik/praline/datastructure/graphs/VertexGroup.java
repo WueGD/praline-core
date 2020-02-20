@@ -1,6 +1,7 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
 import com.fasterxml.jackson.annotation.*;
+import de.uniwue.informatik.praline.datastructure.ReferenceObject;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
@@ -34,7 +35,7 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
 @JsonPropertyOrder({ "drawnFrame", "labelManager", "shape", "containedVertices", "containedVertexGroups",
         "touchingPairs", "portPairings" })
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
-public class VertexGroup implements ShapedObject, LabeledObject {
+public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject {
 
     /*==========
      * Default values
@@ -57,6 +58,7 @@ public class VertexGroup implements ShapedObject, LabeledObject {
      */
     private Shape shape;
     private boolean drawnFrame;
+    private String reference;
 
 
     /*==========
@@ -172,6 +174,18 @@ public class VertexGroup implements ShapedObject, LabeledObject {
         return labelManager;
     }
 
+    @Override
+    public String getReference()
+    {
+        return this.reference;
+    }
+
+    @Override
+    public void setReference(String reference)
+    {
+        this.reference = reference;
+    }
+
 
     /*==========
      * Modifiers
@@ -210,7 +224,14 @@ public class VertexGroup implements ShapedObject, LabeledObject {
         return touchingPairs.remove(tp);
     }
 
-
+    /**
+     *
+     * @param pp
+     *      Each of both ports of this {@link PortPairing} must be contained in a {@link Vertex} of
+     *      this {@link VertexGroup}
+     * @return
+     *      success
+     */
     public boolean addPortPairing(PortPairing pp) {
         List<Port> allPortsOfTopLevelVertices = new ArrayList<>();
         for (Vertex v : containedVertices) {

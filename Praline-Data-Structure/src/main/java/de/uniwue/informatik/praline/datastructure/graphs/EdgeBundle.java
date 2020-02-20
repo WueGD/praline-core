@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import de.uniwue.informatik.praline.datastructure.ReferenceObject;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
@@ -25,7 +26,7 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  * {@link Port}s use the labeling of its contained {@link Edge}s.
  */
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
-public class EdgeBundle implements LabeledObject {
+public class EdgeBundle implements LabeledObject, ReferenceObject {
 
     /*==========
      * Instance variables
@@ -34,6 +35,7 @@ public class EdgeBundle implements LabeledObject {
     private final List<Edge> containedEdges;
     private final List<EdgeBundle> containedEdgeBundles;
     private final LabelManager labelManager;
+    private String reference;
 
 
     /*==========
@@ -78,7 +80,7 @@ public class EdgeBundle implements LabeledObject {
 
 
     /*==========
-     * Getters
+     * Getters & Setters
      *==========*/
 
     public List<Edge> getContainedEdges() {
@@ -92,6 +94,18 @@ public class EdgeBundle implements LabeledObject {
     @Override
     public LabelManager getLabelManager() {
         return labelManager;
+    }
+
+    @Override
+    public String getReference()
+    {
+        return this.reference;
+    }
+
+    @Override
+    public void setReference(String reference)
+    {
+        this.reference = reference;
     }
 
 
