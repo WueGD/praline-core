@@ -16,13 +16,13 @@ public interface ReferenceObject {
 
     /**
      * Query the reference you may have set via {@link ReferenceObject#setReference(String)} -- see there for more.
-     * This value may be zero if it was not set before.
+     * This value may be null if it was not set before.
      */
     String getReference();
 
     /**
      * Set a reference (e.g. an ID) to an object to identify it later.
-     * This value is not changed by the algorithm, it may be set to zero.
+     * This value is not changed by the algorithm, it may be set to null.
      * It is only for the convenience of the user to save additional internal information for some object.
      *
      * @param reference
