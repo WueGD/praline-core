@@ -135,21 +135,32 @@ public class PortGroup implements PortComposition, ReferenceObject {
     }
 
     public void addPortComposition(PortComposition pc) {
-        portCompositions.add(pc);
-        pc.setVertex(this.getVertex());
-        pc.setPortGroup(this);
+        addPortComposition(this.getPortCompositions().size(), pc); //append to the end of the list
     }
 
     public void addPortComposition(int position, PortComposition pc) {
         portCompositions.add(position, pc);
-        pc.setVertex(this.getVertex());
+        setVertexRecursivelyToAllPortCompositions(pc, this.getVertex());
         pc.setPortGroup(this);
     }
 
     public boolean removePortComposition(PortComposition pc) {
-        pc.setVertex(null);
         pc.setPortGroup(null);
+        setVertexRecursivelyToAllPortCompositions(pc, null);
         return portCompositions.remove(pc);
+    }
+
+    /*==========
+     * Internal
+     *==========*/
+
+    private static void setVertexRecursivelyToAllPortCompositions(PortComposition pc, Vertex vertex) {
+        pc.setVertex(vertex);
+        if (pc instanceof PortGroup) {
+            for (PortComposition groupMember : ((PortGroup)pc).getPortCompositions()) {
+                setVertexRecursivelyToAllPortCompositions(groupMember, vertex);
+            }
+        }
     }
 
 
