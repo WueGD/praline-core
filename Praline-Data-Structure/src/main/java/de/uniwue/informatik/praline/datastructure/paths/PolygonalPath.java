@@ -1,6 +1,7 @@
 package de.uniwue.informatik.praline.datastructure.paths;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.awt.geom.Point2D;
@@ -18,6 +19,7 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  * or orthogonal paths, i. e. only horizontal and vertical segments, if the choice of points is done accordingly
  * (alternatingly changing only the x- or y- coordinate between each two consecutive points).
  */
+@JsonIgnoreProperties({ "terminalAndBendPoints" })
 public class PolygonalPath extends Path {
 
     /*==========
