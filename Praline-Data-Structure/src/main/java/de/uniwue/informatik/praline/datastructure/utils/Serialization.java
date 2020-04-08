@@ -43,6 +43,18 @@ public class Serialization {
     }
 
     /**
+     * Read a graph from a JSON file.
+     *
+     * @param path JSON file path to read diagram from
+     * @param klass Concrete class to instantiate
+     * @return Instance
+     * @throws IOException if reading the file fails
+     */
+    public static <T extends Graph> T read(String path, Class<T> klass) throws IOException {
+        return read(new File(path), klass);
+    }
+
+    /**
      * Writes the graph to a JSON string.
      *
      * @param graph Diagram to write
