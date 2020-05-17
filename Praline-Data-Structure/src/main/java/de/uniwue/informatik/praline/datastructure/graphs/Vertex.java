@@ -263,7 +263,7 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
             boolean success = false;
             //is contained
             if (((PortGroup) fromThis).getPortCompositions().contains(removeThis)) {
-                return ((PortGroup) fromThis).getPortCompositions().remove(removeThis);
+                return ((PortGroup) fromThis).removePortComposition(removeThis);
             }
             //not on this level contained but possibly on a lower level -> go into recursion
             for (PortComposition portComposition : ((PortGroup) fromThis).getPortCompositions()) {
