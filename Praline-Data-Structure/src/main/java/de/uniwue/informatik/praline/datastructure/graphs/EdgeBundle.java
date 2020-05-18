@@ -71,7 +71,7 @@ public class EdgeBundle implements LabeledObject, ReferenceObject {
     public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles,
                       Collection<Label> labels, Label mainlabel) {
         this.containedEdges = newArrayListNullSafe(containedEdges);
-        for (Edge e : containedEdges) {
+        for (Edge e : this.containedEdges) {
             e.setEdgeBundle(this);
         }
         this.containedEdgeBundles = newArrayListNullSafe(containedEdgeBundles);
