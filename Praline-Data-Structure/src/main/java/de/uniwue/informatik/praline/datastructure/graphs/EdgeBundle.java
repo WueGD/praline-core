@@ -118,11 +118,26 @@ public class EdgeBundle implements LabeledObject, ReferenceObject {
         e.setEdgeBundle(this);
     }
 
+    /**
+     * Removes an {@link Edge} from this {@link EdgeBundle} or from some recursively contained
+     * {@link EdgeBundle}
+     *
+     * @param e
+     *      to be removed from this {@link EdgeBundle}
+     * @return
+     *      success
+     */
     public boolean removeEdge(Edge e) {
         boolean success = containedEdges.remove(e);
         if (success) {
             e.setEdgeBundle(null);
         }
+
+        //recursive call to edge bundles inside this edge bundle
+        for (EdgeBundle containedEdgeBundle : containedEdgeBundles) {
+            success |= containedEdgeBundle.removeEdge(e);
+        }
+
         return success;
     }
 
@@ -130,8 +145,24 @@ public class EdgeBundle implements LabeledObject, ReferenceObject {
         containedEdgeBundles.add(eb);
     }
 
+    /**
+     * Removes an {@link EdgeBundle} from this {@link EdgeBundle} or from some recursively contained
+     * {@link EdgeBundle}
+     *
+     * @param eb
+     *      to be removed from this {@link EdgeBundle}
+     * @return
+     *      success
+     */
     public boolean removeEdgeBundle(EdgeBundle eb) {
-        return containedEdgeBundles.remove(eb);
+        boolean success = containedEdgeBundles.remove(eb);
+
+        //recursive call to edge bundles inside this edge bundle
+        for (EdgeBundle containedEdgeBundle : containedEdgeBundles) {
+            success |= containedEdgeBundle.removeEdgeBundle(eb);
+        }
+
+        return success;
     }
 
 

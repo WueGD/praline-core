@@ -109,6 +109,11 @@ public class Graph {
     }
     
     public boolean removeVertex(Vertex v) {
+        //remove vertex from vertex groups
+        for (VertexGroup vertexGroup : vertexGroups) {
+            vertexGroup.removeVertex(v);
+        }
+
         return vertices.remove(v);
     }
 
@@ -125,6 +130,11 @@ public class Graph {
     }
 
     public boolean removeEdge(Edge e) {
+        //remove edge from edge bundles
+        for (EdgeBundle edgeBundle : edgeBundles) {
+            edgeBundle.removeEdge(e);
+        }
+
         return edges.remove(e);
     }
 

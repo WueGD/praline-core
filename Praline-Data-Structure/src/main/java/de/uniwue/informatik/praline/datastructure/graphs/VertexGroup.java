@@ -195,12 +195,37 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
         containedVertices.add(v);
         v.setVertexGroup(this);
     }
-
+    /**
+     * Removes a {@link Vertex} from this {@link VertexGroup} or from some recursively contained {@link VertexGroup}.
+     * It also removes all {@link TouchingPair}s and {@link PortPairing}s where this {@link Vertex} is involved.
+     *
+     * @param v
+     *      to be removed from this {@link VertexGroup}
+     * @return
+     *      success
+     */
     public boolean removeVertex(Vertex v) {
         boolean success = containedVertices.remove(v);
         if (success) {
             v.setVertexGroup(null);
         }
+        //remove from touching pairs and its ports from port pairings
+        for (TouchingPair touchingPair : new ArrayList<>(touchingPairs)) {
+            if (touchingPair.getVertex0().equals(v) || touchingPair.getVertex1().equals(v)) {
+                touchingPairs.remove(touchingPair);
+            }
+        }
+        for (PortPairing portPairing : new ArrayList<>(portPairings)) {
+            if (portPairing.getPort0().getVertex().equals(v) || portPairing.getPort1().getVertex().equals(v)) {
+                portPairings.remove(portPairing);
+            }
+        }
+
+        //recursive call to vertex groups inside this vertex group
+        for (VertexGroup containedVertexGroup : containedVertexGroups) {
+            success |= containedVertexGroup.removeVertex(v);
+        }
+
         return success;
     }
 
@@ -208,8 +233,24 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
         containedVertexGroups.add(vg);
     }
 
+    /**
+     * Removes a {@link VertexGroup} from this {@link VertexGroup} or from some recursively contained
+     * {@link VertexGroup}
+     *
+     * @param vg
+     *      to be removed from this {@link VertexGroup}
+     * @return
+     *      success
+     */
     public boolean removeVertexGroup(VertexGroup vg) {
-        return containedVertexGroups.remove(vg);
+        boolean success = containedVertexGroups.remove(vg);
+
+        //recursive call to vertex groups inside this vertex group
+        for (VertexGroup containedVertexGroup : containedVertexGroups) {
+            success |= containedVertexGroup.removeVertexGroup(vg);
+        }
+
+        return success;
     }
 
     public boolean addTouchingPair(TouchingPair tp) {
