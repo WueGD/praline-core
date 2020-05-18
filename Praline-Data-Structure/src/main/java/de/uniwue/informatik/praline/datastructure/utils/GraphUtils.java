@@ -9,6 +9,9 @@ public class GraphUtils {
         if (elements == null) {
             return new ArrayList<>();
         }
+        while (elements.contains(null)) {
+            elements.remove(null);
+        }
         return new ArrayList<>(elements);
     }
 }
