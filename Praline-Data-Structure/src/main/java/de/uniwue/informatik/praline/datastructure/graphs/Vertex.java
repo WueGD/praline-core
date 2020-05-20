@@ -227,7 +227,7 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
             //compare this newly alive ports with the previously alive ports
             for (Port oldPort : new ArrayList<>(ports)) {
                 if (!currentPorts.contains(oldPort)) {
-                    success = success & this.ports.remove(oldPort);
+                    success = success & removePortCleanly(oldPort);
                 }
             }
         }
@@ -272,6 +272,20 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
             return success;
         }
         return false;
+    }
+
+    private boolean removePortCleanly(Port port) {
+        //remove it from possibly existing PortPairings
+        if (this.getVertexGroup() != null) {
+            for (PortPairing portPairing : new ArrayList<>(this.getVertexGroup().getPortPairings())) {
+                if (portPairing.getPorts().contains(port)) {
+                    this.getVertexGroup().removePortPairing(portPairing);
+                }
+            }
+        }
+
+        //remove it from the hash set storing the ports for convenience (easier querying)
+        return this.ports.remove(port);
     }
 
     private static void assignPortCompositionRecursivelyToVertex(PortComposition topLevelPortComposition,
