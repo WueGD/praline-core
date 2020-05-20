@@ -1,8 +1,10 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +27,7 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  * {@link Port}s are contained in the vertices, {@link PortPairing}s are contained in {@link VertexGroup}s and
  * similar with other elements of the network.
  */
+@JsonIgnoreProperties({ "allRecursivelyContainedVertexGroups", "allRecursivelyContainedEdgeBundles" })
 public class Graph {
 
     /*==========
@@ -87,16 +90,54 @@ public class Graph {
         return Collections.unmodifiableList(vertices);
     }
 
+    /**
+     *
+     * @return
+     *      all top-level {@link VertexGroup}s
+     */
     public List<VertexGroup> getVertexGroups() {
         return Collections.unmodifiableList(vertexGroups);
+    }
+
+    /**
+     *
+     * @return
+     *      all top-level {@link VertexGroup}s as well as all recursively contained lower-level {@link VertexGroup}s
+     */
+    public List<VertexGroup> getAllRecursivelyContainedVertexGroups() {
+        ArrayList<VertexGroup> allVertexGroups = new ArrayList<>();
+        for (VertexGroup vertexGroup : vertexGroups) {
+            allVertexGroups.add(vertexGroup);
+            allVertexGroups.addAll(vertexGroup.getAllRecursivelyContainedVertexGroups());
+        }
+        return Collections.unmodifiableList(allVertexGroups);
     }
 
     public List<Edge> getEdges() {
         return Collections.unmodifiableList(edges);
     }
 
+    /**
+     *
+     * @return
+     *      all top-level {@link EdgeBundle}s
+     */
     public List<EdgeBundle> getEdgeBundles() {
         return Collections.unmodifiableList(edgeBundles);
+    }
+
+    /**
+     *
+     * @return
+     *      all top-level {@link EdgeBundle}s as well as all recursively contained lower-level {@link EdgeBundle}s
+     */
+    public List<EdgeBundle> getAllRecursivelyContainedEdgeBundles() {
+        ArrayList<EdgeBundle> allEdgeBundles = new ArrayList<>();
+        for (EdgeBundle edgeBundle : edgeBundles) {
+            allEdgeBundles.add(edgeBundle);
+            allEdgeBundles.addAll(edgeBundle.getAllRecursivelyContainedEdgeBundles());
+        }
+        return Collections.unmodifiableList(allEdgeBundles);
     }
 
 

@@ -31,7 +31,7 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  *
  * A {@link VertexGroup} may have {@link Label}s.
  */
-@JsonIgnoreProperties({ "allRecursivelyContainedVertices" })
+@JsonIgnoreProperties({ "allRecursivelyContainedVertices", "allRecursivelyContainedVertexGroups" })
 @JsonPropertyOrder({ "drawnFrame", "labelManager", "shape", "containedVertices", "containedVertexGroups",
         "touchingPairs", "portPairings" })
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
@@ -117,7 +117,7 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
      * Differs from {@link VertexGroup#getAllRecursivelyContainedVertices()}
      *
      * @return
-     *      Vertices contained directly in this {@link VertexGroup}. Note that vertices contained in a
+     *      {@link Vertex}es contained directly in this {@link VertexGroup}. Note that vertices contained in a
      *      {@link VertexGroup} of this {@link VertexGroup} are not returned
      */
     public List<Vertex> getContainedVertices() {
@@ -128,19 +128,42 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
      * Differs from {@link VertexGroup#getContainedVertices()}
      *
      * @return
-     *      Vertices contained directly in this {@link VertexGroup} and contained in any {@link VertexGroup}
-     *      contained in this {@link VertexGroup} or even deeper in another {@link VertexGroup} (with arbitrary depth)
+     *      {@link Vertex}es contained directly in this {@link VertexGroup} and contained in any {@link VertexGroup}
+     *      contained in this {@link VertexGroup} or even deeper (with arbitrary depth)
      */
     public List<Vertex> getAllRecursivelyContainedVertices() {
         List<Vertex> allVertices = new ArrayList<>(containedVertices);
-        for (VertexGroup containedVertexGroup : getContainedVertexGroups()) {
+        for (VertexGroup containedVertexGroup : containedVertexGroups) {
             allVertices.addAll(containedVertexGroup.getAllRecursivelyContainedVertices());
         }
         return allVertices;
     }
 
+    /**
+     * Differs from {@link VertexGroup#getAllRecursivelyContainedVertexGroups()}
+     *
+     * @return
+     *      {@link VertexGroup}s contained directly in this {@link VertexGroup}. Note that {@link VertexGroup}s
+     *      contained in a {@link VertexGroup} of this {@link VertexGroup} are not returned
+     */
     public List<VertexGroup> getContainedVertexGroups() {
         return Collections.unmodifiableList(containedVertexGroups);
+    }
+
+    /**
+     * Differs from {@link VertexGroup#getContainedVertexGroups()}
+     *
+     * @return
+     *      {@link VertexGroup}s contained directly in this {@link VertexGroup} and contained in any {@link VertexGroup}
+     *      contained in this {@link VertexGroup} or even deeper (with arbitrary depth)
+     */
+    public List<VertexGroup> getAllRecursivelyContainedVertexGroups() {
+        List<VertexGroup> allVertexGroups = new ArrayList<>();
+        for (VertexGroup containedVertexGroup : containedVertexGroups) {
+            allVertexGroups.add(containedVertexGroup);
+            allVertexGroups.addAll(containedVertexGroup.getAllRecursivelyContainedVertexGroups());
+        }
+        return allVertexGroups;
     }
 
     public List<TouchingPair> getTouchingPairs() {
@@ -297,4 +320,5 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
     public String toString() {
         return labelManager.getStringForLabeledObject();
     }
+
 }

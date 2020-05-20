@@ -1,9 +1,6 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.annotation.*;
 import de.uniwue.informatik.praline.datastructure.ReferenceObject;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
@@ -25,6 +22,7 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  * An {@link EdgeBundle} may have labels, but just for the whole thing -- for placing {@link Label}s close to
  * {@link Port}s use the labeling of its contained {@link Edge}s.
  */
+@JsonIgnoreProperties({ "allRecursivelyContainedEdges", "allRecursivelyContainedEdgeBundles" })
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public class EdgeBundle implements LabeledObject, ReferenceObject {
 
@@ -83,12 +81,57 @@ public class EdgeBundle implements LabeledObject, ReferenceObject {
      * Getters & Setters
      *==========*/
 
+    /**
+     * Differs from {@link EdgeBundle#getAllRecursivelyContainedEdges()}
+     *
+     * @return
+     *      {@link Edge}es contained directly in this {@link EdgeBundle}. Note that {@link Edge}s contained in an
+     *      {@link EdgeBundle} of this {@link EdgeBundle} are not returned
+     */
     public List<Edge> getContainedEdges() {
         return Collections.unmodifiableList(containedEdges);
     }
 
+    /**
+     * Differs from {@link EdgeBundle#getContainedEdges()}
+     *
+     * @return
+     *      {@link Edge}es contained directly in this {@link EdgeBundle} and contained in any {@link EdgeBundle}
+     *      contained in this {@link EdgeBundle} or even deeper (with arbitrary depth)
+     */
+    public List<Edge> getAllRecursivelyContainedEdges() {
+        List<Edge> allEdges = new ArrayList<>(containedEdges);
+        for (EdgeBundle containedEdgeBundle : containedEdgeBundles) {
+            allEdges.addAll(containedEdgeBundle.getAllRecursivelyContainedEdges());
+        }
+        return allEdges;
+    }
+
+    /**
+     * Differs from {@link EdgeBundle#getAllRecursivelyContainedEdgeBundles()}
+     *
+     * @return
+     *      {@link EdgeBundle}es contained directly in this {@link EdgeBundle}. Note that {@link EdgeBundle}s
+     *      contained in an {@link EdgeBundle} of this {@link EdgeBundle} are not returned
+     */
     public List<EdgeBundle> getContainedEdgeBundles() {
         return Collections.unmodifiableList(containedEdgeBundles);
+    }
+
+    /**
+     * Differs from {@link EdgeBundle#getContainedEdgeBundles()}
+     *
+     * @return
+     *      {@link EdgeBundle}es contained directly in this {@link EdgeBundle} and contained in any {@link EdgeBundle}
+     *      contained in this {@link EdgeBundle} or even deeper (with arbitrary depth)
+     */
+    public List<EdgeBundle> getAllRecursivelyContainedEdgeBundles() {
+        List<EdgeBundle> allEdgeBundles = new ArrayList<>();
+        for (EdgeBundle containedEdgeBundle : containedEdgeBundles) {
+            allEdgeBundles.add(containedEdgeBundle);
+            allEdgeBundles.addAll(containedEdgeBundle.getAllRecursivelyContainedEdgeBundles());
+        }
+        return allEdgeBundles;
     }
 
     @Override
@@ -174,4 +217,5 @@ public class EdgeBundle implements LabeledObject, ReferenceObject {
     public String toString() {
         return labelManager.getStringForLabeledObject();
     }
+
 }

@@ -109,11 +109,6 @@ public class PortGroup implements PortComposition, ReferenceObject {
         this.reference = reference;
     }
 
-
-    /*==========
-     * Modifiers
-     *==========*/
-
     @Override
     public Vertex getVertex() {
         return vertex;
@@ -134,6 +129,11 @@ public class PortGroup implements PortComposition, ReferenceObject {
         this.portGroup = portGroup;
     }
 
+
+    /*==========
+     * Modifiers
+     *==========*/
+
     public void addPortComposition(PortComposition pc) {
         addPortComposition(this.getPortCompositions().size(), pc); //append to the end of the list
     }
@@ -149,6 +149,7 @@ public class PortGroup implements PortComposition, ReferenceObject {
         setVertexRecursivelyToAllPortCompositions(pc, null);
         return portCompositions.remove(pc);
     }
+
 
     /*==========
      * Internal
