@@ -19,7 +19,7 @@ public class GraphUtils {
             return new ArrayList<>();
         }
 
-        ArrayList<T> returnList = new ArrayList<>(elements);
+        ArrayList<T> returnList = new ArrayList<>();
         for (T element : elements) {
             if (element == null) {
                 continue;
