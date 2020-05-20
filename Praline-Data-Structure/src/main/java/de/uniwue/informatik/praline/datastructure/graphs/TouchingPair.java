@@ -1,9 +1,14 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
 import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A {@link TouchingPair} specifies two vertices ({@link Vertex}) that must be drawn such that their boundaries touch
@@ -22,6 +27,7 @@ import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
  * {@link TouchingPair#getVerticalPlacementVertex1()} == {@link VerticalPlacement#BOTTOM} and
  * {@link TouchingPair#getHorizontalPlacementVertex1()} == {@link HorizontalPlacement#FREE}.
  */
+@JsonIgnoreProperties({ "vertices" })
 public class TouchingPair {
 
     /*==========
@@ -107,6 +113,10 @@ public class TouchingPair {
 
     public void setVertex1(Vertex vertex1) {
         this.vertex1 = vertex1;
+    }
+
+    public List<Vertex> getVertices() {
+        return Collections.unmodifiableList(Arrays.asList(vertex0, vertex1));
     }
 
     public HorizontalPlacement getHorizontalPlacementVertex1() {

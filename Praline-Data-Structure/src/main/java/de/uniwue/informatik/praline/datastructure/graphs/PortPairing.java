@@ -1,7 +1,12 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -16,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * same {@link VertexGroup} (precisely the {@link VertexGroup} this {@link PortPairing} is stored in) and there
  * should be a {@link TouchingPair} between these two {@link Vertex}es stored in the same {@link VertexGroup}.
  */
+@JsonIgnoreProperties({ "ports" })
 public class PortPairing {
 
     /*==========
@@ -60,6 +66,9 @@ public class PortPairing {
         this.port1 = port1;
     }
 
+    public List<Port> getPorts() {
+        return Collections.unmodifiableList(Arrays.asList(port0, port1));
+    }
 
     /*==========
      * toString
