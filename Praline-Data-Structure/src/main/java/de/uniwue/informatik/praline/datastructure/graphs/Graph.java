@@ -148,12 +148,10 @@ public class Graph {
     public void addVertex(Vertex v) {
         vertices.add(v);
     }
-    
+
     public boolean removeVertex(Vertex v) {
-        //remove vertex from vertex groups
-        for (VertexGroup vertexGroup : vertexGroups) {
-            vertexGroup.removeVertex(v);
-        }
+        //remove vertex from vertex group
+        v.getVertexGroup().removeVertex(v);
 
         return vertices.remove(v);
     }
