@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 
 /**
@@ -69,6 +70,35 @@ public class PortPairing {
     public List<Port> getPorts() {
         return Collections.unmodifiableList(Arrays.asList(port0, port1));
     }
+
+
+    /*==========
+     * equals & hashCode
+     *
+     * (should depend here only on contained objects and their order does not matter)
+     *==========*/
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PortPairing that = (PortPairing) o;
+        // sort ports by hash code to compare the correct ones with each other
+        Port thisPortA = port0.hashCode() <= port1.hashCode() ? port0 : port1;
+        Port thisPortB = thisPortA.equals(port0) ? port1 : port0;
+        Port thatPortA = that.port0.hashCode() <= that.port1.hashCode() ? that.port0 : that.port1;
+        Port thatPortB = thatPortA.equals(that.port0) ? that.port1 : that.port0;
+        return Objects.equals(thisPortA, thatPortA) && Objects.equals(thisPortB, thatPortB);
+    }
+
+    @Override
+    public int hashCode() {
+        // sort ports by hash code to compare the correct ones with each other
+        Port portA = port0.hashCode() <= port1.hashCode() ? port0 : port1;
+        Port portB = portA.equals(port0) ? port1 : port0;
+        return Objects.hash(portA, portB);
+    }
+
 
     /*==========
      * toString

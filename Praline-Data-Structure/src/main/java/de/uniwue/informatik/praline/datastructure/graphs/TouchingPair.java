@@ -9,6 +9,7 @@ import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A {@link TouchingPair} specifies two vertices ({@link Vertex}) that must be drawn such that their boundaries touch
@@ -133,6 +134,34 @@ public class TouchingPair {
 
     public void setVerticalPlacementVertex1(VerticalPlacement verticalPlacementVertex1) {
         this.verticalPlacementVertex1 = verticalPlacementVertex1;
+    }
+
+
+    /*==========
+     * equals & hashCode
+     *
+     * (should depend here only on contained objects and their order does not matter)
+     *==========*/
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TouchingPair that = (TouchingPair) o;
+        // sort vertices by hash code to compare the correct ones with each other
+        Vertex thisVertexA = vertex0.hashCode() <= vertex1.hashCode() ? vertex0 : vertex1;
+        Vertex thisVertexB = thisVertexA.equals(vertex0) ? vertex1 : vertex0;
+        Vertex thatVertexA = that.vertex0.hashCode() <= that.vertex1.hashCode() ? that.vertex0 : that.vertex1;
+        Vertex thatVertexB = thatVertexA.equals(that.vertex0) ? that.vertex1 : that.vertex0;
+        return Objects.equals(thisVertexA, thatVertexA) && Objects.equals(thisVertexB, thatVertexB);
+    }
+
+    @Override
+    public int hashCode() {
+        // sort vertices by hash code to compare the correct ones with each other
+        Vertex vertexA = vertex0.hashCode() <= vertex1.hashCode() ? vertex0 : vertex1;
+        Vertex vertexB = vertexA.equals(vertex0) ? vertex1 : vertex0;
+        return Objects.hash(vertexA, vertexB);
     }
 
 
