@@ -151,7 +151,9 @@ public class Graph {
 
     public boolean removeVertex(Vertex v) {
         //remove vertex from vertex group
-        v.getVertexGroup().removeVertex(v);
+        if (v.getVertexGroup() != null) {
+            v.getVertexGroup().removeVertex(v);
+        }
 
         return vertices.remove(v);
     }
