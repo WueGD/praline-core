@@ -284,6 +284,11 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
             }
         }
 
+        //remove references at edges
+        for (Edge edge : new ArrayList<>(port.getEdges())) {
+            edge.removePort(port);
+        }
+
         //remove it from the hash set storing the ports for convenience (easier querying)
         return this.ports.remove(port);
     }

@@ -155,6 +155,13 @@ public class Graph {
             v.getVertexGroup().removeVertex(v);
         }
 
+        //remove references to incident edges
+        for (Port portOfV : v.getPorts()) {
+            for (Edge incidentEdge : new ArrayList<>(portOfV.getEdges())) {
+                incidentEdge.removePort(portOfV);
+            }
+        }
+
         return vertices.remove(v);
     }
 
@@ -163,6 +170,11 @@ public class Graph {
     }
 
     public boolean removeVertexGroup(VertexGroup vg) {
+        //set reference at its vertices to null
+        for (Vertex containedVertex : vg.getContainedVertices()) {
+            containedVertex.setVertexGroup(null);
+        }
+
         return vertexGroups.remove(vg);
     }
 
@@ -171,9 +183,14 @@ public class Graph {
     }
 
     public boolean removeEdge(Edge e) {
-        //remove edge from edge bundles
-        for (EdgeBundle edgeBundle : edgeBundles) {
-            edgeBundle.removeEdge(e);
+        //remove edge from edge bundle
+        if (e.getEdgeBundle() != null) {
+            e.getEdgeBundle().removeEdge(e);
+        }
+
+        //remove references at ports
+        for (Port port : new ArrayList<>(e.getPorts())) {
+            port.removeEdge(e);
         }
 
         return edges.remove(e);
@@ -184,6 +201,11 @@ public class Graph {
     }
 
     public boolean removeEdgeBundle(EdgeBundle eb) {
+        //set reference at its edges to null
+        for (Edge containedEdge : eb.getContainedEdges()) {
+            containedEdge.setEdgeBundle(null);
+        }
+
         return edgeBundles.remove(eb);
     }
 
