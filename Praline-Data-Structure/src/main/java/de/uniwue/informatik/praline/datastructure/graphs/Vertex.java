@@ -190,10 +190,10 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
         //not yet contained -> add it
         portCompositions.add(pc);
         assignPortCompositionRecursivelyToVertex(pc, this);
+
         //find ports of newly added PortComposition
-        HashSet<Port> newPorts = new HashSet<>();
-        getContainedPortCompositionsAndAllPorts(new HashSet<>(), newPorts, pc);
-        this.ports.addAll(newPorts);
+        updatePortsOfVertex(pc);
+
         return true;
     }
 
@@ -239,6 +239,12 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
     /*==========
      * Internal
      *==========*/
+
+    protected void updatePortsOfVertex(PortComposition pc) {
+        HashSet<Port> newPorts = new HashSet<>();
+        getContainedPortCompositionsAndAllPorts(new HashSet<>(), newPorts, pc);
+        this.ports.addAll(newPorts);
+    }
 
     private void getContainedPortCompositionsAndAllPorts(HashSet<PortComposition> allLowerLevelPortCompositions,
                                                          HashSet<Port> allPorts,
