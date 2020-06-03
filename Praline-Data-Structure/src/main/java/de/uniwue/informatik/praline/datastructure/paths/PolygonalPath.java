@@ -100,7 +100,8 @@ public class PolygonalPath extends Path {
      *      {@link PolygonalPath#getEndPoint()}.
      */
     public List<Point2D.Double> getTerminalAndBendPoints() {
-        List<Point2D.Double> allPoints = Arrays.asList(getStartPoint());
+        List<Point2D.Double> allPoints = new ArrayList<>();
+        allPoints.add(getStartPoint());
         allPoints.addAll(getBendPoints());
         allPoints.add(getEndPoint());
         return Collections.unmodifiableList(allPoints);
