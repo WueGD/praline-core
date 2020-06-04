@@ -156,10 +156,18 @@ public class PortGroup implements PortComposition, ReferenceObject {
      *==========*/
 
     private static void setVertexRecursivelyToAllPortCompositions(PortComposition pc, Vertex vertex) {
+        //potentially remove from port set of vertex
+        if (vertex == null && pc.getVertex() != null && pc instanceof Port) {
+            pc.getVertex().removePortFromPortSet((Port) pc);
+        }
+
         pc.setVertex(vertex);
+
+        //potentially add to port set of vertex
         if (vertex != null) {
             vertex.updatePortsOfVertex(pc);
         }
+
         if (pc instanceof PortGroup) {
             for (PortComposition groupMember : ((PortGroup)pc).getPortCompositions()) {
                 setVertexRecursivelyToAllPortCompositions(groupMember, vertex);

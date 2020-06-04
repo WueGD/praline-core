@@ -246,6 +246,10 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
         this.ports.addAll(newPorts);
     }
 
+    protected void removePortFromPortSet(Port p) {
+        ports.remove(p);
+    }
+
     private void getContainedPortCompositionsAndAllPorts(HashSet<PortComposition> allLowerLevelPortCompositions,
                                                          HashSet<Port> allPorts,
                                                          PortComposition portComposition) {
