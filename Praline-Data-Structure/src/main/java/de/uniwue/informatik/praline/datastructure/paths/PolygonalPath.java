@@ -43,15 +43,24 @@ public class PolygonalPath extends Path {
         this(null, null, null, thickness);
     }
 
-    public PolygonalPath(Point2D.Double startPoint, Point2D.Double endPoint, Collection<Point2D.Double> bendPoints) {
+    public PolygonalPath(Point2D.Double startPoint, Point2D.Double endPoint, List<Point2D.Double> bendPoints) {
         this(startPoint, endPoint, bendPoints, UNSPECIFIED_THICKNESS);
+    }
+
+    public PolygonalPath(List<Point2D.Double> terminalAndBendPoints) {
+        this(terminalAndBendPoints, Path.UNSPECIFIED_THICKNESS);
+    }
+
+    public PolygonalPath(List<Point2D.Double> terminalAndBendPoints, double thickness) {
+        this(terminalAndBendPoints.get(0), terminalAndBendPoints.get(terminalAndBendPoints.size() - 1),
+                newListWithoutFirstAndLast(terminalAndBendPoints), thickness);
     }
 
     @JsonCreator
     public PolygonalPath(
             @JsonProperty("startPoint") final Point2D.Double startPoint,
             @JsonProperty("endPoint") final Point2D.Double endPoint,
-            @JsonProperty("bendPoints") final Collection<Point2D.Double> bendPoints,
+            @JsonProperty("bendPoints") final List<Point2D.Double> bendPoints,
             @JsonProperty("thickness") final double thickness
     ) {
         super(thickness);
@@ -105,6 +114,18 @@ public class PolygonalPath extends Path {
         allPoints.addAll(getBendPoints());
         allPoints.add(getEndPoint());
         return Collections.unmodifiableList(allPoints);
+    }
+
+
+    /*==========
+     * Internal
+     *==========*/
+
+    private static List<Point2D.Double> newListWithoutFirstAndLast(List<Point2D.Double> list) {
+        LinkedList<Point2D.Double> reducedList = new LinkedList<>(list);
+        reducedList.removeFirst();
+        reducedList.removeLast();
+        return reducedList;
     }
 
 
