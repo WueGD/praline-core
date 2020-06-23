@@ -9,8 +9,13 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>Praline-Data-Structure</module>
+        <module>Praline-IO</module>
         <module>Praline-Layouting</module>
     </modules>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
     <packaging>pom</packaging>
 
