@@ -10,6 +10,35 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>Praline-Layouting</artifactId>
+    <dependencies>
+        <dependency>
+            <groupId>praline</groupId>
+            <artifactId>Praline-Data-Structure</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>praline</groupId>
+            <artifactId>Praline-IO</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.jung</groupId>
+            <artifactId>jung-algorithms</artifactId>
+            <version>2.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.elk</groupId>
+            <artifactId>org.eclipse.elk.alg.layered</artifactId>
+            <version>0.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.jung</groupId>
+            <artifactId>jung-graph-impl</artifactId>
+            <version>2.1.1</version>
+        </dependency>
+    </dependencies>
 
 
 </project>
