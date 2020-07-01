@@ -183,6 +183,10 @@ public class Edge implements LabeledObject, ReferenceObject {
         return this.paths.remove(path);
     }
 
+    public void removeAllPaths() {
+        this.paths.clear();
+    }
+
     /**
      * this {@link Edge} is also added to the list of {@link Edge}s of the passed {@link Port} p
      *
