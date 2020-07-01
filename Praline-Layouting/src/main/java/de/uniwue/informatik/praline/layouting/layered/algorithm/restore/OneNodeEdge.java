@@ -51,8 +51,9 @@ public class OneNodeEdge implements Restoreable {
                         groups.get(ports.get(i)).addPortComposition(ports.get(i));
                     }
                     ports.get(i).addEdge(edge);
-                    if (dummyPorts.get(i).getPortGroup() != null)
+                    if (dummyPorts.get(i).getPortGroup() != null) {
                         dummyPorts.get(i).getPortGroup().removePortComposition(dummyPorts.get(i));
+                    }
                     node.removePortComposition(dummyPorts.get(i));
                     ports.get(i).setShape(dummyPorts.get(i).getShape());
                 }

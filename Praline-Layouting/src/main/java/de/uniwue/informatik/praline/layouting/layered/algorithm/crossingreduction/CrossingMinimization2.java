@@ -539,10 +539,6 @@ public class CrossingMinimization2 {
             port2adjacentNodePosition.put(port, adjacentObjectPosition);
         }
 
-        //TODO: re-order ports at its vertex if possible so that outermost ports are corresponding, next inner ports
-        // are corresponding, ... innermost ports are corresponding. For this use:
-        // sugy.getCorrespondingPortAtDummy(port);
-
         //first sort ports at dummy turning vertex -- this should be unproblematic
         Collections.sort(ports, Comparator.comparingDouble(port2adjacentNodePosition::get));
 

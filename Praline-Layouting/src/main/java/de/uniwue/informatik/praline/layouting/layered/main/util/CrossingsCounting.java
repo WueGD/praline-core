@@ -51,8 +51,6 @@ public class CrossingsCounting {
         }
         //TODO: add adjacent segments for adjacent edges (currently only between paths of the same edge)
 
-        //TODO: repair overlaying paths (already in Sugiyama when composing an edge from multiple paths)
-
         //now count crossings
         //TODO currently this is done naively in quadratic time. if necessary make it O(n log n) later
         int counter = 0;

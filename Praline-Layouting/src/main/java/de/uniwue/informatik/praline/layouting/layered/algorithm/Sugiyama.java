@@ -4,6 +4,9 @@ import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
+import de.uniwue.informatik.praline.datastructure.paths.Path;
+import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
+import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.io.output.svg.SVGDrawer;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CMResult;
@@ -21,6 +24,8 @@ import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.Du
 import de.uniwue.informatik.praline.layouting.layered.algorithm.restore.NoEdgePort;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.restore.OneNodeEdge;
 
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
 import java.util.*;
 
 public class Sugiyama {
@@ -114,6 +119,7 @@ public class Sugiyama {
         handleOneNodeEdge();
         // if the Graph is not connected use just biggest connected component
         breakDownToBiggestConnectedComponent();
+        //TODO: draw all components
     }
     // todo: change method back to private when done with debugging and testing
 
@@ -236,11 +242,27 @@ public class Sugiyama {
                     Edge originalEdge = dummyEdge2RealEdge.get(edge);
                     replaceByOriginalEdge(edge, originalEdge);
                     hasChanged = true;
-                } else if (hyperEdgeParts.containsKey(edge)) {
-                    Edge originalEdge = hyperEdges.get(hyperEdgeParts.get(edge));
-                    replaceByOriginalEdge(edge, originalEdge);
-                    hasChanged = true;
                 }
+            }
+        }
+
+        //until now all edges are deg 2 (so there are no hyperedges)
+        //because they are composite of many different edge parts each contributing a path, they have multiple paths
+        // now. We unify all the paths to one long path
+        for (Edge edge : this.getGraph().getEdges()) {
+            unifyPathsOfDeg2Edge(edge);
+        }
+
+        //unify single parts of hyperedges to one edge each
+        while (hasChanged) {
+            hasChanged = false;
+            for (Edge edge : new ArrayList<>(this.getGraph().getEdges())) {
+                //TODO: re-store hyperedges
+//                if (hyperEdgeParts.containsKey(edge)) {
+//                    Edge originalEdge = hyperEdges.get(hyperEdgeParts.get(edge));
+//                    replaceByOriginalEdge(edge, originalEdge);
+//                    hasChanged = true;
+//                }
             }
         }
 
@@ -280,26 +302,103 @@ public class Sugiyama {
         }
     }
 
+    private void unifyPathsOfDeg2Edge(Edge edge) {
+        //first find all segments of the edge paths
+        Set<Line2D.Double> allSegments = new LinkedHashSet<>();
+        for (Path path : edge.getPaths()) {
+            allSegments.addAll(((PolygonalPath) path).getSegments());
+        }
+        //now re-construct whole paths beginning from the start port
+        Port startPort = edge.getPorts().get(0);
+        Port endPort = edge.getPorts().get(1);
+        Point2D.Double nextPoint = findSegmentPointAt((Rectangle) startPort.getShape(), allSegments);
+        Point2D.Double endPoint = findSegmentPointAt((Rectangle) endPort.getShape(), allSegments);
+        PolygonalPath newPath = new PolygonalPath();
+        newPath.setStartPoint(nextPoint);
+        newPath.setEndPoint(endPoint);
+        //find all inner bend points
+        Point2D.Double prevPoint = null;
+        Point2D.Double curPoint = null;
+        while (curPoint == null || !nextPoint.equals(endPoint)) {
+            prevPoint = curPoint;
+            curPoint = nextPoint;
+            Line2D.Double curSegment = findSegmentAt(curPoint, allSegments);
+            allSegments.remove(curSegment);
+            nextPoint = getOtherEndPoint(curSegment, curPoint);
+
+            if (prevPoint != null && !areOnALine(prevPoint, curPoint, nextPoint)) {
+                newPath.getBendPoints().add(curPoint);
+            }
+        }
+        //add new path and remove all old ones
+        edge.removeAllPaths();
+        edge.addPath(newPath);
+    }
+
+    private boolean areOnALine(Point2D.Double prevPoint, Point2D.Double curPoint, Point2D.Double nextPoint) {
+        return new Line2D.Double(prevPoint, nextPoint).ptSegDist(curPoint) == 0;
+    }
+
+    private Point2D.Double getOtherEndPoint(Line2D.Double segment, Point2D.Double point) {
+        if (segment.getP1().equals(point)) {
+            return (Point2D.Double) segment.getP2();
+        }
+        return (Point2D.Double) segment.getP1();
+    }
+
+    private Line2D.Double findSegmentAt(Point2D.Double point, Set<Line2D.Double> allSegments) {
+        for (Line2D.Double segment : allSegments) {
+            if (point.equals(segment.getP1())) {
+                return segment;
+            }
+            if (point.equals(segment.getP2())) {
+                return segment;
+            }
+        }
+        return null;
+    }
+
+    private Point2D.Double findSegmentPointAt(Rectangle portRectangle, Set<Line2D.Double> allSegments) {
+        for (Line2D.Double segment : allSegments) {
+            if (portRectangle.intersectsLine(new Line2D.Double(segment.getP1(), segment.getP1()))) {
+                return (Point2D.Double) segment.getP1();
+            }
+            if (portRectangle.intersectsLine(new Line2D.Double(segment.getP2(), segment.getP2()))) {
+                return (Point2D.Double) segment.getP2();
+            }
+        }
+        return null;
+    }
+
     private void replaceByOriginalEdge(Edge dummyEdge, Edge originalEdge) {
         if (!getGraph().getEdges().contains(originalEdge)) {
             getGraph().addEdge(originalEdge);
+            if (!originalEdge.getPaths().isEmpty()) {
+                //TODO this was introduced to avoid doubling of edge paths. but ideally that should not be necessary
+                // (and this could even lead to new problems) -- so better fix edge-path insertion and edge-removal
+                // in DrawingPreparation
+                originalEdge.removeAllPaths();
+            }
         }
         //transfer the paths form the dummy to the original edge
-        //TODO: unify paths to one (or few) long paths
         originalEdge.addPaths(dummyEdge.getPaths());
+        //add ports of dummy edge to original edge
+        for (Port port : dummyEdge.getPorts()) {
+            Vertex vertex = port.getVertex();
+            if (!dummyTurningNodes.containsKey(vertex)
+                    && !dummyNodesLongEdges.containsKey(vertex)
+                    && !originalEdge.getPorts().contains(port)) {
+                originalEdge.addPort(port);
+            }
+        }
         getGraph().removeEdge(dummyEdge);
     }
 
     // todo: change method back to private when done with debugging and testing
 
     public void drawResult (String path) {
-        if (path == null || path.equals("")) {
-            SVGDrawer dr = new SVGDrawer(this.getGraph());
-            dr.draw("test4xxx.svg", drawInfo);
-        } else {
-            SVGDrawer dr = new SVGDrawer(this.getGraph());
-            dr.draw(path, drawInfo);
-        }
+        SVGDrawer dr = new SVGDrawer(this.getGraph());
+        dr.draw(path, drawInfo);
     }
 
     ////////////////////////
