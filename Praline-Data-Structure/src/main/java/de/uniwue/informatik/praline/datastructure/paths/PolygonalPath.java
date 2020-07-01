@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.*;
 
@@ -114,6 +115,18 @@ public class PolygonalPath extends Path {
         allPoints.addAll(getBendPoints());
         allPoints.add(getEndPoint());
         return Collections.unmodifiableList(allPoints);
+    }
+
+    public List<Line2D.Double> getSegments() {
+        List<Line2D.Double> allSegments = new ArrayList<>(bendPoints.size() + 1);
+        Point2D.Double prevPoint = null;
+        for (Point2D.Double curPoint : getTerminalAndBendPoints()) {
+            if (prevPoint != null) {
+                allSegments.add(new Line2D.Double(prevPoint, curPoint));
+            }
+            prevPoint = curPoint;
+        }
+        return allSegments;
     }
 
 
