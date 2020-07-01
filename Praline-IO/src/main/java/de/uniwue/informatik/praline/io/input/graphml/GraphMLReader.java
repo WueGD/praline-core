@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import javax.xml.bind.JAXB;
 import java.io.File;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -37,11 +37,11 @@ public class GraphMLReader
 
     public static Graph create(GraphmlType graphML)
     {
-        Map<String, Vertex> nodeMap = new HashMap<>();
+        Map<String, Vertex> nodeMap = new LinkedHashMap<>();
         List<Edge> edges = new LinkedList<>();
 
         // Read attribute keys
-        Map<AttributeEnum, String> attributeIds = new HashMap<>();
+        Map<AttributeEnum, String> attributeIds = new LinkedHashMap<>();
         for (KeyType key : graphML.getKey())
         {
             for (AttributeEnum attribute : AttributeEnum.values())

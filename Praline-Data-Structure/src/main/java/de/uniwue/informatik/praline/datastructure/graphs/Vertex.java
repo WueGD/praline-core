@@ -42,7 +42,7 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
      * contains only top level {@link PortGroup}s and {@link Port}s (and in them possibly contained elements)
      */
     private final List<PortComposition> portCompositions;
-    private final HashSet<Port> ports;
+    private final LinkedHashSet<Port> ports;
     private VertexGroup vertexGroup;
     private final LabelManager labelManager;
     private Shape shape;
@@ -93,12 +93,12 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
      */
     public Vertex(Collection<PortComposition> portCompositions, Collection<Label> labels, Label mainLabel,
                   Shape shape) {
-        this.ports = new HashSet<>();
+        this.ports = new LinkedHashSet<>();
         this.portCompositions = new ArrayList<>();
         if (portCompositions != null) {
             //find top level PortCompositions and lower level ones
             //moreover find all "real" ports
-            HashSet<PortComposition> allLowerLevelPortCompositions = new HashSet<>();
+            LinkedHashSet<PortComposition> allLowerLevelPortCompositions = new LinkedHashSet<>();
             for (PortComposition portComposition : portCompositions) {
                 getContainedPortCompositionsAndAllPorts(allLowerLevelPortCompositions, this.ports, portComposition);
             }
@@ -176,9 +176,9 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
      */
     public boolean addPortComposition(PortComposition pc) {
         //check if already contained
-        HashSet<PortComposition> allAlreadyContainedPortCompositions = new HashSet<>();
+        LinkedHashSet<PortComposition> allAlreadyContainedPortCompositions = new LinkedHashSet<>();
         for (PortComposition currPortComposition : portCompositions) {
-            getContainedPortCompositionsAndAllPorts(allAlreadyContainedPortCompositions, new HashSet<>(),
+            getContainedPortCompositionsAndAllPorts(allAlreadyContainedPortCompositions, new LinkedHashSet<>(),
                     currPortComposition);
             allAlreadyContainedPortCompositions.add(currPortComposition);
         }
@@ -220,9 +220,9 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
             //un-link from this vertex
             assignPortCompositionRecursivelyToVertex(pc, null);
             //find ports that are now alive after the previous removal
-            HashSet<Port> currentPorts = new HashSet<>();
+            LinkedHashSet<Port> currentPorts = new LinkedHashSet<>();
             for (PortComposition topLevelPortComposition : portCompositions) {
-                getContainedPortCompositionsAndAllPorts(new HashSet<>(), currentPorts, topLevelPortComposition);
+                getContainedPortCompositionsAndAllPorts(new LinkedHashSet<>(), currentPorts, topLevelPortComposition);
             }
             //compare this newly alive ports with the previously alive ports
             for (Port oldPort : new ArrayList<>(ports)) {
@@ -241,8 +241,8 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
      *==========*/
 
     protected void updatePortsOfVertex(PortComposition pc) {
-        HashSet<Port> newPorts = new HashSet<>();
-        getContainedPortCompositionsAndAllPorts(new HashSet<>(), newPorts, pc);
+        LinkedHashSet<Port> newPorts = new LinkedHashSet<>();
+        getContainedPortCompositionsAndAllPorts(new LinkedHashSet<>(), newPorts, pc);
         this.ports.addAll(newPorts);
     }
 
@@ -250,8 +250,8 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
         ports.remove(p);
     }
 
-    private void getContainedPortCompositionsAndAllPorts(HashSet<PortComposition> allLowerLevelPortCompositions,
-                                                         HashSet<Port> allPorts,
+    private void getContainedPortCompositionsAndAllPorts(LinkedHashSet<PortComposition> allLowerLevelPortCompositions,
+                                                         LinkedHashSet<Port> allPorts,
                                                          PortComposition portComposition) {
         //add Port if possible
         if (portComposition instanceof Port) {

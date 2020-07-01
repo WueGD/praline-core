@@ -74,7 +74,7 @@ public class EdgeLabelManager extends LabelManager {
                         Map<Port, List<Label>> portLabels, Label mainLabel) {
 
         super(managedLabeledObject, innerLabels, mainLabel);
-        this.portLabels = new HashMap<>(portLabels == null ? 2 : portLabels.size());
+        this.portLabels = new LinkedHashMap<>(portLabels == null ? 2 : portLabels.size());
         if (portLabels != null) {
             for (Port port : portLabels.keySet()) {
                 if (portLabels.get(port) != null) {
@@ -127,7 +127,7 @@ public class EdgeLabelManager extends LabelManager {
      *      to avoid unnecessary full copying!
      */
     public Set<PairPort2Labels> getAllPortLabels() {
-        HashSet<PairPort2Labels> allPortLabels = new HashSet<>();
+        LinkedHashSet<PairPort2Labels> allPortLabels = new LinkedHashSet<>();
         for (Port port : this.getRegisteredPorts()) {
             if (this.getPortLabels(port) != null) {
                 allPortLabels.add(new PairPort2Labels(port, this.getPortLabels(port)));
