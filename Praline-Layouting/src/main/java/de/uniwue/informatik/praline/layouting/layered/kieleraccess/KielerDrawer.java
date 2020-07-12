@@ -28,12 +28,12 @@ import java.util.*;
 public class KielerDrawer {
 
     public static final String JSON_PATH =
-//            "data/largest-comp-praline-package-2020-05-18/lc-praline-1dda4e2a-ae64-4e76-916a-822c4e838c41.json";
-            "data/example-very-small/praline-a0b0b5a2-2c23-43b0-bb87-4ddeb34d5a02.json";
-//            "data/example-pseudo-plans/praline-pseudo-plan-0a94e4bf6d729042.json";
-//            "data/example-pseudo-plans/praline-pseudo-plan-0f90e022f10bae3f.json";
+//            "Praline-Layouting/data/lc-praline-package-2020-05-18/lc-praline-1dda4e2a-ae64-4e76-916a-822c4e838c41.json";
+            "Praline-Layouting/data/example-very-small/praline-a0b0b5a2-2c23-43b0-bb87-4ddeb34d5a02.json";
+//            "Praline-Layouting/data/example-pseudo-plans/praline-pseudo-plan-0a94e4bf6d729042.json";
+//            "Praline-Layouting/data/example-pseudo-plans/praline-pseudo-plan-0f90e022f10bae3f.json";
 
-    public static final String SVG_TARGET_PATH = "testKIELER.svg";
+    public static final String SVG_TARGET_PATH = "Praline-Layouting/results/testKIELER.svg";
 
     public static void main(String[] args) throws IOException {
         //test this class here
@@ -172,6 +172,9 @@ public class KielerDrawer {
         }
         for (Edge pralineEdge : pralineGraph.getEdges()) {
             ElkEdge edge = edges.get(pralineEdge);
+            if (edge.getSections().isEmpty()) {
+                continue;
+            }
             ElkEdgeSection path = edge.getSections().get(0);
             pralineEdge.addPath(new PolygonalPath(
                     new Point2D.Double(path.getStartX(), path.getStartY()),
@@ -223,6 +226,14 @@ public class KielerDrawer {
             vertex.getPorts().addAll(portsOfThisVertex);
             if (List.class.isAssignableFrom(portsOfThisVertex.getClass())) {
                 vertex.setProperty(LayeredOptions.PORT_CONSTRAINTS, PortConstraints.FIXED_ORDER);
+            }
+            else {
+                //if it contains a group, fix at least sides
+                for (PortComposition portComposition : pralineVertex.getPortCompositions()) {
+                    if (portComposition instanceof PortGroup) {
+                        vertex.setProperty(LayeredOptions.PORT_CONSTRAINTS, PortConstraints.FIXED_SIDE);
+                    }
+                }
             }
 
             //find port pairings
