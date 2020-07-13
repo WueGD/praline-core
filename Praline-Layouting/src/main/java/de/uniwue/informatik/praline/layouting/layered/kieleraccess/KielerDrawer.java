@@ -5,6 +5,7 @@ import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.utils.Serialization;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.kieleraccess.util.OrthogonalCrossingsAnalysis;
 import org.eclipse.elk.alg.layered.ElkLayered;
 import org.eclipse.elk.alg.layered.graph.LGraph;
@@ -17,7 +18,6 @@ import org.eclipse.elk.core.util.BasicProgressMonitor;
 import org.eclipse.elk.graph.*;
 import org.eclipse.elk.graph.impl.ElkGraphFactoryImpl;
 import org.eclipse.emf.common.util.EList;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.Sugiyama;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 
@@ -50,7 +50,7 @@ public class KielerDrawer {
         System.out.println("KIELER test done successfully");
     }
 
-    private Sugiyama sugiyForInternalUse;
+    private SugiyamaLayouter sugiyForInternalUse;
     private DrawingInformation drawInfo;
     private LinkedHashMap<Vertex, ElkNode> vertices;
     private LinkedHashMap<Port, ElkPort> ports;
@@ -74,7 +74,7 @@ public class KielerDrawer {
         this.drawInfo = drawInfo;
 
         //do first steps of the "main" implementation to get a directed graph from an undirected one
-        sugiyForInternalUse = new Sugiyama(graph);
+        sugiyForInternalUse = new SugiyamaLayouter(graph);
 
         sugiyForInternalUse.construct();
 
@@ -84,11 +84,11 @@ public class KielerDrawer {
     }
 
 
-    public KielerDrawer(Sugiyama sugiyWithPrecomputedDirectedGraph) {
+    public KielerDrawer(SugiyamaLayouter sugiyWithPrecomputedDirectedGraph) {
         this(sugiyWithPrecomputedDirectedGraph, new DrawingInformation());
     }
 
-    public KielerDrawer(Sugiyama sugiyWithPrecomputedDirectedGraph, DrawingInformation drawInfo) {
+    public KielerDrawer(SugiyamaLayouter sugiyWithPrecomputedDirectedGraph, DrawingInformation drawInfo) {
 
         this.drawInfo = drawInfo;
 

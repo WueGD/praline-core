@@ -1,10 +1,10 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting;
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
 import edu.uci.ics.jung.algorithms.layout.util.RandomLocationTransformer;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.Sugiyama;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
 
 import java.awt.*;
@@ -13,7 +13,7 @@ import java.util.List;
 
 public class DirectionAssignment {
 
-    public void randomDirected (Sugiyama sugy) {
+    public void randomDirected (SugiyamaLayouter sugy) {
         Map<Vertex, Integer> values = new LinkedHashMap<>();
         List<Vertex> vertices = new LinkedList<>(sugy.getGraph().getVertices());
         Collections.shuffle(vertices, Constants.random);
@@ -33,7 +33,7 @@ public class DirectionAssignment {
         }
     }
 
-    public void forceDirected (Sugiyama sugy) {
+    public void forceDirected (SugiyamaLayouter sugy) {
         // create new Jung graph
         UndirectedSparseGraph<String,String> junggraph = new UndirectedSparseGraph<>();
         int edgeCounter = 0;
@@ -80,7 +80,7 @@ public class DirectionAssignment {
         }
     }
 
-    public void breadthFirstSearch(Sugiyama sugy) {
+    public void breadthFirstSearch(SugiyamaLayouter sugy) {
         if (sugy.getGraph().getVertices().isEmpty()) {
             return;
         }

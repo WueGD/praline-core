@@ -4,7 +4,7 @@ import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.Sugiyama;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CMResult;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 
@@ -13,12 +13,12 @@ import java.util.*;
 
 public class DrawingPreparation {
 
-    private Sugiyama sugy;
+    private SugiyamaLayouter sugy;
     private DrawingInformation drawInfo;
     private CMResult cmResult;
     private double delta;
 
-    public DrawingPreparation (Sugiyama sugy) {
+    public DrawingPreparation (SugiyamaLayouter sugy) {
         this.sugy = sugy;
     }
 

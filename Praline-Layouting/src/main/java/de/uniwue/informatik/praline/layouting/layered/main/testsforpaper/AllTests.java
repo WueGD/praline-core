@@ -4,7 +4,7 @@ import de.uniwue.informatik.praline.datastructure.graphs.Graph;
 import de.uniwue.informatik.praline.datastructure.graphs.Vertex;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.utils.Serialization;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.Sugiyama;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 import de.uniwue.informatik.praline.layouting.layered.kieleraccess.KielerDrawer;
@@ -219,7 +219,7 @@ public class AllTests {
 
         int numberVtcs = 0;
         for (int i = 0; i < noi ; i++) {
-//            Sugiyama lastSugiy = null;
+//            SugiyamaLayouter lastSugiy = null;
             for (String method : methods) {
                 System.out.println("Progress: " + progress() + "/" + totalSteps);
 //                System.out.println(method);
@@ -230,7 +230,7 @@ public class AllTests {
 //                ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
                 long startTime = mxBean.getThreadCpuTime(Thread.currentThread().getId());
 
-                Sugiyama sugiy = new Sugiyama(graph);
+                SugiyamaLayouter sugiy = new SugiyamaLayouter(graph);
 
                 sugiy.construct();
 

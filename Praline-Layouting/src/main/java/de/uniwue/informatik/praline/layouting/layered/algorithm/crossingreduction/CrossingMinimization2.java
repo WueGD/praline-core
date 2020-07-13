@@ -1,8 +1,8 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction;
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import edu.uci.ics.jung.graph.util.Pair;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.Sugiyama;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 
@@ -23,7 +23,7 @@ public class CrossingMinimization2 {
     public static final boolean DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE = true;
     public static final boolean DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX = true;
 
-    private Sugiyama sugy;
+    private SugiyamaLayouter sugy;
     private List<List<Vertex>> currentNodeOrder;
     private Map<Vertex, List<Port>> currentTopPortOrder;
     private Map<Vertex, List<Port>> currentBottomPortOrder;
@@ -37,7 +37,7 @@ public class CrossingMinimization2 {
     private boolean movePortsAdjToTurningDummiesToTheOutside;
     private boolean placeTurningDummiesNextToTheirVertex;
 
-    public CrossingMinimization2(Sugiyama sugy) {
+    public CrossingMinimization2(SugiyamaLayouter sugy) {
         this.sugy = sugy;
     }
 

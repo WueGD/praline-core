@@ -2,7 +2,7 @@ package de.uniwue.informatik.praline.layouting.layered.main;
 
 import de.uniwue.informatik.praline.datastructure.graphs.Graph;
 import de.uniwue.informatik.praline.datastructure.utils.Serialization;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.Sugiyama;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 
@@ -83,14 +83,14 @@ public class MainDrawPackage {
     public static void parallelio (File file) throws IOException {
         int numberOfVertices = -1;
         int bestNumberOfCrossings = Integer.MAX_VALUE;
-        Sugiyama bestRunSugy = null;
+        SugiyamaLayouter bestRunSugy = null;
 
         for (int i = 0; i < NUMBER_OF_REPETITIONS_PER_GRAPH; i++) {
             Graph graph = Serialization.read(file, Graph.class);
 
             numberOfVertices = graph.getVertices().size();
 
-            Sugiyama sugy = new Sugiyama(graph);
+            SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
 
             sugy.construct();
             sugy.assignDirections(DirectionMethod.FORCE);

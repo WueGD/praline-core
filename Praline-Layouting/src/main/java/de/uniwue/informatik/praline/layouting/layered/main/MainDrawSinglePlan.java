@@ -2,7 +2,7 @@ package de.uniwue.informatik.praline.layouting.layered.main;
 
 import de.uniwue.informatik.praline.datastructure.graphs.Graph;
 import de.uniwue.informatik.praline.datastructure.utils.Serialization;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.Sugiyama;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 import de.uniwue.informatik.praline.layouting.layered.main.util.BendsCounting;
@@ -38,7 +38,7 @@ public class MainDrawSinglePlan {
         System.out.println("Read graph " + SOURCE_PATH);
         System.out.println();
 
-        Sugiyama sugy = new Sugiyama(graph);
+        SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
 
         sugy.construct();
         sugy.assignDirections(DirectionMethod.BFS);

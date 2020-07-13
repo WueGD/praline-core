@@ -3,7 +3,7 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm.edgerouting;
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.Sugiyama;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CMResult;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 
@@ -15,11 +15,11 @@ import java.util.Map;
 
 public class EdgeRouting {
 
-    private Sugiyama sugy;
+    private SugiyamaLayouter sugy;
     private DrawingInformation drawInfo;
     private CMResult cmResult;
 
-    public EdgeRouting (Sugiyama sugy, CMResult cmResult, DrawingInformation drawingInformation) {
+    public EdgeRouting (SugiyamaLayouter sugy, CMResult cmResult, DrawingInformation drawingInformation) {
         this.sugy = sugy;
         this.drawInfo = drawingInformation;
         this.cmResult = cmResult;

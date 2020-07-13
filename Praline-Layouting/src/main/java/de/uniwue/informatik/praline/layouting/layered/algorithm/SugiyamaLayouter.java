@@ -9,6 +9,7 @@ import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.io.output.svg.SVGDrawer;
+import de.uniwue.informatik.praline.layouting.PralineLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CMResult;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimization2;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
@@ -28,7 +29,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.*;
 
-public class Sugiyama {
+public class SugiyamaLayouter implements PralineLayouter {
 
     // todo: adapt these comments to final status when done with debugging and testing
     //input: graph
@@ -64,11 +65,11 @@ public class Sugiyama {
     private Map<Integer, Collection<Vertex>> rankToNodes;
     private CMResult orders;
     private boolean hasAssignedLayeres;
-    public Sugiyama (Graph graph) {
+    public SugiyamaLayouter(Graph graph) {
         this(graph, new DrawingInformation());
     }
 
-    public Sugiyama (Graph graph, DrawingInformation drawInfo) {
+    public SugiyamaLayouter(Graph graph, DrawingInformation drawInfo) {
         this.graph = graph;
         initialise();
         for (Vertex node : graph.getVertices()) {
@@ -137,18 +138,18 @@ public class Sugiyama {
                 break;
         }
     }
-    public void copyDirections(Sugiyama otherSugiyamaWithSameGraph)  {
-        for (Edge edge : otherSugiyamaWithSameGraph.getGraph().getEdges()) {
+    public void copyDirections(SugiyamaLayouter otherSugiyamaLayouterWithSameGraph)  {
+        for (Edge edge : otherSugiyamaLayouterWithSameGraph.getGraph().getEdges()) {
             this.assignDirection(edge,
-                    otherSugiyamaWithSameGraph.getStartNode(edge), otherSugiyamaWithSameGraph.getEndNode(edge));
+                    otherSugiyamaLayouterWithSameGraph.getStartNode(edge), otherSugiyamaLayouterWithSameGraph.getEndNode(edge));
         }
 
         //check that all edges got a direction
         for (Edge edge : this.getGraph().getEdges()) {
             if (!edgeToStart.containsKey(edge)) {
                 throw new NoSuchElementException("No edge direction found to copy. The input parameter " +
-                        "otherSugiyamaWithSameGraph has either not yet directions assigned or the graph is not " +
-                        "identical with the graph of this Sugiyama object.");
+                        "otherSugiyamaLayouterWithSameGraph has either not yet directions assigned or the graph is not " +
+                        "identical with the graph of this SugiyamaLayouter object.");
             }
         }
     }

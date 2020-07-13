@@ -2,7 +2,7 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment
 
 import de.uniwue.informatik.praline.datastructure.graphs.Edge;
 import de.uniwue.informatik.praline.datastructure.graphs.Vertex;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.Sugiyama;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 
 import java.util.*;
 
@@ -11,11 +11,11 @@ public class LayerAssignment {
     private Collection<Edge> tree;
     private Map<Vertex, Collection<Edge>> treeNodes;
     private Map<Vertex, Integer> ranks;
-    private Sugiyama sugy;
+    private SugiyamaLayouter sugy;
     private Set<Vertex> tailComponent;
     private Set<Vertex> headComponent;
 
-    public LayerAssignment (Sugiyama sugy) {
+    public LayerAssignment (SugiyamaLayouter sugy) {
         this.sugy = sugy;
         this.tree = new LinkedHashSet<>();
         this.treeNodes = new LinkedHashMap<>();

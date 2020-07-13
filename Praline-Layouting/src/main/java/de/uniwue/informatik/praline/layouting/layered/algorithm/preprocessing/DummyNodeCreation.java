@@ -3,14 +3,14 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing;
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.Sugiyama;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 
 import java.util.*;
 
 public class DummyNodeCreation {
 
-    private Sugiyama sugy;
+    private SugiyamaLayouter sugy;
     private Map<Vertex, Integer> newRanks;
     private Map<Vertex, Edge> dummyNodesLongEdges;
     private Map<Vertex, Vertex> dummyTurningNodes;
@@ -20,7 +20,7 @@ public class DummyNodeCreation {
     private Map<Edge, Edge> dummyEdge2RealEdge;
     private boolean[] usedRanks;
 
-    public DummyNodeCreation (Sugiyama sugy) {
+    public DummyNodeCreation (SugiyamaLayouter sugy) {
         this.sugy = sugy;
         this.newRanks = new LinkedHashMap<>();
         this.dummyNodesLongEdges = new LinkedHashMap<>();
@@ -67,7 +67,7 @@ public class DummyNodeCreation {
                     } else if (pc instanceof PortGroup && ports2.isEmpty()) {
                         PortUtils.getPortsRecursively(pc, ports2);
                     } else {
-                        // something went wrong during Sugiyama.construct().handleVertexGroup()
+                        // something went wrong during SugiyamaLayouter.construct().handleVertexGroup()
                     }
                 }
 

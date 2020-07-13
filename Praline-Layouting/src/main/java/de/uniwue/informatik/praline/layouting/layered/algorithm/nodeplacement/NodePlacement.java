@@ -7,7 +7,7 @@ import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.Sugiyama;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CMResult;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.restore.OneNodeEdge;
@@ -16,7 +16,7 @@ import java.util.*;
 
 public class NodePlacement {
 
-    private Sugiyama sugy;
+    private SugiyamaLayouter sugy;
     private DrawingInformation drawInfo;
     private List<List<Port>> structure;
     private CMResult cmResult;
@@ -33,7 +33,7 @@ public class NodePlacement {
     private Map<Port, PortValues> portValues;
     private double delta;
 
-    public NodePlacement (Sugiyama sugy, CMResult cmResult, DrawingInformation drawingInformation) {
+    public NodePlacement (SugiyamaLayouter sugy, CMResult cmResult, DrawingInformation drawingInformation) {
         this.sugy = sugy;
         this.cmResult = cmResult;
         this.drawInfo = drawingInformation;
