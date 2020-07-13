@@ -11,6 +11,7 @@
         <module>Praline-Data-Structure</module>
         <module>Praline-IO</module>
         <module>Praline-Layouting</module>
+        <module>Jung-Layouting</module>
     </modules>
 
     <properties>
