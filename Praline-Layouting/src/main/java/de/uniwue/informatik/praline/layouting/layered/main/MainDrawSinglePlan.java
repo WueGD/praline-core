@@ -11,7 +11,7 @@ import de.uniwue.informatik.praline.layouting.layered.main.util.CrossingsCountin
 import java.io.File;
 import java.io.IOException;
 
-public class SingleTest {
+public class MainDrawSinglePlan {
 
     private static final String SOURCE_PATH =
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18/lc-praline-1dda4e2a-ae64-4e76-916a-822c4e838c41.json";

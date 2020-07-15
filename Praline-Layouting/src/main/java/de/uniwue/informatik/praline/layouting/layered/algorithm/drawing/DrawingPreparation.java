@@ -762,7 +762,7 @@ public class DrawingPreparation {
                 }
             }
         }
-        // add Edges with Paths for left dummyNodes
+        // add Edges with Paths for remaining dummyNodes
         vertices = new LinkedHashSet<>(sugy.getGraph().getVertices());
         for (Vertex node : vertices) {
             if (sugy.isDummy(node)) {

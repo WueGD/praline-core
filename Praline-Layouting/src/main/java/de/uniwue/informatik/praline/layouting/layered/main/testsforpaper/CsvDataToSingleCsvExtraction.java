@@ -14,18 +14,21 @@ import java.util.stream.Stream;
 public class CsvDataToSingleCsvExtraction {
 
     private static final String DATA_PATH =
-            "Praline-Layouting/results/paper-all-tests-2020-06-10_06-18-04";
+            "Praline-Layouting/results/" +
+//                    "paper-all-tests-2020-06-10_06-18-04";
+                    "2020-07-09_18-07-13";
 
     private static final String[] DATA_DIRS =
             {
-                    "DA_lc-praline-package-2020-05-18",
-                    "DA_generated_2020-06-04_18-39-49",
+//                    "DA_lc-praline-package-2020-05-18",
+//                    "DA_generated_2020-06-04_18-39-49",
                     "CM_lc-praline-package-2020-05-18",
-                    "CM_generated_2020-06-04_18-39-49"
+//                    "CM_generated_2020-06-04_18-39-49"
+                    "CM_generated_2020-07-09_05-07-43"
             };
 
     private static final String TARGET_PATH =
-            "Praline-Layouting/results/paper-all-tests-2020-06-10_06-18-04/csv-summary";
+            "Praline-Layouting/results/2020-07-09_18-07-13/csv-summary";
 
     private static final String[] TARGET_FILE_PREFIX =
             {
@@ -34,14 +37,13 @@ public class CsvDataToSingleCsvExtraction {
             };
     private static final String[] TARGET_FILES =
             {
-                    "DA_lc-praline-package-2020-05-18",
-                    "DA_generated_2020-06-04_18-39-49",
+//                    "DA_lc-praline-package-2020-05-18",
+//                    "DA_generated_2020-06-04_18-39-49",
                     "CM_lc-praline-package-2020-05-18",
-                    "CM_generated_2020-06-04_18-39-49"
+//                    "CM_generated_2020-06-04_18-39-49"
+                    "CM_generated_2020-07-09_05-07-43"
             };
     private static final String TARGET_FILE_SUFFIX = ".csv";
-
-    private static final String PATH_RESULTS = "results/diagram.csv";
 
     private static final String[] CONSIDER_FILES =
             {
@@ -49,7 +51,7 @@ public class CsvDataToSingleCsvExtraction {
                     "nob"
             }; //"nodn", "time", "space"
 
-    private static final Map<String, String> KNOWN_NAMES = new LinkedHashMap<String, String>(){
+    private static final Map<String, String> KNOWN_NAMES = new LinkedHashMap<>() {
         {
             put("#vtcs", "vtcs");
             put("ports-noMove-noPlaceTurnings", "ports");

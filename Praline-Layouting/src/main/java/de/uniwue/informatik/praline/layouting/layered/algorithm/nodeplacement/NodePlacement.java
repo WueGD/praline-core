@@ -91,7 +91,7 @@ public class NodePlacement {
         // bring back original order
         for (List<Port> order : structure) {
             Collections.reverse(order);
-       }
+        }
         // change to positive x-values
         makePositive();
         // creates shapes for all nodes

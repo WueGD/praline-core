@@ -16,18 +16,21 @@ import java.util.stream.Stream;
 public class CsvDataExtraction {
 
     private static final String DATA_PATH =
-            "Praline-Layouting/results/paper-all-tests-2020-06-10_06-18-04";
+            "Praline-Layouting/results/" +
+//                    "paper-all-tests-2020-06-10_06-18-04";
+                    "2020-07-09_18-07-13";
 
     private static final String[] DATA_DIRS =
             {
-                    "DA_lc-praline-package-2020-05-18",
-                    "DA_generated_2020-06-04_18-39-49",
+//                    "DA_lc-praline-package-2020-05-18",
+//                    "DA_generated_2020-06-04_18-39-49",
                     "CM_lc-praline-package-2020-05-18",
-                    "CM_generated_2020-06-04_18-39-49"
+//                    "CM_generated_2020-06-04_18-39-49"
+                    "CM_generated_2020-07-09_05-07-43"
             };
 
 
-    private static final boolean TABLE_CONTENT_OUTPUT = true; //otherwise better readable for humans
+    private static final boolean TABLE_CONTENT_OUTPUT = false; //otherwise better readable for humans
 
     private static final DecimalFormat OUTPUT_FORMAT_MEAN =
             new DecimalFormat("0.0", DecimalFormatSymbols.getInstance(Locale.US));
