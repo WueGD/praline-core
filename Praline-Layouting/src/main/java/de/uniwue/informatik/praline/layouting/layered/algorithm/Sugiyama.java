@@ -84,7 +84,6 @@ public class Sugiyama {
     public Graph computeLayout (DirectionMethod method, CrossingMinimizationMethod cmMethod, int numberOfIterationsCM) {
         //chose methods for directionassignment
         //chose other steps to be done or not
-        //maybe preferred edge distance
         construct();
         assignDirections(method);
         assignLayers();
@@ -1164,6 +1163,10 @@ public class Sugiyama {
 
     public Port getCorrespondingPortAtDummy (Port port) {
         return correspondingPortsAtDummy.get(port);
+    }
+
+    public boolean isTopPort (Port port) {
+        return orders.getTopPortOrder().get(port.getVertex()).contains(port);
     }
 
     public Map<Edge, Edge> getDummyEdge2RealEdge() {
