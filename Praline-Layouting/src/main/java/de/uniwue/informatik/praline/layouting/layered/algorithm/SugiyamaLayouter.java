@@ -31,10 +31,10 @@ import java.util.*;
 
 public class SugiyamaLayouter implements PralineLayouter {
 
-    // todo: adapt these comments to final status when done with debugging and testing
-    //input: graph
-    //output: nodepositions (shape - rectangle), portpositions (shape - rectangle), edgebendpositions respectively edgepaths (polygonalPath)
-    //information: edgedirection, layersofnodes, orderofnodesperlayer, orderofportspernode, sizeofnodes
+    public static final DirectionMethod DEFAULT_DIRECTION_METHOD = DirectionMethod.FORCE;
+    public static final CrossingMinimizationMethod DEFAULT_CROSSING_MINIMIZATION_METHOD =
+            CrossingMinimizationMethod.PORTS;
+    public static final int DEFAULT_NUMBER_OF_CM_ITERATIONS = 5; //iterations for crossing minimization
 
     private Graph graph;
     private DrawingInformation drawInfo;
@@ -65,6 +65,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     private Map<Integer, Collection<Vertex>> rankToNodes;
     private CMResult orders;
     private boolean hasAssignedLayeres;
+
     public SugiyamaLayouter(Graph graph) {
         this(graph, new DrawingInformation());
     }
@@ -82,7 +83,12 @@ public class SugiyamaLayouter implements PralineLayouter {
         this.drawInfo = drawInfo;
     }
 
-    public Graph computeLayout (DirectionMethod method, CrossingMinimizationMethod cmMethod, int numberOfIterationsCM) {
+    @Override
+    public void computeLayout() {
+        computeLayout(DEFAULT_DIRECTION_METHOD, DEFAULT_CROSSING_MINIMIZATION_METHOD, DEFAULT_NUMBER_OF_CM_ITERATIONS);
+    }
+
+    public void computeLayout (DirectionMethod method, CrossingMinimizationMethod cmMethod, int numberOfIterationsCM) {
         //chose methods for directionassignment
         //chose other steps to be done or not
         //maybe preferred edge distance
@@ -94,7 +100,6 @@ public class SugiyamaLayouter implements PralineLayouter {
         nodePositioning();
         edgeRouting();
         prepareDrawing();
-        return graph;
     }
 
     // change graph so that
@@ -1232,8 +1237,19 @@ public class SugiyamaLayouter implements PralineLayouter {
         return width;
     }
 
-    public Graph getGraph () {
+    @Override
+    public Graph getGraph() {
         return this.graph;
+    }
+
+    @Override
+    public DrawingInformation getDrawingInformation() {
+        return this.drawInfo;
+    }
+
+    @Override
+    public void setDrawingInformation(DrawingInformation drawInfo) {
+        this.drawInfo = drawInfo;
     }
 
     /////////////////
