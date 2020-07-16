@@ -166,7 +166,13 @@ public class Graph {
     }
 
     public void addVertexGroup(VertexGroup vg) {
+        if (vg == null) {
+            return;
+        }
         vertexGroups.add(vg);
+        for (Vertex containedVertex : vg.getAllRecursivelyContainedVertices()) {
+            containedVertex.setVertexGroup(vg);
+        }
     }
 
     public boolean removeVertexGroup(VertexGroup vg) {
