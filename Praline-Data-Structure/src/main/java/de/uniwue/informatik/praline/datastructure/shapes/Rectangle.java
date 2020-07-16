@@ -5,7 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.awt.*;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.Objects;
 
 /**
  * Most typical implementation of {@link Shape}.
@@ -76,6 +78,11 @@ public class Rectangle extends Rectangle2D.Double implements Shape {
     }
 
     @Override
+    public Rectangle2D getBoundingBox() {
+        return super.getBounds2D();
+    }
+
+    @Override
     public Color getColor() {
         return color;
     }
@@ -86,11 +93,44 @@ public class Rectangle extends Rectangle2D.Double implements Shape {
     }
 
     /*==========
-     * Clone
+     * Helpful methods
+     *==========*/
+
+    public boolean liesOnBoundary(Point2D.Double point) {
+        if ((point.x == this.x || point.x == this.x + this.width)
+                && this.y <= point.y && point.y <= this.y + this.height) {
+            return true;
+        }
+        if ((point.y == this.y || point.y == this.y + this.height)
+                && this.x <= point.x && point.x <= this.x + this.width) {
+            return true;
+        }
+        return false;
+    }
+
+    /*==========
+     * Clone, equals, hashCode
      *==========*/
 
     @Override
     public Rectangle clone() {
         return (Rectangle) super.clone();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Rectangle that = (Rectangle) o;
+        return java.lang.Double.compare(that.getX(), getX()) == 0 &&
+                java.lang.Double.compare(that.getY(), getY()) == 0 &&
+                java.lang.Double.compare(that.getWidth(), getWidth()) == 0 &&
+                java.lang.Double.compare(that.getHeight(), getHeight()) == 0 &&
+                Objects.equals(color, that.color);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), color);
     }
 }
