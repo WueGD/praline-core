@@ -122,7 +122,7 @@ public class CrossingMinimization2 {
             orderPortsFinally(i % 2 == 0);
 //            orderPortsFinally(i % 2 != 0);
         }
-        handleTurningVerticesFinally(true);
+//        handleTurningVerticesFinally(true);
 
 
         return new CMResult(currentNodeOrder, currentTopPortOrder, currentBottomPortOrder);
