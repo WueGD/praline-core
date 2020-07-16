@@ -59,6 +59,10 @@ public class PortGroup implements PortComposition, ReferenceObject {
         this(null, DEFAULT_IS_ORDERED);
     }
 
+    public PortGroup(boolean isOrdered) {
+        this(null, isOrdered);
+    }
+
     public PortGroup(int numberOfPortsPlannedToAdd) {
         portCompositions = new ArrayList<>(numberOfPortsPlannedToAdd);
         ordered = DEFAULT_IS_ORDERED;

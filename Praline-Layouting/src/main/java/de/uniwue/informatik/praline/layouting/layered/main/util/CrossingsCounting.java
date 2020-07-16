@@ -2,8 +2,10 @@ package de.uniwue.informatik.praline.layouting.layered.main.util;
 
 import de.uniwue.informatik.praline.datastructure.graphs.Edge;
 import de.uniwue.informatik.praline.datastructure.graphs.Graph;
+import de.uniwue.informatik.praline.datastructure.graphs.Port;
 import de.uniwue.informatik.praline.datastructure.paths.Path;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
+import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
@@ -15,6 +17,7 @@ public class CrossingsCounting {
         //first find all segments
         ArrayList<Line2D.Double> allSegments = new ArrayList<>();
         Map<Line2D.Double, Collection<Line2D.Double>> adjacentSegments = new LinkedHashMap<>();
+        Map<Line2D.Double, Port> segment2Port = new LinkedHashMap<>();
         for (Edge edge : graph.getEdges()) {
             List<Path> paths = edge.getPaths();
             if (paths != null) {
@@ -32,6 +35,7 @@ public class CrossingsCounting {
                                 if (prevSegment == null) {
                                     registerAdjacentSegmentsOfOtherPaths(adjacentSegments, outsideEndPointsOfPaths,
                                             prevPoint, curSegment);
+                                    registerPortAtSegment(segment2Port, edge.getPorts(), prevPoint, curSegment);
                                 }
                                 else {
                                     adjacentSegments.computeIfAbsent(prevSegment, k -> new ArrayList<>())
@@ -43,13 +47,13 @@ public class CrossingsCounting {
                         }
                         registerAdjacentSegmentsOfOtherPaths(adjacentSegments, outsideEndPointsOfPaths, prevPoint,
                                 prevSegment);
+                        registerPortAtSegment(segment2Port, edge.getPorts(), prevPoint, prevSegment);
                     }
                 }
                 //special case: kick out all segments of this edge that are completely covered by another edge
                 filterOutOverlayingSegments(allSegments, allSegmentsOfThisEdge);
             }
         }
-        //TODO: add adjacent segments for adjacent edges (currently only between paths of the same edge)
 
         //now count crossings
         //TODO currently this is done naively in quadratic time. if necessary make it O(n log n) later
@@ -59,7 +63,10 @@ public class CrossingsCounting {
                 Line2D.Double segment0 = allSegments.get(i);
                 Line2D.Double segment1 = allSegments.get(j);
                 if (!adjacentSegments.containsKey(segment0) || !adjacentSegments.get(segment0).contains(segment1)) {
-                    counter += segment0.intersectsLine(segment1) ? 1 : 0;
+                    if (!segment2Port.containsKey(segment0) || !segment2Port.containsKey(segment1) ||
+                            !segment2Port.get(segment0).equals(segment2Port.get(segment1))) {
+                        counter += segment0.intersectsLine(segment1) ? 1 : 0;
+                    }
                 }
             }
         }
@@ -100,5 +107,14 @@ public class CrossingsCounting {
                     k -> new ArrayList<>()).add(curSegment);
         }
         segmentsEndingAtPrevPoint.add(curSegment);
+    }
+
+    private static void registerPortAtSegment(Map<Line2D.Double, Port> segment2Port, List<Port> ports,
+                                              Point2D.Double endPoint, Line2D.Double segment) {
+        for (Port port : ports) {
+            if (((Rectangle) port.getShape()).liesOnBoundary(endPoint)) {
+                segment2Port.put(segment, port);
+            }
+        }
     }
 }

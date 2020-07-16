@@ -4,6 +4,7 @@ import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.paths.Path;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
+import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import org.apache.batik.dom.GenericDOMImplementation;
@@ -167,6 +168,11 @@ public class SVGDrawer {
     private void drawPortPairing(Port port0, Port port1, Graphics2D g2d) {
         Port lowerPort = port0.getShape().getYPosition() < port1.getShape().getYPosition() ? port0 : port1;
         Port upperPort = port0 == lowerPort ? port1 : port0;
+
+        if (lowerPort.getShape().equals(Port.DEFAULT_SHAPE_TO_BE_CLONED)
+                || upperPort.getShape().equals(Port.DEFAULT_SHAPE_TO_BE_CLONED)) {
+            return;
+        }
 
         Color saveColor = g2d.getColor();
         g2d.setColor(drawInfo.getPortPairingColor());

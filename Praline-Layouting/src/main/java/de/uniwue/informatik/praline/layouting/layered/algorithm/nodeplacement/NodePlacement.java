@@ -26,10 +26,8 @@ public class NodePlacement {
     private List<Port> dummyPorts;
     private List<Edge> dummyEdges;
     private Set<Edge> oneNodeEdges;
-
-    private int portnumber; //TODO: this was static before; I don't know why this should be static?
-
-    // stuff from paper
+    private int portnumber;
+    // variables according to paper:
     private Map<Port, PortValues> portValues;
     private double delta;
 
@@ -184,7 +182,7 @@ public class NodePlacement {
         List<Port> ports = new ArrayList<>();
         ports.add(p1);
         ports.add(p2);
-        Edge e = new Edge(ports);
+        new Edge(ports);
         rankBottomPorts.add(p1);
         rankTopPorts.add(p2);
         dummyVertex.addPortComposition(p1);
@@ -296,7 +294,7 @@ public class NodePlacement {
                     }
                 }
             }
-            // initialise root and align according to Alg. 2 from the paper
+            // initialise root and align according to Alg. 2 from paper
             verticalAlignment(stack);
         }
     }
@@ -460,33 +458,6 @@ public class NodePlacement {
             currentY += ((2 * drawInfo.getPortHeight()) + drawInfo.getDistanceBetweenLayers());
         }
     }
-
-//    private void drawFirst() {
-//        Set<Edge> edges = new LinkedHashSet<>();
-//        sugy.getGraph().addVertex(dummyVertex);
-//        double currentY = 10;
-//        boolean bool = true;
-//        for (List<Port> layer : structure) {
-//            for (Port port : layer) {
-//                Rectangle portShape = new Rectangle((portValues.get(port).getX() - (drawInfo.getPortWidth() / 2.0)), currentY, drawInfo.getPortWidth(), drawInfo.getPortHeight(),null);
-//                port.setShape(portShape);
-//                for (Edge edge : port.getEdges()) {
-//                    if (!sugy.getGraph().getEdges().contains(edge)) {
-//                        sugy.getGraph().addEdge(edge);
-//                        edges.add(edge);
-//                    }
-//                }
-//            }
-//            if (bool) currentY += 12;
-//            else currentY += 20;
-//        }
-//        for (Vertex node : sugy.getGraph().getVertices()) {
-//            node.setShape(new Rectangle(0,0,0,0, null));
-//        }
-//        sugy.drawResult("test11x.svg");
-//        for (Edge edge : edges) sugy.getGraph().removeEdge(edge);
-//        sugy.getGraph().removeVertex(dummyVertex);
-//    }
 
     private void createMainLabel (LabeledObject lo) {
         Label newLabel = new TextLabel("" + portnumber++);

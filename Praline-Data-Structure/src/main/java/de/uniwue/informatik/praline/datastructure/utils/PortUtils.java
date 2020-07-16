@@ -160,4 +160,13 @@ public class PortUtils {
         }
         return pp.getPort0();
     }
+
+    public static Port getPortAtVertex(Edge edge, Vertex vertex) {
+        for (Port port : edge.getPorts()) {
+            if (vertex.getPorts().contains(port)) {
+                return port;
+            }
+        }
+        return null;
+    }
 }

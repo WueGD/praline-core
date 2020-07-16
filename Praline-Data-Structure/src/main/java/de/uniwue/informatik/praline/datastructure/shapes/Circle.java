@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
+import java.util.Objects;
 
 /**
  * Implementation of {@link Shape}.
@@ -66,6 +68,11 @@ public class Circle extends Ellipse2D.Double implements Shape {
         return getY();
     }
 
+    @Override
+    public Rectangle2D getBoundingBox() {
+        return super.getBounds2D();
+    }
+
     public double getRadius() {
         return width / 2.0;
     }
@@ -82,11 +89,25 @@ public class Circle extends Ellipse2D.Double implements Shape {
 
 
     /*==========
-     * Clone
+     * Clone, equals, hashCode
      *==========*/
 
     @Override
     public Circle clone() {
         return (Circle) super.clone();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        Circle circle = (Circle) o;
+        return Objects.equals(color, circle.color);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), color);
     }
 }

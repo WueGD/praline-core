@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 
 /**
  * Some geometric 2D object covering some area in a drawing for a {@link ShapedObject}.
@@ -14,8 +15,8 @@ import java.awt.*;
  *
  * Implementations are {@link Rectangle}, {@link Circle} and {@link ArrowHeadTriangle}.
  */
-@JsonIgnoreProperties({ "bounds", "bounds2D", "x", "y", "empty", "minX", "minY", "maxX", "maxY", "centerX", "centerY",
-        "frame", "pathIterator" })
+@JsonIgnoreProperties({ "bounds", "bounds2D", "boundingBox", "x", "y", "empty", "minX", "minY", "maxX", "maxY",
+        "centerX", "centerY", "frame", "pathIterator" })
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = Rectangle.class, name = "rectangle"),
@@ -39,6 +40,7 @@ public interface Shape extends Cloneable {
 
     double getXPosition();
     double getYPosition();
+    Rectangle2D getBoundingBox();
     Color getColor();
     void setColor(Color c);
     Shape clone();
