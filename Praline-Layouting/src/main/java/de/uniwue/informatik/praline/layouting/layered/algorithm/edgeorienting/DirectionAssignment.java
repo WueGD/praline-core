@@ -1,5 +1,7 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting;
 
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.multilevel.FRWSPDb_bMultiLevel;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.wspd.RecomputationOfSplitTreeAndWSPDFunction;
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import edu.uci.ics.jung.algorithms.layout.FRLayout;
@@ -48,16 +50,16 @@ public class DirectionAssignment {
                     edge.getPorts().get(1).getVertex().getLabelManager().getMainLabel().toString()
             );
         }
-        // create new force directed layout
-        FRLayout<String, String> layout = new FRLayout<>(junggraph);
         // calculate height and width so that each node has 6237 pixel space and the drawing space is proportional in size to DIN A4
         int height= ((int) Math.round(Math.sqrt((junggraph.getVertexCount()*6237.0)/0.707)));
         int width = ((int) Math.round((junggraph.getVertexCount()*6237.0)/height));
         Dimension dimension = new Dimension(width, height);
-        layout.setSize(dimension);
-        layout.setMaxIterations(2000);
-        layout.setAttractionMultiplier(0.75); //higher value equals weaker force
-        layout.setRepulsionMultiplier(0.75); //lower value equals weaker force
+        // create new force directed layout
+        FRWSPDb_bMultiLevel<String, String> layout = new FRWSPDb_bMultiLevel<>(junggraph, 1.0, dimension);
+        layout.setRecomputationOfSplitTreeAndWSPDFunction(new RecomputationOfSplitTreeAndWSPDFunction());
+//        layout.setMaxIterations(2000);
+//        layout.setAttractionMultiplier(0.75); //higher value equals weaker force
+//        layout.setRepulsionMultiplier(0.75); //lower value equals weaker force
         //TODO: jung.FRLayout does not use seeds in all of its code --> change to something reproducible
         layout.setInitializer(new RandomLocationTransformer<>(dimension, Constants.SEED_JUNG));
         layout.initialize();
