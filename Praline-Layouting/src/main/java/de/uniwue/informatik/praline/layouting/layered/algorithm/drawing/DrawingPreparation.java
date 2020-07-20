@@ -1,7 +1,6 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm.drawing;
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
-import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;

@@ -3,19 +3,19 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.multilevel.FRWSPDb_bMultiLevel;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.wspd.RecomputationOfSplitTreeAndWSPDFunction;
 import de.uniwue.informatik.praline.datastructure.graphs.*;
+import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
-import edu.uci.ics.jung.algorithms.layout.FRLayout;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
 import edu.uci.ics.jung.algorithms.layout.util.RandomLocationTransformer;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class DirectionAssignment {
 
-    public void randomDirected (SugiyamaLayouter sugy) {
+    public void randomDirected(SugiyamaLayouter sugy) {
         Map<Vertex, Integer> values = new LinkedHashMap<>();
         List<Vertex> vertices = new LinkedList<>(sugy.getGraph().getVertices());
         Collections.shuffle(vertices, Constants.random);
@@ -35,27 +35,31 @@ public class DirectionAssignment {
         }
     }
 
-    public void forceDirected (SugiyamaLayouter sugy) {
+    public void forceDirected(SugiyamaLayouter sugy) {
         // create new Jung graph
-        UndirectedSparseGraph<String,String> junggraph = new UndirectedSparseGraph<>();
-        int edgeCounter = 0;
+        UndirectedSparseGraph<Long, Long> junggraph = new UndirectedSparseGraph<>();
+        Map<Vertex, Long> nodeToLong = new HashMap<>();
+        long counter = 0;
         // add vertices and edges from original graph to the Jung graph
         for (Vertex node : sugy.getGraph().getVertices()) {
-            junggraph.addVertex(node.getLabelManager().getMainLabel().toString());
+            junggraph.addVertex(counter);
+            nodeToLong.put(node, counter);
+            counter++;
         }
         for (Edge edge : sugy.getGraph().getEdges()) {
             junggraph.addEdge(
-                    "e" + edgeCounter++ + "-" + edge.getLabelManager().getMainLabel().toString(),
-                    edge.getPorts().get(0).getVertex().getLabelManager().getMainLabel().toString(),
-                    edge.getPorts().get(1).getVertex().getLabelManager().getMainLabel().toString()
+                    counter,
+                    nodeToLong.get(edge.getPorts().get(0).getVertex()),
+                    nodeToLong.get(edge.getPorts().get(1).getVertex())
             );
+            counter++;
         }
         // calculate height and width so that each node has 6237 pixel space and the drawing space is proportional in size to DIN A4
-        int height= ((int) Math.round(Math.sqrt((junggraph.getVertexCount()*6237.0)/0.707)));
-        int width = ((int) Math.round((junggraph.getVertexCount()*6237.0)/height));
+        int height = ((int) Math.round(Math.sqrt((junggraph.getVertexCount() * 6237.0) / 0.707)));
+        int width = ((int) Math.round((junggraph.getVertexCount() * 6237.0) / height));
         Dimension dimension = new Dimension(width, height);
         // create new force directed layout
-        FRWSPDb_bMultiLevel<String, String> layout = new FRWSPDb_bMultiLevel<>(junggraph, 1.0, dimension);
+        FRWSPDb_bMultiLevel<Long, Long> layout = new FRWSPDb_bMultiLevel<>(junggraph, 1.0, dimension);
         layout.setRecomputationOfSplitTreeAndWSPDFunction(new RecomputationOfSplitTreeAndWSPDFunction());
 //        layout.setMaxIterations(2000);
 //        layout.setAttractionMultiplier(0.75); //higher value equals weaker force
@@ -64,7 +68,7 @@ public class DirectionAssignment {
         layout.setInitializer(new RandomLocationTransformer<>(dimension, Constants.SEED_JUNG));
         layout.initialize();
         // calculate layout
-        while(!layout.done()) {
+        while (!layout.done()) {
             layout.step();
         }
         // assign directions to edges
@@ -72,7 +76,12 @@ public class DirectionAssignment {
             // Fall mit gleichen Koordinaten wird nicht berücksichtigt
             Vertex node0 = edge.getPorts().get(0).getVertex();
             Vertex node1 = edge.getPorts().get(1).getVertex();
-            if (layout.getY(node0.getLabelManager().getMainLabel().toString()) > layout.getY(node1.getLabelManager().getMainLabel().toString())) {
+            if (layout.getY(nodeToLong.get(node0)) > layout.getY(nodeToLong.get(node1))) {
+                // direct edge from 1 to 0
+                sugy.assignDirection(edge, node1, node0);
+            } else if (layout.getY(nodeToLong.get(node0)) == layout.getY(nodeToLong.get(node1))
+                    // in case of same y-coordinate use x-coordinate
+                    && layout.getX(nodeToLong.get(node0)) > layout.getX(nodeToLong.get(node1))) {
                 // direct edge from 1 to 0
                 sugy.assignDirection(edge, node1, node0);
             } else {
@@ -89,7 +98,7 @@ public class DirectionAssignment {
         Set<Vertex> doneVertices = new LinkedHashSet<>();
         LinkedList<Vertex> queue = new LinkedList<>();
         // use start node by random
-        int random = (int)Math.floor(Constants.random.nextDouble()*sugy.getGraph().getVertices().size());
+        int random = (int) Math.floor(Constants.random.nextDouble() * sugy.getGraph().getVertices().size());
         queue.add(sugy.getGraph().getVertices().get(random));
         while (!queue.isEmpty()) {
             Vertex currentNode = queue.removeFirst();
@@ -116,7 +125,7 @@ public class DirectionAssignment {
         }
     }
 
-    private void addEdgesRecursive (PortComposition portComposition, Set<Edge> edges) {
+    private void addEdgesRecursive(PortComposition portComposition, Set<Edge> edges) {
         if (portComposition instanceof Port) {
             for (Edge edge : ((Port) portComposition).getEdges()) {
                 edges.add(edge);
