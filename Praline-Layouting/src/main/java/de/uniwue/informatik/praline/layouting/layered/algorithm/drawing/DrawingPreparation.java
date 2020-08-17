@@ -29,100 +29,13 @@ public class DrawingPreparation {
 
     public void prepareDrawing(DrawingInformation drawInfo, CMResult cmResult) {
         initialise(drawInfo, cmResult);
-        Collection<Vertex> vertices = new LinkedHashSet<>(sugy.getGraph().getVertices());
-        for (Vertex node : vertices) {
-            if (sugy.isTurningPointDummy(node)) {
-                drawEdgesForTurningDummy(node);
-            } else {
-                tightenNode(node);
-            }
+        for (Vertex node : sugy.getGraph().getVertices()) {
+            tightenNode(node);
         }
         // do path for edges
         doPathForEdges();
         // add Edges with Paths for remaining dummyNodes
         drawEdgesForDummys();
-    }
-
-    private void drawEdgesForTurningDummy(Vertex node) {
-        // create two lists of ports; those whose corresponding edge is routed to the left of v
-        List<Port> portsL = new LinkedList<>();
-        // and those whose edge is routed to the right
-        List<Port> portsR = new LinkedList<>();
-        boolean top;
-        // sort ports into these lists
-        if (cmResult.getTopPortOrder().get(node).isEmpty()) {
-            sortPortsLeftRight(node, portsL, portsR, cmResult.getBottomPortOrder());
-            top = false;
-        } else {
-            sortPortsLeftRight(node, portsL, portsR, cmResult.getTopPortOrder());
-            top = true;
-        }
-        // route edges
-        Collections.reverse(portsL);
-        handlePorts(top, portsL);
-        handlePorts(top, portsR);
-    }
-
-    private void handlePorts(boolean top, List<Port> ports) {
-        int level = 0;
-        for (Port p2 : ports) {
-            Edge edge1 = p2.getEdges().get(0);
-            Port p1 = edge1.getPorts().get(0);
-            if (p2.equals(p1)) p1 = edge1.getPorts().get(1);
-            Port p3 = sugy.getCorrespondingPortAtDummy(p2);
-            Edge edge2 = p3.getEdges().get(0);
-            Port p4 = edge2.getPorts().get(0);
-            if (p3.equals(p4)) p4 = edge2.getPorts().get(1);
-            // new path is going along p1 - edge1 - p2 - p3 - edge2 - p4
-            LinkedList<Point2D.Double> pathPoints = new LinkedList<>();
-            pathPoints.add(new Point2D.Double(p1.getShape().getXPosition(), p1.getShape().getYPosition()));
-            if (!edge1.getPaths().isEmpty()) {
-                LinkedList<Point2D.Double> pathPointsEdge = new LinkedList<>(((PolygonalPath) edge1.getPaths().get(0)).getTerminalAndBendPoints());
-                if (pathPointsEdge.getLast().getX() == pathPoints.getLast().getX()) Collections.reverse(pathPointsEdge);
-                pathPointsEdge.removeFirst();
-                pathPointsEdge.removeLast();
-                pathPoints.addAll(pathPointsEdge);
-            }
-            if (top) pathPoints.add(new Point2D.Double(p2.getShape().getXPosition(), p2.getShape().getYPosition() - (level * drawInfo.getEdgeDistanceVertical())));
-            else pathPoints.add(new Point2D.Double(p2.getShape().getXPosition(), p2.getShape().getYPosition() + (level * drawInfo.getEdgeDistanceVertical())));
-            if (top) pathPoints.add(new Point2D.Double(p3.getShape().getXPosition(), p3.getShape().getYPosition() - (level * drawInfo.getEdgeDistanceVertical())));
-            else pathPoints.add(new Point2D.Double(p3.getShape().getXPosition(), p3.getShape().getYPosition() + (level * drawInfo.getEdgeDistanceVertical())));
-            if (!edge2.getPaths().isEmpty()) {
-                LinkedList<Point2D.Double> pathPointsEdge = new LinkedList<>(((PolygonalPath) edge2.getPaths().get(0)).getTerminalAndBendPoints());
-                if (pathPointsEdge.getLast().getX() == pathPoints.getLast().getX()) Collections.reverse(pathPointsEdge);
-                pathPointsEdge.removeFirst();
-                pathPointsEdge.removeLast();
-                pathPoints.addAll(pathPointsEdge);
-            }
-            pathPoints.add(new Point2D.Double(p4.getShape().getXPosition(), p4.getShape().getYPosition()));
-            sugy.getGraph().removeEdge(edge1);
-            sugy.getGraph().removeEdge(edge2);
-            List<Port> portsForNewEdge = new LinkedList<>();
-            portsForNewEdge.add(p1);
-            portsForNewEdge.add(p4);
-            Edge newEdge = new Edge(portsForNewEdge);
-            newEdge.addPath(new PolygonalPath(pathPoints.removeFirst(), pathPoints.removeLast(), pathPoints));
-            sugy.getGraph().addEdge(newEdge);
-            sugy.getDummyEdge2RealEdge().put(newEdge, sugy.getDummyEdge2RealEdge().get(edge1));
-            level++;
-        }
-    }
-
-    private void sortPortsLeftRight(Vertex node, List<Port> portsL, List<Port> portsR, Map<Vertex, List<Port>> portOrder) {
-        Vertex v = sugy.getVertexOfTurningDummy(node);
-        for (Port port : portOrder.get(node)) {
-            Edge edge = port.getEdges().get(0);
-            Port p2 = edge.getPorts().get(0);
-            if (p2.equals(port)) p2 = edge.getPorts().get(1);
-            if (p2.getVertex().equals(v)) {
-                p2 = sugy.getCorrespondingPortAtDummy(port);
-                if (p2.getShape().getXPosition() < port.getShape().getXPosition()) {
-                    portsR.add(port);
-                } else {
-                    portsL.add(port);
-                }
-            }
-        }
     }
 
     private void tightenNode(Vertex node) {
