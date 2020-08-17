@@ -237,7 +237,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     public void prepareDrawing () {
         DrawingPreparation dp = new DrawingPreparation(this);
         dp.prepareDrawing(drawInfo, orders);
-        restoreOriginalElements();
+        //restoreOriginalElements();
     }
     private void restoreOriginalElements () {
         //replace dummy edges

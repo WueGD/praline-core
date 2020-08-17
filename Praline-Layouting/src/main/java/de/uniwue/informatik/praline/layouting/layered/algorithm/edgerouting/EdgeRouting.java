@@ -59,12 +59,10 @@ public class EdgeRouting {
 
             createBendpoints(conflicts, edgeToLayer, maxLevel);
         }
+        // remove TurningPointDummys
         Collection<Vertex> vertices = new LinkedHashSet<>(sugy.getGraph().getVertices());
         for (Vertex node : vertices) {
             if (sugy.isTurningPointDummy(node)) {
-                for (Port port : node.getPorts()) {
-                    sugy.getGraph().removeEdge(port.getEdges().get(0));
-                }
                 sugy.getGraph().removeVertex(node);
             }
         }
@@ -131,7 +129,14 @@ public class EdgeRouting {
                 ports.add(p4); // add endPort of edge segment
                 Edge newEdge = new Edge(ports);
                 sugy.assignDirection(newEdge, p1.getVertex(), p4.getVertex());
-                // todo: remove old stuff from graph? (turningDummy and edges)
+
+                // remove old edges from Ports and Graph
+                p1.removeEdge(e1);
+                p2.removeEdge(e1);
+                p3.removeEdge(e2);
+                p4.removeEdge(e2);
+                sugy.getGraph().removeEdge(e1);
+                sugy.getGraph().removeEdge(e2);
 
                 if (p4.getShape().getXPosition() < p1.getShape().getXPosition()) {
                     edgesL.add(newEdge);
@@ -218,15 +223,15 @@ public class EdgeRouting {
 
         // for all nodes
         for (Vertex node : cmResult.getNodeOrder().get(rank)) {
-            // for all ports
-            for (Port bottomPort : cmResult.getTopPortOrder().get(node)) {
-                // cmResult is build with respect to nodes so the topPortOrder are Ports located on the top of the node
-                // here we work with respect to Edges so a Port on top of a node is a bottomPort for an edge
-                Edge edge = bottomPort.getEdges().get(0);
-                Port topPort = edge.getPorts().get(0);
-                if (bottomPort.equals(topPort)) topPort = edge.getPorts().get(1);
-                // if it is no TurningDummyEdge
-                if (!(sugy.isTurningPointDummy(bottomPort.getVertex()) || sugy.isTurningPointDummy(topPort.getVertex()))) {
+            // if it is no TurningDummy
+            if (!(sugy.isTurningPointDummy(node))) {
+                // for all ports
+                for (Port bottomPort : cmResult.getTopPortOrder().get(node)) {
+                    // cmResult is build with respect to nodes so the topPortOrder are Ports located on the top of the node
+                    // here we work with respect to Edges so a Port on top of a node is a bottomPort for an edge
+                    Edge edge = bottomPort.getEdges().get(0);
+                    Port topPort = edge.getPorts().get(0);
+                    if (bottomPort.equals(topPort)) topPort = edge.getPorts().get(1);
                     // if edge from bottom left to top right
                     // else if edge from bottom right to top left
                     // do nothing if it is a straight edge
@@ -350,13 +355,13 @@ public class EdgeRouting {
         int[] position = {0};
         // for all nodes
         for (Vertex node : cmResult.getNodeOrder().get(rank + 1)) {
-            // for all ports
-            for (Port topPort : cmResult.getBottomPortOrder().get(node)) {
-                Edge edge = topPort.getEdges().get(0);
-                Port bottomPort = edge.getPorts().get(0);
-                if (topPort.equals(bottomPort)) bottomPort = edge.getPorts().get(1);
-                // if it is no TurningDummyEdge
-                if (!(sugy.isTurningPointDummy(bottomPort.getVertex()) || sugy.isTurningPointDummy(topPort.getVertex()))) {
+            // if it is no TurningDummy
+            if (!(sugy.isTurningPointDummy(node))) {
+                // for all ports
+                for (Port topPort : cmResult.getBottomPortOrder().get(node)) {
+                    Edge edge = topPort.getEdges().get(0);
+                    Port bottomPort = edge.getPorts().get(0);
+                    if (topPort.equals(bottomPort)) bottomPort = edge.getPorts().get(1);
                     // if edge from bottom right to top left
                     // else do nothing
                     if (topPort.getShape().getXPosition() < bottomPort.getShape().getXPosition()) {
