@@ -86,22 +86,18 @@ public class SVGDrawer {
 
 
         for (Vertex node : graph.getVertices()) {
-            if (node.getLabelManager().getMainLabel().toString().startsWith("v") || node.getLabelManager().getMainLabel().toString().startsWith("G")  || node.getLabelManager().getMainLabel().toString().startsWith("P") || node.getLabelManager().getMainLabel().toString().startsWith("E")) {
-                if (node.getShape() == null) {
-                    node.setShape(new Rectangle(drawInfo.getVertexMinimumWidth(), drawInfo.getVertexHeight()));
-                }
-                Rectangle2D nodeRectangle = (Rectangle2D) node.getShape();
-                g2d.draw(nodeRectangle);
-                //if (node.getLabelManager().getMainLabel().toString().startsWith("v")){
-                g2d.drawString(node.getLabelManager().getMainLabel().toString(),
-                        (float) ((nodeRectangle).getX() + drawInfo.getHorizontalTextOffset()),
-                        (float) (((nodeRectangle).getY()
-                                + (nodeRectangle).getHeight()
-                                + drawInfo.getVerticalTextOffset())));
-                //}
-                for (PortComposition pc : node.getPortCompositions()) {
-                    paintPortComposition(pc, g2d);
-                }
+            if (node.getShape() == null) {
+                node.setShape(new Rectangle(drawInfo.getVertexMinimumWidth(), drawInfo.getVertexHeight()));
+            }
+            Rectangle2D nodeRectangle = (Rectangle2D) node.getShape();
+            g2d.draw(nodeRectangle);
+            g2d.drawString(node.getLabelManager().getMainLabel().toString(),
+                    (float) ((nodeRectangle).getX() + drawInfo.getHorizontalTextOffset()),
+                    (float) (((nodeRectangle).getY()
+                            + (nodeRectangle).getHeight()
+                            + drawInfo.getVerticalTextOffset())));
+            for (PortComposition pc : node.getPortCompositions()) {
+                paintPortComposition(pc, g2d);
             }
         }
         for (Edge edge : graph.getEdges()) {
@@ -132,16 +128,14 @@ public class SVGDrawer {
         double maxY = Double.NEGATIVE_INFINITY;
 
         for (Vertex node : graph.getVertices()) {
-            if (node.getLabelManager().getMainLabel().toString().startsWith("v") || node.getLabelManager().getMainLabel().toString().startsWith("G")  || node.getLabelManager().getMainLabel().toString().startsWith("P") || node.getLabelManager().getMainLabel().toString().startsWith("E")) {
-                if (node.getShape() == null) {
-                    node.setShape(new Rectangle(drawInfo.getVertexMinimumWidth(), drawInfo.getVertexHeight()));
-                }
-                Rectangle2D nodeRectangle = (Rectangle2D) node.getShape();
-                minX = Math.min(minX, nodeRectangle.getX());
-                maxX = Math.max(maxX, nodeRectangle.getX() + nodeRectangle.getWidth());
-                minY = Math.min(minY, nodeRectangle.getY());
-                maxY = Math.max(maxY, nodeRectangle.getY() + nodeRectangle.getHeight());
+            if (node.getShape() == null) {
+                node.setShape(new Rectangle(drawInfo.getVertexMinimumWidth(), drawInfo.getVertexHeight()));
             }
+            Rectangle2D nodeRectangle = (Rectangle2D) node.getShape();
+            minX = Math.min(minX, nodeRectangle.getX());
+            maxX = Math.max(maxX, nodeRectangle.getX() + nodeRectangle.getWidth());
+            minY = Math.min(minY, nodeRectangle.getY());
+            maxY = Math.max(maxY, nodeRectangle.getY() + nodeRectangle.getHeight());
         }
         for (Edge edge : graph.getEdges()) {
             if (!edge.getPaths().isEmpty()) {

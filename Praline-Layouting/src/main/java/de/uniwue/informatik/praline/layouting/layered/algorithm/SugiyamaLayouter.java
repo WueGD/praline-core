@@ -54,7 +54,6 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     //additional structures
 
-    private int numberOfDigitsAdded;
     private Map<Edge, Vertex> edgeToStart;
     private Map<Edge, Vertex> edgeToEnd;
     private Map<Vertex, Collection<Edge>> nodeToOutgoingEdges;
@@ -83,7 +82,6 @@ public class SugiyamaLayouter implements PralineLayouter {
                 break;
             }
         }
-        prepareGraph();
         this.drawInfo = drawInfo;
     }
 
@@ -338,23 +336,13 @@ public class SugiyamaLayouter implements PralineLayouter {
             origPort.setShape(replacePorts.get((replacePorts.size() - 1) / 2).getShape().clone());
         }
         //re-hang edges
-        Point2D.Double targetPoint = null;
-        Rectangle origPortShape = (Rectangle) origPort.getShape();
         //find target point
-        for (Port replacePort : replacePorts) {
-            for (Edge edge : new ArrayList<>(replacePort.getEdges())) {
-                for (Path path : edge.getPaths()) {
-                    Point2D.Double startPoint = ((PolygonalPath) path).getStartPoint();
-                    Point2D.Double endPoint = ((PolygonalPath) path).getEndPoint();
-                    if (origPortShape.liesOnBoundary(startPoint)) {
-                        targetPoint = startPoint;
-                    }
-                    else if (origPortShape.liesOnBoundary(endPoint)) {
-                        targetPoint = endPoint;
-                    }
-                }
-            }
-        }
+        Rectangle origPortShape = (Rectangle) origPort.getShape();
+        Point2D.Double targetPoint = new Point2D.Double(
+                origPortShape.getXPosition() + 0.5 * origPortShape.getWidth(),
+                origPortShape.getYPosition() < vertex.getShape().getYPosition() ?
+                        origPortShape.getYPosition() : origPortShape.getYPosition() + origPortShape.getHeight()
+        );
         //re-draw edges
         for (Port replacePort : replacePorts) {
             for (Edge edge : new ArrayList<>(replacePort.getEdges())) {
@@ -664,136 +652,10 @@ public class SugiyamaLayouter implements PralineLayouter {
         oneNodeEdges = new LinkedHashMap<>();
         dummyEdge2RealEdge = new LinkedHashMap<>();
 
-        numberOfDigitsAdded = 0;
         edgeToStart = new LinkedHashMap<>();
         edgeToEnd = new LinkedHashMap<>();
         nodeToOutgoingEdges = new LinkedHashMap<>();
         nodeToIncomingEdges = new LinkedHashMap<>();
-    }
-    private void prepareGraph () {
-        int v = 0, e = 0, g = 0, b = 0, j = 1;
-        p = 0; i = 0;
-        for (Vertex node : getGraph().getVertices()) {
-            if (node.getLabelManager().getLabels().isEmpty()) {
-                createMainLabel(("v" + v++), node);
-            } else if (node.getLabelManager().getMainLabel() == null) {
-                node.getLabelManager().setMainLabel(node.getLabelManager().getLabels().get(0));
-            }
-            for (PortComposition portComposition : node.getPortCompositions()) {
-                preparePort(portComposition);
-            }
-        }
-        Set<Edge> toRemoveDueToNoVertex = new LinkedHashSet<>();
-        for (Edge edge : getGraph().getEdges()) {
-            for (Port port : edge.getPorts()) {
-                if (port.getVertex() == null) {
-                    toRemoveDueToNoVertex.add(edge);
-                }
-            }
-            if (edge.getLabelManager().getLabels().isEmpty()) {
-                createMainLabel(("e" + e++), edge);
-            } else if (edge.getLabelManager().getMainLabel() == null) {
-                edge.getLabelManager().setMainLabel(edge.getLabelManager().getLabels().get(0));
-            }
-        }
-        for (VertexGroup vertexGroup : getGraph().getVertexGroups()) {
-            if (vertexGroup.getLabelManager().getLabels().isEmpty()) {
-                createMainLabel(("g" + g++), vertexGroup);
-            } else if (vertexGroup.getLabelManager().getMainLabel() == null) {
-                vertexGroup.getLabelManager().setMainLabel(vertexGroup.getLabelManager().getLabels().get(0));
-            }
-        }
-        for (EdgeBundle edgeBundle : getGraph().getEdgeBundles()) {
-            if (edgeBundle.getLabelManager().getLabels().isEmpty()) {
-                createMainLabel(("b" + b++), edgeBundle);
-            } else if (edgeBundle.getLabelManager().getMainLabel() == null) {
-                edgeBundle.getLabelManager().setMainLabel(edgeBundle.getLabelManager().getLabels().get(0));
-            }
-        }
-        for (Edge edge : toRemoveDueToNoVertex) {
-            getGraph().removeEdge(edge);
-            List<Port> ports = new LinkedList<>(edge.getPorts());
-            for (Port port : ports) {
-                port.removeEdge(edge);
-            }
-        }
-
-        i += getGraph().getVertices().size();
-        i += getGraph().getEdges().size();
-        i += getGraph().getVertexGroups().size();
-        i += getGraph().getEdgeBundles().size();
-        for (Vertex node : getGraph().getVertices()) {
-            for (PortComposition portComposition : node.getPortCompositions()) {
-                calculateNumberOfPorts(portComposition);
-            }
-        }
-        while (i != 0) {
-            i /= 10;
-            j++;
-        }
-        this.numberOfDigitsAdded = (j + 1);
-        for (Vertex node : getGraph().getVertices()) {
-            Label mainLabel = node.getLabelManager().getMainLabel();
-            node.getLabelManager().removeLabel(mainLabel);
-            createMainLabel("v" + String.format("%0" + j + "d" , i++) + mainLabel, node);
-            for (PortComposition portComposition : node.getPortCompositions()) {
-                numberPortComposition(portComposition, j);
-            }
-        }
-        for (Edge edge : getGraph().getEdges()) {
-            Label mainLabel = edge.getLabelManager().getMainLabel();
-            edge.getLabelManager().removeLabel(mainLabel);
-            createMainLabel("e" + String.format("%0" + j + "d" , i++) + mainLabel, edge);
-        }
-        for (VertexGroup vertexGroup : getGraph().getVertexGroups()) {
-            Label mainLabel = vertexGroup.getLabelManager().getMainLabel();
-            vertexGroup.getLabelManager().removeLabel(mainLabel);
-            createMainLabel("g" + String.format("%0" + j + "d" , i++) + mainLabel, vertexGroup);
-        }
-        for (EdgeBundle edgeBundle : getGraph().getEdgeBundles()) {
-            Label mainLabel = edgeBundle.getLabelManager().getMainLabel();
-            edgeBundle.getLabelManager().removeLabel(mainLabel);
-            createMainLabel("e" + String.format("%0" + j + "d" , i++) + mainLabel, edgeBundle);
-        }
-    }
-
-    //TODO: why should the following 2 vars be static? I made them non-static (JZ)
-    private int i;
-    private int p;
-
-    private void preparePort (PortComposition portComposition) {
-        if (portComposition instanceof Port) {
-            if (((Port)portComposition).getLabelManager().getLabels().isEmpty()) {
-                createMainLabel(("p" + p++), ((Port)portComposition));
-            } else {
-                ((Port)portComposition).getLabelManager().setMainLabel(((Port)portComposition).getLabelManager().getLabels().get(0));
-            }
-        } else if (portComposition instanceof PortGroup){
-            for (PortComposition pc : ((PortGroup) portComposition).getPortCompositions()) {
-                preparePort(pc);
-            }
-        }
-    }
-    private void numberPortComposition (PortComposition portComposition, int j) {
-        if (portComposition instanceof Port) {
-            Label mainLabel = ((Port)portComposition).getLabelManager().getMainLabel();
-            ((Port)portComposition).getLabelManager().removeLabel(mainLabel);
-            createMainLabel("p" + String.format("%0" + j + "d" , i++) + mainLabel, (Port)portComposition);
-        } else if (portComposition instanceof PortGroup) {
-            for (PortComposition member : ((PortGroup)portComposition).getPortCompositions()) {
-                numberPortComposition(member, j);
-            }
-        }
-    }
-
-    private void calculateNumberOfPorts (PortComposition portComposition) {
-        if (portComposition instanceof Port) {
-            i++;
-        } else if (portComposition instanceof PortGroup) {
-            for (PortComposition member : ((PortGroup) portComposition).getPortCompositions()) {
-                calculateNumberOfPorts(member);
-            }
-        }
     }
 
     // construct //
@@ -875,8 +737,12 @@ public class SugiyamaLayouter implements PralineLayouter {
             Vertex representative = new Vertex();
 
             // create main Label
-            String idV = ("GroupRep_for_" + group.getLabelManager().getMainLabel().toString() + "_#" + index1++);
-            if (stickTogether) idV = ("PlugRep_for_" + group.getLabelManager().getMainLabel().toString() + "_#" + (index1-1));
+            String groupLabelText = "no_GroupMainLabel";
+            if (group.getLabelManager().getMainLabel() != null) {
+                groupLabelText = group.getLabelManager().getMainLabel().toString();
+            }
+            String idV = ("GroupRep_for_" + groupLabelText + "_#" + index1++);
+            if (stickTogether) idV = ("PlugRep_for_" + groupLabelText + "_#" + (index1-1));
             createMainLabel(idV, representative);
             index2 = 0;
 
@@ -1460,7 +1326,7 @@ public class SugiyamaLayouter implements PralineLayouter {
         } else {
             nodeName = new String[node.getLabelManager().getLabels().size()];
             for (int i = 0; i < nodeName.length; i++) {
-                nodeName[i] = node.getLabelManager().getLabels().get(i).toString().substring(numberOfDigitsAdded);
+                nodeName[i] = node.getLabelManager().getLabels().get(i).toString();
             }
         }
         return nodeName;
