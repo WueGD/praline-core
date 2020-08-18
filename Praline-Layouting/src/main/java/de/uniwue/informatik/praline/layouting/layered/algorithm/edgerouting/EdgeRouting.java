@@ -170,52 +170,62 @@ public class EdgeRouting {
     }
 
     private void handleTurningEdges(double[] interval, List<Edge> edges, Map<Edge, Integer> edgeToLayer, List<ContourPoint> outlineContour, List<Double> activeCandidates, List<ContourPoint> lastPositions) {
-        // find lowest free level
-        int level = activeCandidates.size();
-        int freeSpaceHeight = edges.size();
-        for (int i = (activeCandidates.size() - 1); i >= 0; i--) {
-            if (activeCandidates.get(i) < interval[0]) {
-                freeSpaceHeight++;
-                if (freeSpaceHeight >= edges.size()) level = i;
-            } else {
-                freeSpaceHeight = 0;
-            }
-        }
-
-        // place edges
-        for (Edge edge : edges) {
-            edgeToLayer.put(edge, level);
-            // update activeCandidates
-            if (level < activeCandidates.size()) {
-                activeCandidates.set(level, interval[1]);
-            } else {
-                activeCandidates.add(interval[1]);
-            }
-            level++;
-        }
-
-        // update outlineContour and lastPositons
-        while (lastPositions.get(lastPositions.size() - 1).getxPosition() < interval[0]) {
-            ContourPoint lp = lastPositions.remove(lastPositions.size() - 1);
-            lp.setLevel(lastPositions.get(lastPositions.size() - 1).getLevel());
-            outlineContour.add(lp);
-        }
-        boolean newContourPointNeeded = true;
-        for (int i = (lastPositions.size() - 1); i >= 0; i--) {
-            if (lastPositions.get(i).getxPosition() > interval[1]) {
-                if (lastPositions.get(i).getLevel() < level) {
-                    if (newContourPointNeeded) {
-                        outlineContour.add(new ContourPoint(level, interval[0]));
-                        lastPositions.add(new ContourPoint(level, interval[1]));
-                    } else {
-                        lastPositions.add((i + 1), new ContourPoint(level, interval[1]));
-                    }
+        if (!edges.isEmpty()) {
+            // find lowest free level
+            int level = activeCandidates.size();
+            int freeSpaceHeight = edges.size();
+            for (int i = (activeCandidates.size() - 1); i >= 0; i--) {
+                if (activeCandidates.get(i) < interval[0]) {
+                    freeSpaceHeight++;
+                    if (freeSpaceHeight >= edges.size()) level = i;
+                } else {
+                    freeSpaceHeight = 0;
                 }
-                break;
-            } else if (lastPositions.get(i).getLevel() < level) {
-                lastPositions.remove(i);
-            } else {
-                newContourPointNeeded = false;
+            }
+
+            // place edges
+            for (Edge edge : edges) {
+                edgeToLayer.put(edge, level);
+                // update activeCandidates
+                if (level < activeCandidates.size()) {
+                    activeCandidates.set(level, interval[1]);
+                } else {
+                    activeCandidates.add(interval[1]);
+                }
+                level++;
+            }
+
+            // update outlineContour and lastPositons
+            while (lastPositions.get(lastPositions.size() - 1).getxPosition() < interval[0]) {
+                ContourPoint lp = lastPositions.remove(lastPositions.size() - 1);
+                lp.setLevel(lastPositions.get(lastPositions.size() - 1).getLevel());
+                outlineContour.add(lp);
+            }
+            if (!outlineContour.isEmpty()) {
+                ContourPoint lastCP = outlineContour.remove(outlineContour.size() - 1);
+                while (interval[0] < lastCP.getxPosition() && level > lastCP.getLevel()) {
+                    lastCP = outlineContour.remove(outlineContour.size() - 1);
+                    break;
+                }
+                outlineContour.add(lastCP);
+            }
+            boolean newContourPointNeeded = true;
+            for (int i = (lastPositions.size() - 1); i >= 0; i--) {
+                if (lastPositions.get(i).getxPosition() > interval[1]) {
+                    if (lastPositions.get(i).getLevel() < level) {
+                        if (newContourPointNeeded) {
+                            outlineContour.add(new ContourPoint(level, interval[0]));
+                            lastPositions.add(new ContourPoint(level, interval[1]));
+                        } else {
+                            lastPositions.add((i + 1), new ContourPoint(level, interval[1]));
+                        }
+                    }
+                    break;
+                } else if (lastPositions.get(i).getLevel() < level) {
+                    lastPositions.remove(i);
+                } else {
+                    newContourPointNeeded = false;
+                }
             }
         }
     }
