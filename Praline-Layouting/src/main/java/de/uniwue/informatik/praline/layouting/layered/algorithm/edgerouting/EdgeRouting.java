@@ -27,13 +27,16 @@ public class EdgeRouting {
         double shiftUpValue = 0;
         // for all ranks
         for (int rank = 0; rank < (cmResult.getNodeOrder().size() - 1); rank++) {
-            double level0 = -1;
+
+            double level0 = -1; // reference value for calculating the positions of the horizontal edge parts
             for (Vertex node : cmResult.getNodeOrder().get(rank)) {
                 if (!cmResult.getTopPortOrder().get(node).isEmpty()) {
-                    level0 = cmResult.getTopPortOrder().get(node).get(0).getShape().getYPosition() + drawInfo.getPortHeight() + (drawInfo.getDistanceBetweenLayers() / 2);
+                    level0 = cmResult.getTopPortOrder().get(node).get(0).getShape().getYPosition()
+                            + drawInfo.getPortHeight() + (drawInfo.getDistanceBetweenLayers() / 2);
                     break;
                 }
             }
+
             List<ContourPoint> outlineContourBB = new ArrayList<>();
             List<ContourPoint> outlineContourTT = new ArrayList<>();
             Map<Edge, Integer> edgeToLayer = new LinkedHashMap<>();
