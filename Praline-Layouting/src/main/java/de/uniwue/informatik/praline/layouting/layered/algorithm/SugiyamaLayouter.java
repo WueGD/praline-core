@@ -113,7 +113,7 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public void construct() {
         //handle edge bundles
-        handleEdgeBundle();
+//        handleEdgeBundle(); //TODO uncomment and fix (+ re-inserting)
         // handle Port if it has no Vertex
         handlePortWithoutNode();
         // handle Edge if connected to more than two Ports
