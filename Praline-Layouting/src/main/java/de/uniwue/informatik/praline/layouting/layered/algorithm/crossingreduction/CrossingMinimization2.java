@@ -959,7 +959,7 @@ public class CrossingMinimization2 {
         }
         Port portSelf = portOrder.get(index);
         Port portLeft = portOrder.get(index - 1);
-        PortGroup leastCommonAncestor = PortUtils.getLeastCommonAncestor(portSelf, portLeft);
+        PortGroup leastCommonAncestor = (PortGroup) PortUtils.getLeastCommonAncestor(portSelf, portLeft);
         PortComposition candidateLeft =
                 PortUtils.getTopMostChildContainingThisPort(leastCommonAncestor, portLeft);
         for (Port port : PortUtils.getPortsRecursively(candidateLeft)) {
@@ -977,7 +977,7 @@ public class CrossingMinimization2 {
         }
         Port portSelf = portOrder.get(index);
         Port portRight = portOrder.get(index + 1);
-        PortGroup leastCommonAncestor = PortUtils.getLeastCommonAncestor(portSelf, portRight);
+        PortGroup leastCommonAncestor = (PortGroup) PortUtils.getLeastCommonAncestor(portSelf, portRight);
         PortComposition candidateRight =
                 PortUtils.getTopMostChildContainingThisPort(leastCommonAncestor, portRight);
         for (Port port : PortUtils.getPortsRecursively(candidateRight)) {
@@ -992,7 +992,7 @@ public class CrossingMinimization2 {
     private void swapPortGroupLeft(int index, List<Port> portOrder) {
         Port portSelf = portOrder.get(index);
         Port portLeft = portOrder.get(index - 1);
-        PortGroup leastCommonAncestor = PortUtils.getLeastCommonAncestor(portSelf, portLeft);
+        PortGroup leastCommonAncestor = (PortGroup) PortUtils.getLeastCommonAncestor(portSelf, portLeft);
         PortComposition candidateSelf = PortUtils.getTopMostChildContainingThisPort(leastCommonAncestor, portSelf);
         PortComposition candidateLeft = PortUtils.getTopMostChildContainingThisPort(leastCommonAncestor, portLeft);
         swapPortCompositions(portOrder, candidateLeft, candidateSelf);
@@ -1001,7 +1001,7 @@ public class CrossingMinimization2 {
     private void swapPortGroupRight(int index, List<Port> portOrder) {
         Port portSelf = portOrder.get(index);
         Port portRight = portOrder.get(index + 1);
-        PortGroup leastCommonAncestor = PortUtils.getLeastCommonAncestor(portSelf, portRight);
+        PortGroup leastCommonAncestor = (PortGroup) PortUtils.getLeastCommonAncestor(portSelf, portRight);
         PortComposition candidateSelf = PortUtils.getTopMostChildContainingThisPort(leastCommonAncestor, portSelf);
         PortComposition candidateRight = PortUtils.getTopMostChildContainingThisPort(leastCommonAncestor, portRight);
         swapPortCompositions(portOrder, candidateSelf, candidateRight);

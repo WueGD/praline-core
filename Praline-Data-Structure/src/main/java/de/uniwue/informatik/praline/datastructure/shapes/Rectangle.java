@@ -50,6 +50,10 @@ public class Rectangle extends Rectangle2D.Double implements Shape {
         this(UNDEFINED_POSITION, UNDEFINED_POSITION, width, height, null);
     }
 
+    public Rectangle(double x, double y, double width, double height) {
+        this(x, y, width, height, null);
+    }
+
     @JsonCreator
     public Rectangle(
             @JsonProperty("xposition") final double x,

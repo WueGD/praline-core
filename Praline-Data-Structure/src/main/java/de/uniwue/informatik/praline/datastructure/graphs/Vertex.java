@@ -285,19 +285,19 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
     }
 
     private boolean removePortCleanly(Port port) {
-        //remove it from possibly existing PortPairings
-        if (this.getVertexGroup() != null) {
-            for (PortPairing portPairing : new ArrayList<>(this.getVertexGroup().getPortPairings())) {
-                if (portPairing.getPorts().contains(port)) {
-                    this.getVertexGroup().removePortPairing(portPairing);
-                }
-            }
-        }
-
-        //remove references at edges
-        for (Edge edge : new ArrayList<>(port.getEdges())) {
-            edge.removePort(port);
-        }
+//        //remove it from possibly existing PortPairings
+//        if (this.getVertexGroup() != null) {
+//            for (PortPairing portPairing : new ArrayList<>(this.getVertexGroup().getPortPairings())) {
+//                if (portPairing.getPorts().contains(port)) {
+//                    this.getVertexGroup().removePortPairing(portPairing);
+//                }
+//            }
+//        }
+//
+//        //remove references at edges
+//        for (Edge edge : new ArrayList<>(port.getEdges())) {
+//            edge.removePort(port);
+//        }
 
         //remove it from the hash set storing the ports for convenience (easier querying)
         return this.ports.remove(port);

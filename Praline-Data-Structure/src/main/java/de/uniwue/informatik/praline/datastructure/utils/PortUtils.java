@@ -24,19 +24,52 @@ public class PortUtils {
         }
     }
 
-    public static PortGroup getLeastCommonAncestor(Port port0, Port port1) {
-        List<PortGroup> containmentHierarchy0 = getContainmentHierarchy(port0);
-        List<PortGroup> containmentHierarchy1 = getContainmentHierarchy(port1);
+    public static PortComposition getLeastCommonAncestor(PortComposition port0, PortComposition port1) {
+        if (port0 == null || port1 == null) {
+            return null;
+        }
 
-        for (PortGroup portGroup0 : containmentHierarchy0) {
-            for (PortGroup portGroup1 : containmentHierarchy1) {
-                if (portGroup0.equals(portGroup1)) {
-                    return portGroup0;
+        List<PortComposition> containmentHierarchy0 = getContainmentHierarchy(port0);
+        List<PortComposition> containmentHierarchy1 = getContainmentHierarchy(port1);
+
+        for (PortComposition portComp0 : containmentHierarchy0) {
+            for (PortComposition portComp1 : containmentHierarchy1) {
+                if (portComp0.equals(portComp1)) {
+                    return portComp0;
                 }
             }
         }
 
         return null;
+    }
+
+    public static PortComposition getLeastCommonAncestor(Collection<Port> ports) {
+        if (ports == null || ports.isEmpty()) {
+            return null;
+        }
+        PortComposition leastCommonAncestor = ports.iterator().next();
+        for (Port port : ports) {
+            leastCommonAncestor = getLeastCommonAncestor(port, leastCommonAncestor);
+        }
+        return leastCommonAncestor;
+    }
+
+    public static void movePortCompositionsToPortGroup(Collection<? extends PortComposition> portCompositions,
+                                                       PortGroup portGroup) {
+        for (PortComposition portComposition : portCompositions) {
+            movePortCompositionToPortGroup(portComposition, portGroup);
+        }
+    }
+
+    public static void movePortCompositionToPortGroup(PortComposition portComposition, PortGroup portGroup) {
+        if (portComposition.getPortGroup() != null) {
+            portComposition.getPortGroup().removePortComposition(portComposition);
+        }
+        else if (portComposition.getVertex() != null) {
+            portComposition.getVertex().removePortComposition(portComposition);
+        }
+
+        portGroup.addPortComposition(portComposition);
     }
 
     public static boolean areInTheSamePortGroup(Port port0, Port port1) {
@@ -62,8 +95,8 @@ public class PortUtils {
      * @param port
      * @return
      */
-    public static List<PortGroup> getContainmentHierarchy(Port port) {
-        List<PortGroup> containmentHierarchy = new ArrayList<>();
+    public static List<PortComposition> getContainmentHierarchy(PortComposition port) {
+        List<PortComposition> containmentHierarchy = new ArrayList<>();
         PortComposition curr = port;
         while (curr.getPortGroup() != null) {
             PortGroup upperLevelPortGroup = curr.getPortGroup();
