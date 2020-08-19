@@ -112,6 +112,8 @@ public class SugiyamaLayouter implements PralineLayouter {
     // todo: change method back to private when done with debugging and testing
 
     public void construct() {
+        //handle edge bundles
+        handleEdgeBundle();
         // handle Port if it has no Vertex
         handlePortWithoutNode();
         // handle Edge if connected to more than two Ports
@@ -659,6 +661,53 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     // construct //
+
+    private void handleEdgeBundle () {
+        for (EdgeBundle edgeBundle : getGraph().getEdgeBundles()) {
+            handleEdgeBundle(edgeBundle);
+        }
+    }
+
+    private void handleEdgeBundle(EdgeBundle edgeBundle) {
+        //first find all ports of the bundle
+        Map<Vertex, List<Port>> vertices2bundlePorts = new LinkedHashMap<>();
+        //all ports in the bundle should end up next to the other -> also include recursively contained ones
+        for (Edge edge : edgeBundle.getAllRecursivelyContainedEdges()) {
+            for (Port port : edge.getPorts()) {
+                Vertex vertex = port.getVertex();
+                vertices2bundlePorts.putIfAbsent(vertex, new ArrayList<>());
+                vertices2bundlePorts.get(vertex).add(port);
+            }
+        }
+        //create a port group for the ports of the bundle at each vertex
+        for (Vertex vertex : vertices2bundlePorts.keySet()) {
+            List<Port> ports = vertices2bundlePorts.get(vertex);
+            Map<PortGroup, List<PortComposition>> group2bundlePorts = new LinkedHashMap<>();
+            PortGroup nullGroup = new PortGroup(); //dummy object for ports without port group
+            //for this first find the containing port groups
+            for (Port port : ports) {
+                PortGroup portGroup = port.getPortGroup() == null ? nullGroup : port.getPortGroup();
+                group2bundlePorts.put(portGroup, new ArrayList<>());
+                group2bundlePorts.get(portGroup).add(port);
+            }
+            //and now create these port groups
+            for (PortGroup portGroup : group2bundlePorts.keySet()) {
+                PortGroup portGroupForEdgeBundle = new PortGroup(null, false);
+                if (portGroup == nullGroup) {
+                    //if not port group add it directly to the vertex
+                    vertex.addPortComposition(new PortGroup(Arrays.asList(new PortGroup(Arrays.asList(new PortGroup(Arrays.asList(portGroupForEdgeBundle)))))));
+                }
+                else {
+                    portGroup.addPortComposition(new PortGroup(Arrays.asList(new PortGroup(Arrays.asList(new PortGroup(Arrays.asList(portGroupForEdgeBundle)))))));
+                }
+                PortUtils.movePortCompositionsToPortGroup(group2bundlePorts.get(portGroup), portGroupForEdgeBundle);
+            }
+        }
+        //do this recursively for contained edge bundles
+        for (EdgeBundle containedEdgeBundle : edgeBundle.getContainedEdgeBundles()) {
+            handleEdgeBundle(containedEdgeBundle);
+        }
+    }
 
     private void handlePortWithoutNode () {
         for (Edge edge : getGraph().getEdges()) {
