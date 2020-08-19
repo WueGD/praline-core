@@ -140,6 +140,7 @@ public class EdgeRouting {
                 Edge newEdge = new Edge(ports);
                 sugy.getGraph().addEdge(newEdge);
                 sugy.assignDirection(newEdge, p1.getVertex(), p4.getVertex());
+                sugy.getDummyEdge2RealEdge().put(newEdge, sugy.getDummyEdge2RealEdge().get(e1));
 
                 // remove old edges from Ports and Graph
                 p1.removeEdge(e1);

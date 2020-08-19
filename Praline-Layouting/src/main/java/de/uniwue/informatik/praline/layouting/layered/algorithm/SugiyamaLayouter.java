@@ -123,7 +123,7 @@ public class SugiyamaLayouter implements PralineLayouter {
         // handle VertexGroup
         handleVertexGroup();
         // handle Port if it has no Edge
-        handleNoEdgePort();
+        handleNoEdgePort(); //TODO: re-insert these ports!
         // handle Edge if both Ports have same Vertex
         handleOneNodeEdge();
         // if the Graph is not connected use just biggest connected component
@@ -239,7 +239,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     public void prepareDrawing () {
         DrawingPreparation dp = new DrawingPreparation(this);
         dp.prepareDrawing(drawInfo, orders);
-        //restoreOriginalElements();
+        restoreOriginalElements();
     }
     private void restoreOriginalElements () {
         //replace dummy edges
@@ -263,25 +263,27 @@ public class SugiyamaLayouter implements PralineLayouter {
         }
 
         //unify single parts of hyperedges to one edge each
-        for (Edge edge : new ArrayList<>(this.getGraph().getEdges())) {
-            if (hyperEdgeParts.containsKey(edge)) {
-                restoreHyperedgePart(edge);
-            }
-        }
+//        for (Edge edge : new ArrayList<>(this.getGraph().getEdges())) {
+//            if (hyperEdgeParts.containsKey(edge)) {
+//                restoreHyperedgePart(edge);
+//            }
+//        }
+
+        //TODO: count crossings and bends for hyperedges correctly. There still seems to be something that does not work
 
         //replace dummy vertices
         for (Vertex vertex : new ArrayList<>(this.getGraph().getVertices())) {
-            if (hyperEdges.containsKey(vertex)) {
-                replaceHyperEdgeDummyVertex(vertex);
-            }
-            if (vertexGroups.containsKey(vertex)) {
-                VertexGroup vertexGroup = vertexGroups.get(vertex);
-                restoreVertexGroup(vertex, vertexGroup);
-            }
-            if (plugs.containsKey(vertex)) {
-                VertexGroup vertexGroup = plugs.get(vertex);
-                restoreVertexGroup(vertex, vertexGroup);
-            }
+//            if (hyperEdges.containsKey(vertex)) {
+//                replaceHyperEdgeDummyVertex(vertex);
+//            }
+//            if (vertexGroups.containsKey(vertex)) {
+//                VertexGroup vertexGroup = vertexGroups.get(vertex);
+//                restoreVertexGroup(vertex, vertexGroup);
+//            }
+//            if (plugs.containsKey(vertex)) {
+//                VertexGroup vertexGroup = plugs.get(vertex);
+//                restoreVertexGroup(vertex, vertexGroup);
+//            }
             if (dummyTurningNodes.containsKey(vertex)) {
                 getGraph().removeVertex(vertex);
             }
@@ -301,9 +303,9 @@ public class SugiyamaLayouter implements PralineLayouter {
         //second we replace the ports that were created during the phase where ports with multiple edges were split to
         // multiple ports; now we re-unify all these ports back to one. If there is a port pairing involved, we keep
         // the one on the opposite site to the port pairing; otherwise we keep the/a middle one
-        for (Port origPort : multipleEdgePort2replacePorts.keySet()) {
-            restorePortsWithMultipleEdges(origPort);
-        }
+//        for (Port origPort : multipleEdgePort2replacePorts.keySet()) {
+//            restorePortsWithMultipleEdges(origPort);
+//        }
     }
 
     private void restorePortsWithMultipleEdges(Port origPort) {
@@ -473,8 +475,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     private int changeVertexSideIfContained(Map<Vertex, Double> minX, Map<Vertex, Double> maxX, Vertex originalVertex,
                                             int vertexSide, Port port, int changeTo) {
         Port portBeforeUnification = replacedPorts.get(port);
-        if (originalVertex.getPorts().contains(portBeforeUnification) ||
-                originalVertex.getPorts().contains(replacedPorts.get(port))) {
+        if (originalVertex.getPorts().contains(portBeforeUnification) || originalVertex.getPorts().contains(port)) {
             vertexSide = changeTo;
             double xBeginPort = port.getShape().getXPosition();
             if (xBeginPort < minX.get(originalVertex)) {
@@ -1048,6 +1049,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     private void handleNoEdgePortRec (PortComposition portComposition) {
+        //TODO: change this to re-insert (or keep) these ports. See also TODO in NodePlacement
         if (portComposition instanceof Port) {
             Port port = ((Port)portComposition);
             if (port.getEdges().isEmpty()) {

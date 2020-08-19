@@ -37,6 +37,9 @@ public class NodePlacement {
         this.drawInfo = drawingInformation;
     }
 
+    //TODO: re-insert ports without edges in this step. Take care: this may be a "unification" node and then the
+    // ports should end up in different port groups (be inserted in the correct order on the correct side of the vertex)
+
     public void placeNodes () {
         Map<Port, Double> xValues = new LinkedHashMap<>();
         initialise();
