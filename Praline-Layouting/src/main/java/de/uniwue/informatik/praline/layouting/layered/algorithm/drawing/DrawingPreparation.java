@@ -50,8 +50,8 @@ public class DrawingPreparation {
             maxL = Math.min(maxL, port.getShape().getXPosition());
             minR = Math.max(minR, port.getShape().getXPosition());
         }
-        maxL -= (drawInfo.getPortWidth() + (delta / 2));
-        minR += (drawInfo.getPortWidth() + (delta / 2));
+        maxL -= ((drawInfo.getPortWidth() + delta) / 2);
+        minR += ((drawInfo.getPortWidth() + delta) / 2);
         // tighten to smallest width possible
         double size = nodeShape.getWidth();
         double minSize = minR - maxL;
