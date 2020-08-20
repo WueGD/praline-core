@@ -59,13 +59,13 @@ public class DirectionAssignment {
         int width = ((int) Math.round((junggraph.getVertexCount() * 6237.0) / height));
         Dimension dimension = new Dimension(width, height);
         // create new force directed layout
-        FRWSPDb_bMultiLevel<Long, Long> layout = new FRWSPDb_bMultiLevel<>(junggraph, 1.0, dimension);
+        FRWSPDb_bMultiLevel<Long, Long> layout = new FRWSPDb_bMultiLevel<>(junggraph, 1.0, dimension,
+                Constants.random.nextLong());
         layout.setRecomputationOfSplitTreeAndWSPDFunction(new RecomputationOfSplitTreeAndWSPDFunction());
 //        layout.setMaxIterations(2000);
 //        layout.setAttractionMultiplier(0.75); //higher value equals weaker force
 //        layout.setRepulsionMultiplier(0.75); //lower value equals weaker force
-        //TODO: jung.FRLayout does not use seeds in all of its code --> change to something reproducible
-        layout.setInitializer(new RandomLocationTransformer<>(dimension, Constants.SEED_JUNG));
+//        layout.setInitializer(new RandomLocationTransformer<>(dimension, Constants.random.nextLong()));
         layout.initialize();
         // calculate layout
         while (!layout.done()) {

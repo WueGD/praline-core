@@ -5,7 +5,7 @@
  * This software is open-source under the BSD license; see either "license.txt"
  * or http://jung.sourceforge.net/license.txt for a description.
  */
-package de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.jungmodify;
+package de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify;
 
 import java.awt.Dimension;
 import java.awt.geom.Point2D;
@@ -14,6 +14,7 @@ import java.util.ConcurrentModificationException;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.Constants;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.Randomness;
 import edu.uci.ics.jung.algorithms.layout.AbstractLayout;
 import edu.uci.ics.jung.algorithms.layout.util.RandomLocationTransformer;
@@ -112,19 +113,29 @@ public class FRLayout<V, E> extends AbstractLayout<V, E> implements IterativeCon
      * Creates an instance of size {@code d} for the specified graph.
      */
     public FRLayout(Graph<V, E> g, Dimension d) {
-        super(g, new RandomLocationTransformer<V>(d), d);
+        super(g, new RandomLocationTransformer<V>(d, Constants.random.nextLong()), d);
+        initialize();
+        max_dimension = Math.max(d.height, d.width);
+    }
+
+    public FRLayout(Graph<V, E> g, Dimension d, long seed) {
+        super(g, new RandomLocationTransformer<V>(d, seed), d);
         initialize();
         max_dimension = Math.max(d.height, d.width);
     }
 
 	@Override
 	public void setSize(Dimension size) {
-		if(initialized == false) {
-			setInitializer(new RandomLocationTransformer<V>(size));
-		}
-		super.setSize(size);
-        max_dimension = Math.max(size.height, size.width);
+        setSize(size, Constants.random.nextLong());
 	}
+
+    public void setSize(Dimension size, long seed) {
+        if(initialized == false) {
+            setInitializer(new RandomLocationTransformer<V>(size, seed));
+        }
+        super.setSize(size);
+        max_dimension = Math.max(size.height, size.width);
+    }
 
 	/**
 	 * Sets the attraction multiplier.

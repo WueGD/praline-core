@@ -1,6 +1,6 @@
 package de.uniwue.informatik.jung.layouting.forcedirectedwspd.wspd;
 
-import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.jungmodify.FRLayout.FRVertexData;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.FRLayout.FRVertexData;
 import edu.uci.ics.jung.graph.DelegateTree;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.Tree;

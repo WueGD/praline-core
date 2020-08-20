@@ -1,11 +1,11 @@
 package de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms;
 
-import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.jungmodify.FRLayout;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.FRLayout;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.*;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.UndirectedSparseGraph;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.algorithms.layout.util.RandomLocationTransformer;
 import edu.uci.ics.jung.graph.Graph;
-import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -63,6 +63,18 @@ public class FRLayoutNoMaps<V, E> extends FRLayout<VertexTriple<V>, EdgeTriple<V
 	 * @param d
 	 */
 	public FRLayoutNoMaps(Graph<V,E> graph, Dimension d) {
+		this(graph, d, Constants.random.nextLong());
+	}
+
+	/**
+	 * In this constructor a normal JUNG-{@link Graph} is read and {@link VertexTriple}s and
+	 * {@link EdgeTriple}s are created.
+	 *
+	 * @param graph
+	 * @param d
+	 * @param seed
+	 */
+	public FRLayoutNoMaps(Graph<V,E> graph, Dimension d, long seed) {
 		//there locations is touched -> must be changed
 		//<Replace that call in AbstractLayout  (= line "super(g, new RandomLocationTransformer<V>(d), d);" in FRLayout)>
 		//The new created graph is then saved at this.graph
@@ -71,7 +83,7 @@ public class FRLayoutNoMaps<V, E> extends FRLayout<VertexTriple<V>, EdgeTriple<V
 		//Read graph. This is the only step that works with the JUNG-graph-structure
 		vertexData2VertexTriple = new LinkedHashMap<V, VertexTriple<V>>(graph.getVertexCount());
 		vertices = new ArrayList<VertexTriple<V>>(graph.getVertexCount());
-		RandomLocationTransformer<V> randomLocationTransformer = new RandomLocationTransformer<V>(d);
+		RandomLocationTransformer<V> randomLocationTransformer = new RandomLocationTransformer<V>(d, seed);
 		for(V v: graph.getVertices()){
 			VertexTriple<V> newVTriple =
 					new VertexTriple<V>(v, randomLocationTransformer.apply(v), new FRVertexData());

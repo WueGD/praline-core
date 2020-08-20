@@ -1,6 +1,6 @@
 package de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.wspd;
 
-import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.jungmodify.FRLayout;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.FRLayout;
 import edu.uci.ics.jung.graph.Graph;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.FRLayoutNoMapsNoFrame;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.VertexTriple;
@@ -57,6 +57,11 @@ public abstract class FRWSPD<V, E> extends FRLayoutNoMapsNoFrame<V, E> implement
 	
 	public FRWSPD(Graph<V, E> g, double sForTheWSPD, Dimension d) {
 		super(g, d);
+		this.sForTheWSPD = sForTheWSPD;
+	}
+
+	public FRWSPD(Graph<V, E> g, double sForTheWSPD, Dimension d, long seed) {
+		super(g, d, seed);
 		this.sForTheWSPD = sForTheWSPD;
 	}
 

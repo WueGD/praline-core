@@ -1,8 +1,8 @@
 package de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.multilevel.galaxy;
 
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.Randomness;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
-import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.Tuple;
 
 import java.util.ArrayList;

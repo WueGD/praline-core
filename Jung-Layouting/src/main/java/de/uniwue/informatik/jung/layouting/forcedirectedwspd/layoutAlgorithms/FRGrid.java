@@ -1,5 +1,6 @@
 package de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms;
 
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.Constants;
 import edu.uci.ics.jung.graph.Graph;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.VertexTriple;
 
@@ -44,7 +45,11 @@ public class FRGrid<V,E> extends FRLayoutNoMapsNoFrame<V,E> {
      * Constructors
 	 */
 	public FRGrid(Graph<V, E> graph, Dimension d) {
-		super(graph, d);
+		this(graph, d, Constants.random.nextLong());
+	}
+
+	public FRGrid(Graph<V, E> graph, Dimension d, long seed) {
+		super(graph, d, seed);
 		
 		//for every component an own one
 		k = new double[vertices.length];

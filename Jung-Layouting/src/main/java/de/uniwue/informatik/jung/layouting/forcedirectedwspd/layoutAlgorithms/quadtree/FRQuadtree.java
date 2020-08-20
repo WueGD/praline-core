@@ -1,6 +1,6 @@
 package de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.quadtree;
 
-import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.jungmodify.FRLayout;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.FRLayout;
 import edu.uci.ics.jung.graph.Graph;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.FRLayoutNoMapsNoFrame;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.quadtree.QuadTree;
@@ -35,6 +35,11 @@ public class FRQuadtree<V, E> extends FRLayoutNoMapsNoFrame<V, E> {
 	
 	public FRQuadtree(Graph<V, E> g, double theta, Dimension d) {
 		super(g, d);
+		this.theta = theta;
+	}
+
+	public FRQuadtree(Graph<V, E> g, double theta, Dimension d, long seed) {
+		super(g, d, seed);
 		this.theta = theta;
 	}
 

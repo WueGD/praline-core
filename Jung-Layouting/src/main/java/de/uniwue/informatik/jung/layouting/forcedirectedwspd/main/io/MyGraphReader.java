@@ -1,7 +1,7 @@
 package de.uniwue.informatik.jung.layouting.forcedirectedwspd.main.io;
 
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.UndirectedGraph;
-import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.io.GraphIOException;
 import edu.uci.ics.jung.io.GraphReader;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.wspd.LinkedList;

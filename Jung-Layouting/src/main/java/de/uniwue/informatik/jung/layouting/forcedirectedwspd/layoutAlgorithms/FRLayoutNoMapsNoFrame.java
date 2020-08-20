@@ -1,14 +1,11 @@
 package de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms;
 
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.*;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.UndirectedSparseGraph;
 import edu.uci.ics.jung.algorithms.cluster.WeakComponentClusterer;
-import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.jungmodify.FRLayout;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.FRLayout;
 import edu.uci.ics.jung.algorithms.layout.util.RandomLocationTransformer;
 import edu.uci.ics.jung.graph.Graph;
-import edu.uci.ics.jung.graph.UndirectedSparseGraph;
-import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.EdgeTriple;
-import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.TripleSetGraph;
-import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.Tuple;
-import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.VertexTriple;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -148,6 +145,18 @@ public class FRLayoutNoMapsNoFrame<V, E> extends FRLayoutNoMaps<V, E> implements
 	 * @param d
 	 */
 	public FRLayoutNoMapsNoFrame(Graph<V,E> graph, Dimension d) {
+		this(graph, d, Constants.random.nextLong());
+	}
+
+	/**
+	 * Almost the same as the constructor from {@link FRLayoutNoMaps}.
+	 * Only change: Devision acc. to the connected components.
+	 *
+	 * @param graph
+	 * @param d
+	 * @param seed
+	 */
+	public FRLayoutNoMapsNoFrame(Graph<V,E> graph, Dimension d, long seed) {
 		//there locations is touched -> must be changed
 		//<Replace that call in AbstractLayout  (= line "super(g, new RandomLocationTransformer<V>(d), d);" in FRLayout)>
 		//The new created graph is then saved at this.graph
@@ -176,7 +185,7 @@ public class FRLayoutNoMapsNoFrame<V, E> extends FRLayoutNoMaps<V, E> implements
 			offset += component.size();
 			
 			vertices[i] = new ArrayList<VertexTriple<V>>(component.size());
-			RandomLocationTransformer<V> randomLocationTransformer = new RandomLocationTransformer<V>(subsize[i]);
+			RandomLocationTransformer<V> randomLocationTransformer = new RandomLocationTransformer<V>(subsize[i], seed);
 			for(V v: component){
 				VertexTriple<V> newVTriple =
 						new VertexTriple<V>(v, randomLocationTransformer.apply(v), new FRVertexData());

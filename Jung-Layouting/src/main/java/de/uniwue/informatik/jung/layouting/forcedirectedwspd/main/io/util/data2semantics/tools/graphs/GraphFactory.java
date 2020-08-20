@@ -1,7 +1,7 @@
 package de.uniwue.informatik.jung.layouting.forcedirectedwspd.main.io.util.data2semantics.tools.graphs;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -47,7 +47,7 @@ public class GraphFactory {
 		}
 
 		DirectedGraph<Vertex<String>, Edge<String>> graph = new DirectedSparseMultigraph<Vertex<String>, Edge<String>>();
-		Map<String, Vertex<String>> nodes = new HashMap<String, Vertex<String>>();	
+		Map<String, Vertex<String>> nodes = new LinkedHashMap<String, Vertex<String>>();
 		Vertex<String> node1, node2;
 
 		for (Statement statement : sesameGraph) 
@@ -91,7 +91,7 @@ public class GraphFactory {
 	public static <L> DirectedGraph<Vertex<L>, Edge<L>> copyDirectedGraph(DirectedGraph<Vertex<L>, Edge<L>> graph) {
 		DirectedGraph<Vertex<L>, Edge<L>> newGraph = new DirectedSparseMultigraph<Vertex<L>, Edge<L>>();
 
-		Map<Vertex<L>, Vertex<L>> nodes = new HashMap<Vertex<L>, Vertex<L>>();
+		Map<Vertex<L>, Vertex<L>> nodes = new LinkedHashMap<Vertex<L>, Vertex<L>>();
 
 		for (Vertex<L> vertex : graph.getVertices()) {
 			nodes.put(vertex, new Vertex<L>(vertex));
@@ -106,7 +106,7 @@ public class GraphFactory {
 	public static <L> DirectedMultigraphWithRoot<Vertex<L>, Edge<L>> copyDirectedGraph2GraphWithRoot(DirectedGraph<Vertex<L>, Edge<L>> graph) {
 		DirectedMultigraphWithRoot<Vertex<L>, Edge<L>> newGraph = new DirectedMultigraphWithRoot<Vertex<L>, Edge<L>>();
 
-		Map<Vertex<L>, Vertex<L>> nodes = new HashMap<Vertex<L>, Vertex<L>>();
+		Map<Vertex<L>, Vertex<L>> nodes = new LinkedHashMap<Vertex<L>, Vertex<L>>();
 
 		for (Vertex<L> vertex : graph.getVertices()) {
 			nodes.put(vertex, new Vertex<L>(vertex));

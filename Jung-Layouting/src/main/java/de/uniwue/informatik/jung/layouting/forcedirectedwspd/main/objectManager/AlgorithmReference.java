@@ -1,7 +1,8 @@
 package de.uniwue.informatik.jung.layouting.forcedirectedwspd.main.objectManager;
 
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.Constants;
 import edu.uci.ics.jung.algorithms.layout.AbstractLayout;
-import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.jungmodify.FRLayout2;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.FRLayout2;
 import edu.uci.ics.jung.algorithms.layout.KKLayout;
 import edu.uci.ics.jung.graph.Graph;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.AlgorithmType;
@@ -123,9 +124,31 @@ public class AlgorithmReference {
 	 * 
 	 * @return
 	 */
-	public <V,E> AbstractLayout<V, E> getNewInstance(Graph<V, E> graph, Dimension size,
-			double sOrTheta) {
-		
+	public <V,E> AbstractLayout<V, E> getNewInstance(Graph<V, E> graph, Dimension size, double sOrTheta) {
+		return getNewInstance(graph, size, sOrTheta, Constants.random.nextLong());
+	}
+
+	/**
+	 * With that method a class-object referenced with this {@link AlgorithmReference} is instantiated and returned.
+	 * These class-objects must be at least from the class {@link AbstractLayout} (should be already true for
+	 * all algorithms specified in {@link AlgorithmManager#initialize()}).
+	 *
+	 * @param graph
+	 * Graph for the layout that shall be instantiated
+	 * @param size
+	 * Size for the layout that shall be instantiated
+	 * @param sOrTheta
+	 * Only relevant if a layout of type {@link AlgorithmType#WITH_WSPD} (as s-value for the WSPD)
+	 * or of type {@link AlgorithmType#WITH_QUADTREE} (as theta-value for the algorithm)
+	 * is specified by this {@link AlgorithmReference}.
+	 * If it is not of those types it can have an arbitrary value (is never used).
+	 * To query a algorithm of which type is referenced here call {@link AlgorithmReference#getAlgorithmType()}
+	 * @param seed
+	 * @param <V>
+	 * @param <E>
+	 * @return
+	 */
+	public <V,E> AbstractLayout<V, E> getNewInstance(Graph<V, E> graph, Dimension size, double sOrTheta, long seed) {
 		AbstractLayout<V, E> layout = null;
 		
 		Class<?> layoutClass = null;
@@ -137,8 +160,8 @@ public class AlgorithmReference {
 		
 		if(algorithmType==AlgorithmType.WITH_WSPD){
 			try {
-				Constructor<?> con = layoutClass.getConstructor(Graph.class, double.class, Dimension.class);
-				layout = (AbstractLayout<V, E>) con.newInstance(graph, sOrTheta, size);
+				Constructor<?> con = layoutClass.getConstructor(Graph.class, double.class, Dimension.class, long.class);
+				layout = (AbstractLayout<V, E>) con.newInstance(graph, sOrTheta, size, seed);
 			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException |
 					IllegalArgumentException | InvocationTargetException e) {
 				e.printStackTrace();
@@ -146,8 +169,8 @@ public class AlgorithmReference {
 		}
 		else if(algorithmType==AlgorithmType.WITH_QUADTREE){
 			try {
-				Constructor<?> con = layoutClass.getConstructor(Graph.class, double.class, Dimension.class);
-				layout = (AbstractLayout<V, E>) con.newInstance(graph, sOrTheta, size);
+				Constructor<?> con = layoutClass.getConstructor(Graph.class, double.class, Dimension.class, long.class);
+				layout = (AbstractLayout<V, E>) con.newInstance(graph, sOrTheta, size, seed);
 			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException |
 					IllegalArgumentException | InvocationTargetException e) {
 				e.printStackTrace();
@@ -156,7 +179,7 @@ public class AlgorithmReference {
 		//other layout-type
 		else{
 			
-			
+			//TODO: KKLayout does not use seeds (maybe copy the original source and modify it if needed)
 			if(layoutClass == KKLayout.class){
 				try {
 					Constructor<?> con = layoutClass.getConstructor(Graph.class);
@@ -170,8 +193,8 @@ public class AlgorithmReference {
 			//other ones that are not KKLayout
 			else{
 				try {
-					Constructor<?> con = layoutClass.getConstructor(Graph.class, Dimension.class);
-					layout = (AbstractLayout<V, E>) con.newInstance(graph, size);
+					Constructor<?> con = layoutClass.getConstructor(Graph.class, Dimension.class, long.class);
+					layout = (AbstractLayout<V, E>) con.newInstance(graph, size, seed);
 				} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException |
 						IllegalArgumentException | InvocationTargetException e) {
 					e.printStackTrace();
@@ -183,7 +206,7 @@ public class AlgorithmReference {
 			
 		//Because of the implementation of FRLayout2 (other than FRLayout) it is needed to do this extra step
 		if(FRLayout2.class.isInstance(layout)){
-			layout.setSize(size);
+			((FRLayout2) layout).setSize(size, seed);
 		}
 		
 		return layout;

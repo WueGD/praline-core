@@ -1,8 +1,8 @@
 package de.uniwue.informatik.jung.layouting.forcedirectedwspd.main.objectManager;
 
 import edu.uci.ics.jung.algorithms.layout.AbstractLayout;
-import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.jungmodify.FRLayout;
-import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.jungmodify.FRLayout2;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.FRLayout;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.FRLayout2;
 import edu.uci.ics.jung.algorithms.layout.KKLayout;
 import edu.uci.ics.jung.graph.Graph;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.FRGrid;

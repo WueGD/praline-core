@@ -7,12 +7,12 @@ import de.uniwue.informatik.jung.layouting.forcedirectedwspd.main.io.RomeGraphFo
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.main.io.SuperGraphReader;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.main.util.Dialog;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.main.util.InvokeMethod;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.UndirectedSparseGraph;
 import edu.uci.ics.jung.algorithms.cluster.WeakComponentClusterer;
 import edu.uci.ics.jung.algorithms.generators.GraphGenerator;
 import edu.uci.ics.jung.algorithms.generators.random.EppsteinPowerLawGenerator;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.UndirectedGraph;
-import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.Pair;
 
 import java.io.File;
@@ -260,9 +260,9 @@ public class GraphManager extends Manager<GraphReference> {
 		numberOfGraphsWithMoreThanOneComponent = 0;
 		numberOfGraphsWithNoComponentWithAtLeastXVertices = 0;
 		numberOfGraphsWithMoreThanOneComponentWithAtLeastXVertices = 0;
-		numberOfConnectedComponents = new HashMap<Integer, Integer>();
-		sizeOfTheConnectedComponents = new HashMap<Integer, Integer>();
-		sizeOfTheGraphs = new HashMap<Integer, Integer>();
+		numberOfConnectedComponents = new LinkedHashMap<Integer, Integer>();
+		sizeOfTheConnectedComponents = new LinkedHashMap<Integer, Integer>();
+		sizeOfTheGraphs = new LinkedHashMap<Integer, Integer>();
 		rgfgw = new RomeGraphFormatGraphWriter();
 
 

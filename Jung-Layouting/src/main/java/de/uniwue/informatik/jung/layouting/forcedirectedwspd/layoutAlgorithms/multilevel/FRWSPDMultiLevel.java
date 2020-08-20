@@ -27,6 +27,10 @@ public abstract class FRWSPDMultiLevel<V, E> extends MultiLevelLayout<V, E> impl
 		super(graph, size, algo, sOrTheta);
 	}
 
+	public FRWSPDMultiLevel(Graph<V, E> graph, Dimension size, AlgorithmReference algo, double sOrTheta, long seed) {
+		super(graph, size, algo, sOrTheta, seed);
+	}
+
 	@Override
 	public int getCurrentIteration() {
 		return super.currentIteration;

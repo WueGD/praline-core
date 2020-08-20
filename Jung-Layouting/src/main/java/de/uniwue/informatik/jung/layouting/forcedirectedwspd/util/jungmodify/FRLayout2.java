@@ -5,11 +5,12 @@
  * This software is open-source under the BSD license; see either "license.txt"
  * or http://jung.sourceforge.net/license.txt for a description.
  */
-package de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.jungmodify;
+package de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.Constants;
 import edu.uci.ics.jung.algorithms.layout.AbstractLayout;
 import edu.uci.ics.jung.algorithms.layout.util.RandomLocationTransformer;
 import edu.uci.ics.jung.algorithms.util.IterativeContext;
@@ -95,15 +96,25 @@ public class FRLayout2<V, E> extends AbstractLayout<V, E> implements IterativeCo
      * Creates an instance of size {@code d} for the specified graph.
      */
     public FRLayout2(Graph<V, E> g, Dimension d) {
-        super(g, new RandomLocationTransformer<V>(d), d);
+        super(g, new RandomLocationTransformer<V>(d, Constants.random.nextLong()), d);
         max_dimension = Math.max(d.height, d.width);
         initialize();
     }
-    
-	@Override
-	public void setSize(Dimension size) {
+
+    public FRLayout2(Graph<V, E> g, Dimension d, long seed) {
+        super(g, new RandomLocationTransformer<V>(d, seed), d);
+        max_dimension = Math.max(d.height, d.width);
+        initialize();
+    }
+
+    @Override
+    public void setSize(Dimension size) {
+        setSize(size, Constants.random.nextLong());
+    }
+
+    public void setSize(Dimension size, long seed) {
 		if(initialized == false) 
-			setInitializer(new RandomLocationTransformer<V>(size));
+			setInitializer(new RandomLocationTransformer<V>(size, seed));
 		super.setSize(size);
 		double t = size.width/50.0;
 		innerBounds.setFrameFromDiagonal(t,t,size.width-t,size.height-t);

@@ -119,7 +119,7 @@ public class Graphs
 	private static void read(Graph<Vertex<Integer>, Edge<Integer>> graph, File file)
 			throws IOException
 	{
-		Map<Integer, Vertex<Integer>> map = new HashMap<Integer, Vertex<Integer>>();
+		Map<Integer, Vertex<Integer>> map = new LinkedHashMap<Integer, Vertex<Integer>>();
 		
 		BufferedReader reader = new BufferedReader(new FileReader(file));
 				
@@ -127,7 +127,7 @@ public class Graphs
 		int i = 0;
 		int edges = 0;
 		
-		HashSet<Integer> set = new HashSet<Integer>();
+		HashSet<Integer> set = new LinkedHashSet<Integer>();
 		
 		do
 		{
@@ -189,7 +189,7 @@ public class Graphs
 		System.out.println("\nFinished. Read " + edges + "edges");
 		System.out.println("Encountered "+set.size()+" vertices");
 		
-		HashSet<Integer> all = new HashSet<Integer>();
+		HashSet<Integer> all = new LinkedHashSet<Integer>();
 		for(int j = 1; j < 307; j++)
 			all.add(j);
 		System.out.println(all.removeAll(set));
@@ -248,7 +248,7 @@ public class Graphs
 	public static UndirectedGraph<Vertex<String>, Edge<String>> graphFromTSV(File file)
 			throws IOException
 	{
-		Map<String, Vertex<String>> map = new HashMap<String, Vertex<String>>();
+		Map<String, Vertex<String>> map = new LinkedHashMap<String, Vertex<String>>();
 		
 		UndirectedSparseGraph<Vertex<String>, Edge<String>> graph = 
 			new UndirectedSparseGraph<Vertex<String>, Edge<String>>();

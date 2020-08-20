@@ -1,6 +1,6 @@
 package de.uniwue.informatik.jung.layouting.forcedirectedwspd.main.util;
 
-import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.jungmodify.FRLayout;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.FRLayout;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.Randomness;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.VertexTriple;
 

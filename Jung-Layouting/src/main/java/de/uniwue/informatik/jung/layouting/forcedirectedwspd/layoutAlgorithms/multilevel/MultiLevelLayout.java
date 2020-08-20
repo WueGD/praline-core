@@ -1,13 +1,14 @@
 package de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.multilevel;
 
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.Constants;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.Randomness;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.Tuple;
+import de.uniwue.informatik.jung.layouting.forcedirectedwspd.util.jungmodify.UndirectedSparseGraph;
 import edu.uci.ics.jung.algorithms.cluster.WeakComponentClusterer;
 import edu.uci.ics.jung.algorithms.layout.AbstractLayout;
 import edu.uci.ics.jung.algorithms.layout.util.RandomLocationTransformer;
 import edu.uci.ics.jung.algorithms.util.IterativeContext;
 import edu.uci.ics.jung.graph.Graph;
-import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.AlgorithmMeasureRepulsiveTime;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.FRLayoutNoMaps;
 import de.uniwue.informatik.jung.layouting.forcedirectedwspd.layoutAlgorithms.FRLayoutNoMapsNoFrame;
@@ -41,6 +42,7 @@ public class MultiLevelLayout<V,E> extends AbstractLayout<V, E> implements Itera
 	
 	private AlgorithmReference layoutingAlgorithmType;
 	protected double sOrTheta;
+	protected long seed;
 	
 	/**
 	 * see {@link FRLayoutNoMapsNoFrame#numberOfComponents}
@@ -79,9 +81,24 @@ public class MultiLevelLayout<V,E> extends AbstractLayout<V, E> implements Itera
 	 */
 	protected MultiLevelLayout(Graph<V,E> graph, Dimension size,
 			AlgorithmReference layoutingAlgorithmType, double sOrTheta) {
+		this(graph, size, layoutingAlgorithmType, sOrTheta, Constants.random.nextLong());
+	}
+
+	/**
+	 *
+	 * @param graph
+	 * @param size
+	 * @param layoutingAlgorithmType
+	 * @param sOrTheta
+	 * 		May be arbitrary value if not needed for {@link AlgorithmReference#getNewInstance(Graph, Dimension, double)}
+	 * @param seed
+	 */
+	protected MultiLevelLayout(Graph<V,E> graph, Dimension size,
+							   AlgorithmReference layoutingAlgorithmType, double sOrTheta, long seed) {
 		super(graph,size);
 		this.layoutingAlgorithmType = layoutingAlgorithmType;
 		this.sOrTheta = sOrTheta;
+		this.seed = seed;
 		
 		//Find connected components
 		WeakComponentClusterer<V, E> clusterer = new WeakComponentClusterer<V, E>();
@@ -120,7 +137,8 @@ public class MultiLevelLayout<V,E> extends AbstractLayout<V, E> implements Itera
 			}
 			singleComponentMLLayouts.add(i, new SingleComponentMultiLevelLayout(graphOfThisComponent, subsize.get(i)));
 			//init locations
-			RandomLocationTransformer<V> randomLocationTransformer = new RandomLocationTransformer<V>(subsize.get(i));
+			RandomLocationTransformer<V> randomLocationTransformer = new RandomLocationTransformer<V>(subsize.get(i),
+					seed);
 			for(V v: component){
 				Point2D location = randomLocationTransformer.apply(v);
 				this.setLocation(v, location);
@@ -140,11 +158,16 @@ public class MultiLevelLayout<V,E> extends AbstractLayout<V, E> implements Itera
 
 	@Override
 	public void reset() {
+		reset(Constants.random.nextLong());
+	}
+
+	public void reset(long seed) {
 		int i=0; //counter
 		for(SingleComponentMultiLevelLayout componentLayout: singleComponentMLLayouts){
 
 			//new locations
-			RandomLocationTransformer<V> randomLocationTransformer = new RandomLocationTransformer<V>(subsize.get(i));
+			RandomLocationTransformer<V> randomLocationTransformer = new RandomLocationTransformer<V>(subsize.get(i),
+					seed);
 			for(V v: componentLayout.getGraph().getVertices()){
 				Point2D location = randomLocationTransformer.apply(v);
 				this.setLocation(v, location);
@@ -469,7 +492,8 @@ public class MultiLevelLayout<V,E> extends AbstractLayout<V, E> implements Itera
 		
 		private void switchToNextLayoutingLevelAlgorithm(boolean applyVertexLocationsFromThisMultiLevelLayoutToLayoutingAlgorithm){
 			this.prevLayoutingAlgorithm = this.currentLayoutingAlgorithm;
-			this.currentLayoutingAlgorithm = layoutingAlgorithmType.getNewInstance(currentLevel.graph, size, sOrTheta);
+			this.currentLayoutingAlgorithm = layoutingAlgorithmType.getNewInstance(currentLevel.graph, size, sOrTheta
+					, seed);
 			if(currentLayoutingAlgorithm instanceof LayoutWithWSPD){
 				((LayoutWithWSPD<?>) currentLayoutingAlgorithm).setRecomputationOfSplitTreeAndWSPDFunction(recomputationFunction);
 			}

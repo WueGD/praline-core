@@ -31,6 +31,10 @@ public class FRWSPDp_b<V, E> extends FRWSPD<V, E> {
 	public FRWSPDp_b(Graph<V, E> g, double sFuerDieWSPD, Dimension d) {
 		super(g, sFuerDieWSPD, d);
 	}
+
+	public FRWSPDp_b(Graph<V, E> g, double sFuerDieWSPD, Dimension d, long seed) {
+		super(g, sFuerDieWSPD, d, seed);
+	}
 	
 	
 	@Override
