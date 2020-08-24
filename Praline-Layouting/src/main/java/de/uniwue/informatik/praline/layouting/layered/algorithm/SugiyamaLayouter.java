@@ -313,6 +313,23 @@ public class SugiyamaLayouter implements PralineLayouter {
 //                VertexGroup vertexGroup = plugs.get(vertex);
 //                restoreVertexGroup(vertex, vertexGroup);
 //            }
+
+            //TODO: delete after tests for paper; to draw port pairings we need vertex groups
+            for (Port port : vertex.getPorts()) {
+                //if we have saved that there is port pairing but PortUtils does not find one in the graph, we add it
+                // to the graph
+                if (isPaired(port) && !PortUtils.isPaired(port)) {
+                    if (vertex.getVertexGroup() == null) {
+                        VertexGroup dummyVertexGroup = new VertexGroup();
+                        graph.addVertexGroup(dummyVertexGroup);
+                        dummyVertexGroup.addVertex(vertex);
+                    }
+                    vertex.getVertexGroup().addPortPairing(new PortPairing(port, getPairedPort(port)));
+                }
+            }
+            //TODO: end of delete after tests for paper;
+
+
             if (dummyTurningNodes.containsKey(vertex)) {
                 getGraph().removeVertex(vertex);
             }
