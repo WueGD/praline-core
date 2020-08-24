@@ -18,32 +18,39 @@ public class CsvDataExtraction {
     private static final String DATA_PATH =
             "Praline-Layouting/results/" +
 //                    "paper-all-tests-2020-06-10_06-18-04";
-                    "2020-07-09_18-07-13";
+                    "paper-all-tests-2020-08-20_16-01-53";
 
     private static final String[] DATA_DIRS =
             {
 //                    "DA_lc-praline-package-2020-05-18",
-//                    "DA_generated_2020-06-04_18-39-49",
+//                    "DA_generated_2020-08-20_04-42-39",
                     "CM_lc-praline-package-2020-05-18",
-//                    "CM_generated_2020-06-04_18-39-49"
-                    "CM_generated_2020-07-09_05-07-43"
+                    "CM_generated_2020-08-20_04-42-39"
             };
 
 
-    private static final boolean TABLE_CONTENT_OUTPUT = false; //otherwise better readable for humans
+    private static final boolean TABLE_CONTENT_OUTPUT = true; //otherwise better readable for humans
 
     private static final DecimalFormat OUTPUT_FORMAT_MEAN =
-            new DecimalFormat("0.0", DecimalFormatSymbols.getInstance(Locale.US));
+            new DecimalFormat("#.00", DecimalFormatSymbols.getInstance(Locale.US));
+    private static final DecimalFormat OUTPUT_FORMAT_MEAN_RELATIVE_TO =
+            new DecimalFormat("#", DecimalFormatSymbols.getInstance(Locale.US));
     private static final DecimalFormat OUTPUT_FORMAT_SD =
             new DecimalFormat("#.0", DecimalFormatSymbols.getInstance(Locale.US));
     private static final DecimalFormat OUTPUT_PERCENT_FORMAT =
             new DecimalFormat("#", DecimalFormatSymbols.getInstance(Locale.US));
     private static final String PERCENT_SYMBOL = ""; //" \\%"
     private static final String INSTEAD_OF_LEADING_ZERO = "~";
+    private static final boolean IGNORE_SD = true;
 
     private static final String[] CONSIDER_FILES = {"noc", "nob", "nodn", "space", "time"};
 
     private static final String[] SORT_ENTRIES_ORDER = {"fd", "bfs", "ran"};
+
+    //set to an unkonwn value or null to have relative to the best
+    private static final String ENTRIES_RELATIVE_TO =
+//            "ran";
+            "kieler";
 
     private static final Map<String, String> KNOWN_NAMES = new LinkedHashMap<String, String>() {
         {
@@ -126,7 +133,7 @@ public class CsvDataExtraction {
             //for each graph do evaluation, add it to all methods
             for (Map<String, NumberDistribution<Integer>> result : results) {
                 Map<String, Integer> candidates = new LinkedHashMap<>(methods.size());
-                //first find best of each individual method
+                //fin the values of each individual method
                 for (String method : methods) {
                     int value = (int) result.get(method).get(StatisticParameter.MIN);
                     candidates.put(method, value);
@@ -134,18 +141,27 @@ public class CsvDataExtraction {
                         method2absoluteTime.get(method).add(value);
                     }
                 }
-                //now the best total
-                int best = Integer.MAX_VALUE;
+                //now the reference value (as specified or best total)
+                int referenceValue = Integer.MAX_VALUE;
+                int bestValue = Integer.MAX_VALUE;
+                boolean hasReferenceValue = false;
                 for (String method : methods) {
-                    best = Math.min(best, candidates.get(method));
+                    if (ENTRIES_RELATIVE_TO.equals(method)) {
+                        referenceValue = candidates.get(method);
+                        hasReferenceValue = true;
+                    }
+                    bestValue = Math.min(bestValue, candidates.get(method));
+                    if (!hasReferenceValue) {
+                        referenceValue = bestValue;
+                    }
                 }
-                //specify quality of everyone relative to best
+                //specify quality of everyone relative to reference value
                 for (String method : methods) {
                     Integer value = candidates.get(method);
-                    method2best.get(method).add(value == best ? 1 : 0);
-                    //we treat best == 0 as best == 1 to avoid a relative value of infinity
+                    method2best.get(method).add(value == bestValue ? 1 : 0);
+                    //we treat reference value == 0 as reference value == 1 to avoid a relative value of infinity
                     method2relativeQuality.get(method).add(
-                            value == 0 ? 1.0 : best == 0 ? value : (double) value / (double) best);
+                            value == 0 ? 1.0 : referenceValue == 0 ? value : (double) value / (double) referenceValue);
                 }
             }
 
@@ -179,11 +195,14 @@ public class CsvDataExtraction {
 
     private static void tableHeadLineOutput(List<String> methods) {
         System.out.print("\\multicolumn{1}{c|}{}");
+        String numberColumns = "" + (IGNORE_SD ? 2 : 3);
+        String headLineSD = IGNORE_SD ? "" : " & sd";
         for (String method : methods) {
-            System.out.print(" & \\multicolumn{3}{c}{" + string(method) + "}");
+            System.out.print(" & \\multicolumn{" + numberColumns + "}{c}{" + string(method) + "}");
         }
         System.out.println(" \\\\");
-        System.out.println(" & mean & sd & best & mean & sd & best & mean & sd & best \\\\");
+        System.out.println(" & mean" + headLineSD + " & best & mean" + headLineSD
+                + " & best & mean" + headLineSD + " & best \\\\");
         System.out.println("\\hline");
     }
 
@@ -192,12 +211,33 @@ public class CsvDataExtraction {
                                         Map<String, NumberDistribution<Integer>> method2best) {
         sortMethods(methods);
         System.out.print(string(testCase));
-        for (String method : methods) {
+        //find best method to make it bold face
+        int bestMethodIndex = -1;
+        double valueBest = 0;
+        for (int i = 0; i < methods.size(); i++) {
+            String method = methods.get(i);
+            double valueMethod = method2best.get(method).get(StatisticParameter.MEAN);
+            if (valueMethod > valueBest) {
+                bestMethodIndex = i;
+                valueBest = valueMethod;
+            }
+        }
+        for (int i = 0; i < methods.size(); i++) {
+            String method = methods.get(i);
             NumberDistribution<Double> relativeQuality = method2relativeQuality.get(method);
-            System.out.print(" & " + formatMean(relativeQuality.get(StatisticParameter.MEAN)));
-            System.out.print(" & " + formatSD(relativeQuality.get(StatisticParameter.STANDARD_DEVIATION)));
-            System.out.print(" & " + formatPercent(method2best.get(method).get(StatisticParameter.MEAN))
+            System.out.print(" & " + formatMean(relativeQuality.get(StatisticParameter.MEAN), method));
+            if (!IGNORE_SD) {
+                System.out.print(" & " + formatSD(relativeQuality.get(StatisticParameter.STANDARD_DEVIATION)));
+            }
+            System.out.print(" & ");
+            if (bestMethodIndex == i) {
+                System.out.print("\\textbf{");
+            }
+            System.out.print(formatPercent(method2best.get(method).get(StatisticParameter.MEAN))
                     + PERCENT_SYMBOL);
+            if (bestMethodIndex == i) {
+                System.out.print("}");
+            }
         }
         System.out.println(" \\\\");
     }
@@ -213,9 +253,11 @@ public class CsvDataExtraction {
         for (String method : methods) {
             NumberDistribution<Double> relativeQuality = method2relativeQuality.get(method);
             System.out.println(string(method)
-                    + ": mean " + formatMean(relativeQuality.get(StatisticParameter.MEAN)));
-            System.out.println(string(method)
-                    + ": sd " + formatSD(relativeQuality.get(StatisticParameter.STANDARD_DEVIATION)));
+                    + ": mean " + formatMean(relativeQuality.get(StatisticParameter.MEAN), method));
+            if (!IGNORE_SD) {
+                System.out.println(string(method)
+                        + ": sd " + formatSD(relativeQuality.get(StatisticParameter.STANDARD_DEVIATION)));
+            }
             System.out.println(string(method)
                     + ": best in % " + formatPercent(method2best.get(method).get(StatisticParameter.MEAN)));
         }
@@ -242,8 +284,13 @@ public class CsvDataExtraction {
         System.out.println();
     }
 
-    private static String formatMean(double number) {
-        return OUTPUT_FORMAT_MEAN.format(number);
+    private static String formatMean(double number, String method) {
+        String meanAsText = ENTRIES_RELATIVE_TO.equals(method) ?
+                OUTPUT_FORMAT_MEAN_RELATIVE_TO.format(number) : OUTPUT_FORMAT_MEAN.format(number);
+        if (meanAsText.startsWith(".")) {
+            meanAsText = INSTEAD_OF_LEADING_ZERO + meanAsText;
+        }
+        return meanAsText;
     }
 
     private static String formatSD(double number) {
@@ -333,9 +380,19 @@ public class CsvDataExtraction {
             }
             //now the best total
             int bestArea = Integer.MAX_VALUE;
+            int referenceArea = Integer.MAX_VALUE;
+            boolean hasReferenceValue = false;
             for (String method : newMethods) {
                 Integer entry = candidatesArea.get(method);
+                if (ENTRIES_RELATIVE_TO.equals(method)) {
+                    referenceArea = entry;
+                    hasReferenceValue = true;
+                }
                 bestArea = Math.min(bestArea, entry == null ? bestArea : entry);
+                if (!hasReferenceValue) {
+                    referenceArea = bestArea;
+                }
+
             }
             //specify quality of everyone relative to best
             for (String method : newMethods) {
@@ -344,16 +401,25 @@ public class CsvDataExtraction {
                     continue;
                 }
                 areaMethod2best.get(method).add(valueArea == bestArea ? 1 : 0);
-                //we treat best == 0 as best == 1 to avoid a relative value of infinity
-                areaMethod2relativeQuality.get(method).add(
-                        valueArea == 0 ? 1.0 : bestArea == 0 ? valueArea : (double) valueArea / (double) bestArea);
+                //we treat reference value == 0 as reference value == 1 to avoid a relative value of infinity
+                areaMethod2relativeQuality.get(method).add(valueArea == 0 ? 1.0 :
+                        referenceArea == 0 ? valueArea : (double) valueArea / (double) referenceArea);
             }
             //now the best total
             double bestRatio = Double.POSITIVE_INFINITY;
+            double referenceRatio = Double.POSITIVE_INFINITY;
+            hasReferenceValue = false;
             for (String method : newMethods) {
                 Double entry = candidatesRatio.get(method);
+                if (ENTRIES_RELATIVE_TO.equals(method)) {
+                    referenceRatio = entry;
+                    hasReferenceValue = true;
+                }
                 bestRatio =
                         1.0 + Math.min(Math.abs(bestRatio - 1.0), Math.abs((entry == null ? bestRatio : entry) - 1.0));
+                if (!hasReferenceValue) {
+                    referenceRatio = bestRatio;
+                }
             }
             //specify quality of everyone relative to best
             for (String method : newMethods) {
@@ -362,9 +428,9 @@ public class CsvDataExtraction {
                     continue;
                 }
                 ratioMethod2best.get(method).add(valueRatio == bestRatio ? 1 : 0);
-                //we treat best == 0 as best == 1 to avoid a relative value of infinity
-                ratioMethod2relativeQuality.get(method).add(
-                        valueRatio == 1.0 ? 1.0 :  valueRatio >= 1 ? valueRatio / bestRatio : bestRatio / valueRatio);
+                //we treat reference value == 0 as reference value == 1 to avoid a relative value of infinity
+                ratioMethod2relativeQuality.get(method).add(valueRatio == 1.0 ? 1.0 :
+                        valueRatio >= 1 ? valueRatio / referenceRatio : referenceRatio / valueRatio);
             }
         }
 

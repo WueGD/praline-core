@@ -16,19 +16,19 @@ public class CsvDataToSingleCsvExtraction {
     private static final String DATA_PATH =
             "Praline-Layouting/results/" +
 //                    "paper-all-tests-2020-06-10_06-18-04";
-                    "2020-07-09_18-07-13";
+                    "paper-all-tests-2020-08-20_16-01-53";
 
     private static final String[] DATA_DIRS =
             {
 //                    "DA_lc-praline-package-2020-05-18",
-//                    "DA_generated_2020-06-04_18-39-49",
+//                    "DA_generated_2020-08-20_04-42-39",
                     "CM_lc-praline-package-2020-05-18",
-//                    "CM_generated_2020-06-04_18-39-49"
-                    "CM_generated_2020-07-09_05-07-43"
+                    "CM_generated_2020-08-20_04-42-39"
             };
 
     private static final String TARGET_PATH =
-            "Praline-Layouting/results/2020-07-09_18-07-13/csv-summary";
+            DATA_PATH + "/csv-summary";
+//            "Praline-Layouting/results/2020-07-09_18-07-13/csv-summary";
 
     private static final String[] TARGET_FILE_PREFIX =
             {
@@ -38,10 +38,9 @@ public class CsvDataToSingleCsvExtraction {
     private static final String[] TARGET_FILES =
             {
 //                    "DA_lc-praline-package-2020-05-18",
-//                    "DA_generated_2020-06-04_18-39-49",
+//                    "DA_generated_2020-08-20_04-42-39",
                     "CM_lc-praline-package-2020-05-18",
-//                    "CM_generated_2020-06-04_18-39-49"
-                    "CM_generated_2020-07-09_05-07-43"
+                    "CM_generated_2020-08-20_04-42-39"
             };
     private static final String TARGET_FILE_SUFFIX = ".csv";
 
@@ -50,6 +49,15 @@ public class CsvDataToSingleCsvExtraction {
                     "noc",
                     "nob"
             }; //"nodn", "time", "space"
+
+    //set to an unkonwn value or null to have absolute values
+    private static final String ENTRIES_RELATIVE_TO =
+//            "rand";
+            "kieler";
+
+    private static final List<String> UNNORMALIZED_ENTRIES = Arrays.asList(
+            "vtcs"
+    );
 
     private static final Map<String, String> KNOWN_NAMES = new LinkedHashMap<>() {
         {
@@ -126,24 +134,47 @@ public class CsvDataToSingleCsvExtraction {
         try {
             StringBuilder csvFileContent = new StringBuilder();
             //csv top line
+            int relativeTo = -1;
             for (int j = 0; j < methods.size(); j++) {
-                    csvFileContent.append(string(methods.get(j)));
-                if (j == methods.size() - 1){
-                    csvFileContent.append("\n");
+                String methodName = string(methods.get(j));
+                if (methodName.equals(ENTRIES_RELATIVE_TO)) {
+                    relativeTo = j;
                 }
-                else {
-                    csvFileContent.append("\t");
+            }
+            for (int j = 0; j < methods.size(); j++) {
+                String methodName = string(methods.get(j));
+                if (j != relativeTo) {
+                    csvFileContent.append(methodName +
+                            (relativeTo >= 0 && !UNNORMALIZED_ENTRIES.contains(string(methods.get(j))) ?
+                                    "/" + ENTRIES_RELATIVE_TO : ""));
+                    if (j == methods.size() - 1 ||
+                            (j == methods.size() - 2 && relativeTo == methods.size() - 1)) {
+                        csvFileContent.append("\n");
+                    } else {
+                        csvFileContent.append("\t");
+                    }
                 }
             }
             //csv value lines
             for (int i = 0; i < entries.get(entries.keySet().iterator().next()).size(); i++) {
                 for (int j = 0; j < methods.size(); j++) {
-                        csvFileContent.append(entries.get(methods.get(j)).get(i));
-                    if (j == methods.size() - 1){
-                        csvFileContent.append("\n");
-                    }
-                    else {
-                        csvFileContent.append("\t");
+                    if (j != relativeTo) {
+                        double value =(double) entries.get(methods.get(j)).get(i) /
+                                (relativeTo >= 0 && !UNNORMALIZED_ENTRIES.contains(string(methods.get(j))) ?
+                                        entries.get(methods.get(relativeTo)).get(i) : 1.0);
+                        if (Double.isNaN(value)) {
+                            value = 1;
+                        }
+                        else if (Double.isInfinite(value)) {
+                            value = (double) entries.get(methods.get(j)).get(i);
+                        }
+                        csvFileContent.append(value);
+                        if (j == methods.size() - 1 ||
+                                (j == methods.size() - 2 && relativeTo == methods.size() - 1)) {
+                            csvFileContent.append("\n");
+                        } else {
+                            csvFileContent.append("\t");
+                        }
                     }
                 }
             }
