@@ -29,7 +29,7 @@ public class AllTests {
     public static final String[] DATA_SETS =
             {
 //                    "generated_2020-06-04_18-39-49",
-                    "generated_2020-07-09_05-07-43",
+//                    "generated_2020-08-20_04-42-39",
                     "lc-praline-package-2020-05-18"
             };
     private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
@@ -41,7 +41,7 @@ public class AllTests {
 
     private static final Test[] CURRENT_TESTS =
             {
-//                    Test.DIRECTION_ASSIGNMENT_PHASE,
+                    Test.DIRECTION_ASSIGNMENT_PHASE,
                     Test.CROSSING_MINIMIZATION_PHASE
             };
 
@@ -253,7 +253,7 @@ public class AllTests {
                         }
                     }
 //                    System.out.println("da_precomp: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
-                    sugiy.assignDirections(directionMethod);
+                    sugiy.assignDirections(directionMethod, 1);
 //                }
 
 //                System.out.println("da: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));

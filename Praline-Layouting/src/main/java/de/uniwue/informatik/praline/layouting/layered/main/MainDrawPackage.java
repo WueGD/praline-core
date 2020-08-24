@@ -21,18 +21,25 @@ public class MainDrawPackage {
 
     public static final String PATH_DATA_SET =
 //            "Praline-Layouting/data/generated_2020-06-04_18-39-49";
+            "Praline-Layouting/data/generated_2020-08-20_04-42-39";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18";
-            "Praline-Layouting/data/5plansOriginalPseudo";
+//            "Praline-Layouting/data/praline-package-2020-05-18";
+//            "Praline-Layouting/data/5plansOriginalPseudo";
 
 
     private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
     public static final String PATH_RESULTS =
             "Praline-Layouting/results/all-svgs-" + DATE_FORMAT.format(new Date());
 
-    private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 20;
+    private static final DirectionMethod DIRECTION_METHOD = DirectionMethod.FORCE;
 
-    private static final int NUMBER_OF_CROSSING_REDUCTION_ITERATIONS = 10;
+    private static final CrossingMinimizationMethod CROSSING_MINIMIZATION_METHOD = CrossingMinimizationMethod.PORTS;
 
+    private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 5;
+
+    private static final int NUMBER_OF_FORCE_DIRECTED_ITERATIONS = 10;
+
+    private static final int NUMBER_OF_CROSSING_REDUCTION_ITERATIONS = 3;
 
 
     private static int progressCounter = 0;
@@ -93,10 +100,10 @@ public class MainDrawPackage {
             SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
 
             sugy.construct();
-            sugy.assignDirections(DirectionMethod.FORCE);
+            sugy.assignDirections(DIRECTION_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS);
             sugy.assignLayers();
             sugy.createDummyNodes();
-            sugy.crossingMinimization(CrossingMinimizationMethod.PORTS, NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
+            sugy.crossingMinimization(CROSSING_MINIMIZATION_METHOD, NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
 
             int numberOfCrossings = sugy.getNumberOfCrossings();
 

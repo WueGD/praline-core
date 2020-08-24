@@ -33,6 +33,7 @@ import java.util.*;
 public class SugiyamaLayouter implements PralineLayouter {
 
     public static final DirectionMethod DEFAULT_DIRECTION_METHOD = DirectionMethod.FORCE;
+    public static final int DEFAULT_NUMBER_OF_FD_ITERATIONS = 10;
     public static final CrossingMinimizationMethod DEFAULT_CROSSING_MINIMIZATION_METHOD =
             CrossingMinimizationMethod.PORTS;
     public static final int DEFAULT_NUMBER_OF_CM_ITERATIONS = 5; //iterations for crossing minimization
@@ -87,14 +88,28 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     @Override
     public void computeLayout() {
-        computeLayout(DEFAULT_DIRECTION_METHOD, DEFAULT_CROSSING_MINIMIZATION_METHOD, DEFAULT_NUMBER_OF_CM_ITERATIONS);
+        computeLayout(DEFAULT_DIRECTION_METHOD, DEFAULT_NUMBER_OF_FD_ITERATIONS, DEFAULT_CROSSING_MINIMIZATION_METHOD,
+                DEFAULT_NUMBER_OF_CM_ITERATIONS);
     }
 
-    public void computeLayout (DirectionMethod method, CrossingMinimizationMethod cmMethod, int numberOfIterationsCM) {
+    /**
+     *
+     * @param method
+     * @param numberOfIterationsFD
+     *      when employing a force-directed algo, it uses so many iterations with different random start positions
+     *      and takes the one that yields the fewest crossings.
+     *      If you use anything different from {@link DirectionMethod#FORCE}, then this value will be ignored.
+     * @param cmMethod
+     * @param numberOfIterationsCM
+     *      for the crossing minimization phase you may have several independent random iterations of which the one
+     *      that yields the fewest crossings of edges between layers is taken.
+     */
+    public void computeLayout (DirectionMethod method, int numberOfIterationsFD,
+                               CrossingMinimizationMethod cmMethod, int numberOfIterationsCM) {
         //chose methods for directionassignment
         //chose other steps to be done or not
         construct();
-        assignDirections(method);
+        assignDirections(method, numberOfIterationsFD);
         assignLayers();
         createDummyNodes();
         crossingMinimization(cmMethod, numberOfIterationsCM);
@@ -133,10 +148,24 @@ public class SugiyamaLayouter implements PralineLayouter {
     // todo: change method back to private when done with debugging and testing
 
     public void assignDirections (DirectionMethod method) {
+        assignDirections(method, 1);
+    }
+
+    // todo: change method back to private when done with debugging and testing
+
+    /**
+     *
+     * @param method
+     * @param numberOfIterationsForForceDirected
+     *      when employing a force-directed algo, it uses so many iterations with different random start positions
+     *      and takes the one that yields the fewest crossings.
+     *      If you use anything different from {@link DirectionMethod#FORCE}, then this value will be ignored.
+     */
+    public void assignDirections (DirectionMethod method, int numberOfIterationsForForceDirected) {
         DirectionAssignment da = new DirectionAssignment();
         switch (method) {
             case FORCE:
-                da.forceDirected(this);
+                da.forceDirected(this, numberOfIterationsForForceDirected);
                 break;
             case BFS:
                 da.breadthFirstSearch(this);

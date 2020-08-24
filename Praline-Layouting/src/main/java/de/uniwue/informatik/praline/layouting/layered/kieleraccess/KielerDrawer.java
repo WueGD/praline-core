@@ -29,8 +29,9 @@ public class KielerDrawer {
 
     public static final String JSON_PATH =
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18/lc-praline-1dda4e2a-ae64-4e76-916a-822c4e838c41.json";
-            "Praline-Layouting/data/example-very-small/praline-a0b0b5a2-2c23-43b0-bb87-4ddeb34d5a02.json";
+//            "Praline-Layouting/data/example-very-small/praline-a0b0b5a2-2c23-43b0-bb87-4ddeb34d5a02.json";
 //            "Praline-Layouting/data/example-pseudo-plans/praline-pseudo-plan-0a94e4bf6d729042.json";
+            "Praline-Layouting/data/praline-package-2020-05-18/praline-0488185b-18b4-4780-a6c8-1d9ece91252e.json";
 //            "Praline-Layouting/data/example-pseudo-plans/praline-pseudo-plan-0f90e022f10bae3f.json";
 
     public static final String SVG_TARGET_PATH = "Praline-Layouting/results/testKIELER.svg";
@@ -62,14 +63,15 @@ public class KielerDrawer {
     }
 
     public KielerDrawer(Graph graph, DrawingInformation drawInfo) {
-        this(graph, DirectionMethod.FORCE, drawInfo);
+        this(graph, DirectionMethod.FORCE, 1, drawInfo);
     }
 
-    public KielerDrawer(Graph graph, DirectionMethod directionMethod) {
-        this(graph, directionMethod, new DrawingInformation());
+    public KielerDrawer(Graph graph, DirectionMethod directionMethod, int numberOfIterationsFD) {
+        this(graph, directionMethod, numberOfIterationsFD, new DrawingInformation());
     }
 
-    public KielerDrawer(Graph graph, DirectionMethod directionMethod, DrawingInformation drawInfo) {
+    public KielerDrawer(Graph graph, DirectionMethod directionMethod, int numberOfIterationsFD,
+                        DrawingInformation drawInfo) {
 
         this.drawInfo = drawInfo;
 
@@ -78,7 +80,7 @@ public class KielerDrawer {
 
         sugiyForInternalUse.construct();
 
-        sugiyForInternalUse.assignDirections(directionMethod);
+        sugiyForInternalUse.assignDirections(directionMethod, numberOfIterationsFD);
 
         sugiyForInternalUse.assignLayers();
     }
