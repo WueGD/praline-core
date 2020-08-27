@@ -21,8 +21,8 @@ public class MainDrawPackage {
 
     public static final String PATH_DATA_SET =
 //            "Praline-Layouting/data/generated_2020-06-04_18-39-49";
-            "Praline-Layouting/data/generated_2020-08-20_04-42-39";
-//            "Praline-Layouting/data/lc-praline-package-2020-05-18";
+//            "Praline-Layouting/data/generated_2020-08-20_04-42-39";
+            "Praline-Layouting/data/lc-praline-package-2020-05-18";
 //            "Praline-Layouting/data/praline-package-2020-05-18";
 //            "Praline-Layouting/data/5plansOriginalPseudo";
 

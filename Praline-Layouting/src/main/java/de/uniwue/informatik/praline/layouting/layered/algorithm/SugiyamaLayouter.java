@@ -292,42 +292,27 @@ public class SugiyamaLayouter implements PralineLayouter {
         }
 
         //unify single parts of hyperedges to one edge each
-//        for (Edge edge : new ArrayList<>(this.getGraph().getEdges())) {
-//            if (hyperEdgeParts.containsKey(edge)) {
-//                restoreHyperedgePart(edge);
-//            }
-//        }
+        for (Edge edge : new ArrayList<>(this.getGraph().getEdges())) {
+            if (hyperEdgeParts.containsKey(edge)) {
+                restoreHyperedgePart(edge);
+            }
+        }
 
         //TODO: count crossings and bends for hyperedges correctly. There still seems to be something that does not work
 
         //replace dummy vertices
         for (Vertex vertex : new ArrayList<>(this.getGraph().getVertices())) {
-//            if (hyperEdges.containsKey(vertex)) {
-//                replaceHyperEdgeDummyVertex(vertex);
-//            }
-//            if (vertexGroups.containsKey(vertex)) {
-//                VertexGroup vertexGroup = vertexGroups.get(vertex);
-//                restoreVertexGroup(vertex, vertexGroup);
-//            }
-//            if (plugs.containsKey(vertex)) {
-//                VertexGroup vertexGroup = plugs.get(vertex);
-//                restoreVertexGroup(vertex, vertexGroup);
-//            }
-
-            //TODO: delete after tests for paper; to draw port pairings we need vertex groups
-            for (Port port : vertex.getPorts()) {
-                //if we have saved that there is port pairing but PortUtils does not find one in the graph, we add it
-                // to the graph
-                if (isPaired(port) && !PortUtils.isPaired(port)) {
-                    if (vertex.getVertexGroup() == null) {
-                        VertexGroup dummyVertexGroup = new VertexGroup();
-                        graph.addVertexGroup(dummyVertexGroup);
-                        dummyVertexGroup.addVertex(vertex);
-                    }
-                    vertex.getVertexGroup().addPortPairing(new PortPairing(port, getPairedPort(port)));
-                }
+            if (hyperEdges.containsKey(vertex)) {
+                replaceHyperEdgeDummyVertex(vertex);
             }
-            //TODO: end of delete after tests for paper;
+            if (vertexGroups.containsKey(vertex)) {
+                VertexGroup vertexGroup = vertexGroups.get(vertex);
+                restoreVertexGroup(vertex, vertexGroup);
+            }
+            if (plugs.containsKey(vertex)) {
+                VertexGroup vertexGroup = plugs.get(vertex);
+                restoreVertexGroup(vertex, vertexGroup);
+            }
 
 
             if (dummyTurningNodes.containsKey(vertex)) {
@@ -343,15 +328,15 @@ public class SugiyamaLayouter implements PralineLayouter {
         //TODO: check that #ports, #vertices, #edges is in the end the same as at the beginning
 
         //first we have already replaced in restoreVertexGroup (...) the ports that were created during vertex group
-        // handeling; these are are the ports in replacedPorts where the original vertex is not in
+        // handeling; these are the ports in replacedPorts where the original vertex is not in
         // multipleEdgePort2replacePorts
 
         //second we replace the ports that were created during the phase where ports with multiple edges were split to
         // multiple ports; now we re-unify all these ports back to one. If there is a port pairing involved, we keep
         // the one on the opposite site to the port pairing; otherwise we keep the/a middle one
-//        for (Port origPort : multipleEdgePort2replacePorts.keySet()) {
-//            restorePortsWithMultipleEdges(origPort);
-//        }
+        for (Port origPort : multipleEdgePort2replacePorts.keySet()) {
+            restorePortsWithMultipleEdges(origPort);
+        }
     }
 
     private void restorePortsWithMultipleEdges(Port origPort) {
