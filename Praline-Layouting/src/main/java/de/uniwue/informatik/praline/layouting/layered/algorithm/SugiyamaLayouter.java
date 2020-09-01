@@ -305,6 +305,8 @@ public class SugiyamaLayouter implements PralineLayouter {
             if (hyperEdges.containsKey(vertex)) {
                 replaceHyperEdgeDummyVertex(vertex);
             }
+            //TODO: the following causes plans to be not drawn because ports (without edge/with self loop) are
+            // removed and their vertices of a vertex group are not placed (only with Double.NAN coordinates)
             if (vertexGroups.containsKey(vertex)) {
                 VertexGroup vertexGroup = vertexGroups.get(vertex);
                 restoreVertexGroup(vertex, vertexGroup);

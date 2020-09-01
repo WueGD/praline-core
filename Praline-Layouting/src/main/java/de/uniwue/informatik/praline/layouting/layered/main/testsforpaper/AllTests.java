@@ -7,7 +7,7 @@ import de.uniwue.informatik.praline.datastructure.utils.Serialization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
-import de.uniwue.informatik.praline.layouting.layered.kieleraccess.KielerDrawer;
+import de.uniwue.informatik.praline.layouting.layered.kieleraccess.KielerLayouter;
 import de.uniwue.informatik.praline.layouting.layered.main.util.BendsCounting;
 import de.uniwue.informatik.praline.layouting.layered.main.util.CrossingsCounting;
 
@@ -259,14 +259,14 @@ public class AllTests {
 //                System.out.println("da: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
 
                 if (method.equals("kieler")) {
-                    KielerDrawer kielerDrawer = new KielerDrawer(sugiy);
+                    KielerLayouter kielerLayouter = new KielerLayouter(sugiy);
 //                    System.out.println("kieler_init: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
-                    kielerDrawer.draw();
+                    kielerLayouter.computeLayout();
                     //save number of dummy nodes
                     criterion2method2values.get(Criterion.NUMBER_OF_DUMMY_VERTICES).get(method).add(0); //for kieler
                     // we don't know and we also don't care so much about dummy vertices
                     //save number of crossings
-                    criterion2method2values.get(Criterion.NUMBER_OF_CROSSINGS).get(method).add(kielerDrawer.getNumberOfCrossings());
+                    criterion2method2values.get(Criterion.NUMBER_OF_CROSSINGS).get(method).add(kielerLayouter.getNumberOfCrossings());
 
 //                    System.out.println("kieler_draw: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
                 }

@@ -4,8 +4,10 @@ import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
-import de.uniwue.informatik.praline.datastructure.utils.Serialization;
+import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
+import de.uniwue.informatik.praline.layouting.PralineLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 import de.uniwue.informatik.praline.layouting.layered.kieleraccess.util.OrthogonalCrossingsAnalysis;
 import org.eclipse.elk.alg.layered.ElkLayered;
 import org.eclipse.elk.alg.layered.graph.LGraph;
@@ -18,38 +20,11 @@ import org.eclipse.elk.core.util.BasicProgressMonitor;
 import org.eclipse.elk.graph.*;
 import org.eclipse.elk.graph.impl.ElkGraphFactoryImpl;
 import org.eclipse.emf.common.util.EList;
-import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 
 import java.awt.geom.Point2D;
-import java.io.IOException;
 import java.util.*;
 
-public class KielerDrawer {
-
-    public static final String JSON_PATH =
-//            "Praline-Layouting/data/lc-praline-package-2020-05-18/lc-praline-1dda4e2a-ae64-4e76-916a-822c4e838c41.json";
-//            "Praline-Layouting/data/example-very-small/praline-a0b0b5a2-2c23-43b0-bb87-4ddeb34d5a02.json";
-//            "Praline-Layouting/data/example-pseudo-plans/praline-pseudo-plan-0a94e4bf6d729042.json";
-            "Praline-Layouting/data/praline-package-2020-05-18/praline-0488185b-18b4-4780-a6c8-1d9ece91252e.json";
-//            "Praline-Layouting/data/example-pseudo-plans/praline-pseudo-plan-0f90e022f10bae3f.json";
-
-    public static final String SVG_TARGET_PATH = "Praline-Layouting/results/testKIELER.svg";
-
-    public static void main(String[] args) throws IOException {
-        //test this class here
-        Graph graph = Serialization.read(JSON_PATH, Graph.class); //creator.createTestGraph();
-        System.out.println("Graph read");
-
-        KielerDrawer kielerDrawer = new KielerDrawer(graph);
-
-        Graph resultGraph = kielerDrawer.draw();
-        System.out.println("Number of crossings = " + kielerDrawer.getNumberOfCrossings());
-
-        kielerDrawer.generateSVG(SVG_TARGET_PATH);
-
-        System.out.println("KIELER test done successfully");
-    }
+public class KielerLayouter implements PralineLayouter {
 
     private SugiyamaLayouter sugiyForInternalUse;
     private DrawingInformation drawInfo;
@@ -58,20 +33,20 @@ public class KielerDrawer {
     private LinkedHashMap<Edge, ElkEdge> edges;
     private int numberOfCrossings = -1;
 
-    public KielerDrawer(Graph graph) {
+    public KielerLayouter(Graph graph) {
         this(graph, new DrawingInformation());
     }
 
-    public KielerDrawer(Graph graph, DrawingInformation drawInfo) {
+    public KielerLayouter(Graph graph, DrawingInformation drawInfo) {
         this(graph, DirectionMethod.FORCE, 1, drawInfo);
     }
 
-    public KielerDrawer(Graph graph, DirectionMethod directionMethod, int numberOfIterationsFD) {
+    public KielerLayouter(Graph graph, DirectionMethod directionMethod, int numberOfIterationsFD) {
         this(graph, directionMethod, numberOfIterationsFD, new DrawingInformation());
     }
 
-    public KielerDrawer(Graph graph, DirectionMethod directionMethod, int numberOfIterationsFD,
-                        DrawingInformation drawInfo) {
+    public KielerLayouter(Graph graph, DirectionMethod directionMethod, int numberOfIterationsFD,
+                          DrawingInformation drawInfo) {
 
         this.drawInfo = drawInfo;
 
@@ -86,11 +61,11 @@ public class KielerDrawer {
     }
 
 
-    public KielerDrawer(SugiyamaLayouter sugiyWithPrecomputedDirectedGraph) {
+    public KielerLayouter(SugiyamaLayouter sugiyWithPrecomputedDirectedGraph) {
         this(sugiyWithPrecomputedDirectedGraph, new DrawingInformation());
     }
 
-    public KielerDrawer(SugiyamaLayouter sugiyWithPrecomputedDirectedGraph, DrawingInformation drawInfo) {
+    public KielerLayouter(SugiyamaLayouter sugiyWithPrecomputedDirectedGraph, DrawingInformation drawInfo) {
 
         this.drawInfo = drawInfo;
 
@@ -102,13 +77,27 @@ public class KielerDrawer {
         }
     }
 
-    public Graph draw() {
+    @Override
+    public void computeLayout() {
         computeLayeredDrawing();
 
         Graph pralineGraph = getStoredPralineGraph();
         writeResultToPralineGraph(pralineGraph);
+    }
 
-        return pralineGraph;
+    @Override
+    public Graph getGraph() {
+        return getStoredPralineGraph();
+    }
+
+    @Override
+    public DrawingInformation getDrawingInformation() {
+        return this.drawInfo;
+    }
+
+    @Override
+    public void setDrawingInformation(DrawingInformation drawInfo) {
+        this.drawInfo = drawInfo;
     }
 
     public void generateSVG(String path) {
