@@ -18,6 +18,8 @@ public class CrossingsCounting {
         ArrayList<Line2D.Double> allSegments = new ArrayList<>();
         Map<Line2D.Double, Collection<Line2D.Double>> adjacentSegments = new LinkedHashMap<>();
         Map<Line2D.Double, Port> segment2Port = new LinkedHashMap<>();
+        Map<Line2D.Double, Edge> segment2Edge = new LinkedHashMap<>();
+        Map<Line2D.Double, Collection<Point2D.Double>> pathEndingSegment2EndPoints = new LinkedHashMap<>();
         for (Edge edge : graph.getEdges()) {
             List<Path> paths = edge.getPaths();
             if (paths != null) {
@@ -32,10 +34,13 @@ public class CrossingsCounting {
                                 Line2D.Double curSegment = new Line2D.Double(prevPoint, curPoint);
                                 allSegments.add(curSegment);
                                 allSegmentsOfThisEdge.add(curSegment);
+                                segment2Edge.put(curSegment, edge);
                                 if (prevSegment == null) {
                                     registerAdjacentSegmentsOfOtherPaths(adjacentSegments, outsideEndPointsOfPaths,
                                             prevPoint, curSegment);
                                     registerPortAtSegment(segment2Port, edge.getPorts(), prevPoint, curSegment);
+                                    pathEndingSegment2EndPoints.computeIfAbsent(curSegment, k -> new ArrayList<>())
+                                            .add(prevPoint);
                                 }
                                 else {
                                     adjacentSegments.computeIfAbsent(prevSegment, k -> new ArrayList<>())
@@ -48,6 +53,7 @@ public class CrossingsCounting {
                         registerAdjacentSegmentsOfOtherPaths(adjacentSegments, outsideEndPointsOfPaths, prevPoint,
                                 prevSegment);
                         registerPortAtSegment(segment2Port, edge.getPorts(), prevPoint, prevSegment);
+                        pathEndingSegment2EndPoints.computeIfAbsent(prevSegment, k -> new ArrayList<>()).add(prevPoint);
                     }
                 }
                 //special case: kick out all segments of this edge that are completely covered by another edge
@@ -65,7 +71,10 @@ public class CrossingsCounting {
                 if (!adjacentSegments.containsKey(segment0) || !adjacentSegments.get(segment0).contains(segment1)) {
                     if (!segment2Port.containsKey(segment0) || !segment2Port.containsKey(segment1) ||
                             !segment2Port.get(segment0).equals(segment2Port.get(segment1))) {
-                        counter += segment0.intersectsLine(segment1) ? 1 : 0;
+                        if (segment2Edge.get(segment0) != segment2Edge.get(segment1) ||
+                                !containsEndingPoint(segment0, segment1, pathEndingSegment2EndPoints)) {
+                            counter += segment0.intersectsLine(segment1) ? 1 : 0;
+                        }
                     }
                 }
             }
@@ -73,6 +82,37 @@ public class CrossingsCounting {
 
 
         return counter;
+    }
+
+    /**
+     * to avoid couting a crossing in hyperedges (where one path ends at a segment of another path)
+     *
+     * @param segment0
+     * @param segment1
+     * @param pathEndingSegment2EndPoints
+     * @return
+     */
+    private static boolean containsEndingPoint(Line2D.Double segment0, Line2D.Double segment1,
+                                               Map<Line2D.Double, Collection<Point2D.Double>> pathEndingSegment2EndPoints) {
+
+
+        Collection<Point2D.Double> endPoints0 = pathEndingSegment2EndPoints.get(segment0);
+        Collection<Point2D.Double> endPoints1 = pathEndingSegment2EndPoints.get(segment1);
+        boolean returnValue = false;
+        returnValue |= containsEndingPoints(segment0, endPoints1);
+        returnValue |= containsEndingPoints(segment1, endPoints0);
+        return returnValue;
+    }
+
+    private static boolean containsEndingPoints(Line2D.Double segment, Collection<Point2D.Double> endPoints) {
+        if (endPoints != null) {
+            for (Point2D.Double endPoint : endPoints) {
+                if (segment.ptSegDist(endPoint) == 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static void filterOutOverlayingSegments(ArrayList<Line2D.Double> allSegments,

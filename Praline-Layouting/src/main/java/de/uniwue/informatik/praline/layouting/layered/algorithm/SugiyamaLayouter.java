@@ -1,5 +1,6 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm;
 
+import com.google.common.collect.Lists;
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
@@ -116,6 +117,7 @@ public class SugiyamaLayouter implements PralineLayouter {
         nodePositioning();
         edgeRouting();
         prepareDrawing();
+        restoreOriginalElements();
     }
 
     // change graph so that
@@ -268,9 +270,10 @@ public class SugiyamaLayouter implements PralineLayouter {
     public void prepareDrawing () {
         DrawingPreparation dp = new DrawingPreparation(this);
         dp.prepareDrawing(drawInfo, orders);
-        restoreOriginalElements();
     }
-    private void restoreOriginalElements () {
+    // todo: change method back to private when done with debugging and testing
+
+    public void restoreOriginalElements () {
         //replace dummy edges
         boolean hasChanged = true;
         while (hasChanged) {
@@ -307,17 +310,33 @@ public class SugiyamaLayouter implements PralineLayouter {
             }
             //TODO: the following causes plans to be not drawn because ports (without edge/with self loop) are
             // removed and their vertices of a vertex group are not placed (only with Double.NAN coordinates)
-            if (vertexGroups.containsKey(vertex)) {
-                VertexGroup vertexGroup = vertexGroups.get(vertex);
-                restoreVertexGroup(vertex, vertexGroup);
+//            if (vertexGroups.containsKey(vertex)) {
+//                VertexGroup vertexGroup = vertexGroups.get(vertex);
+//                restoreVertexGroup(vertex, vertexGroup);
+//            }
+//            if (plugs.containsKey(vertex)) {
+//                VertexGroup vertexGroup = plugs.get(vertex);
+//                restoreVertexGroup(vertex, vertexGroup);
+//            }
+
+            //TODO: delete after tests for paper; to draw port pairings we need vertex groups
+            for (Port port : vertex.getPorts()) {
+                //if we have saved that there is port pairing but PortUtils does not find one in the graph, we add it
+                // to the graph
+                if (isPaired(port) && !PortUtils.isPaired(port)) {
+                    if (vertex.getVertexGroup() == null) {
+                        VertexGroup dummyVertexGroup = new VertexGroup();
+                        graph.addVertexGroup(dummyVertexGroup);
+                        dummyVertexGroup.addVertex(vertex);
+                    }
+                    vertex.getVertexGroup().addPortPairing(new PortPairing(port, getPairedPort(port)));
+                }
             }
-            if (plugs.containsKey(vertex)) {
-                VertexGroup vertexGroup = plugs.get(vertex);
-                restoreVertexGroup(vertex, vertexGroup);
-            }
+            //TODO: end of delete after tests for paper;
 
 
-            if (dummyTurningNodes.containsKey(vertex)) {
+
+            if (dummyTurningNodes != null && dummyTurningNodes.containsKey(vertex)) {
                 getGraph().removeVertex(vertex);
             }
             if (dummyNodesLongEdges.containsKey(vertex)) {
@@ -336,9 +355,9 @@ public class SugiyamaLayouter implements PralineLayouter {
         //second we replace the ports that were created during the phase where ports with multiple edges were split to
         // multiple ports; now we re-unify all these ports back to one. If there is a port pairing involved, we keep
         // the one on the opposite site to the port pairing; otherwise we keep the/a middle one
-        for (Port origPort : multipleEdgePort2replacePorts.keySet()) {
-            restorePortsWithMultipleEdges(origPort);
-        }
+//        for (Port origPort : multipleEdgePort2replacePorts.keySet()) {
+//            restorePortsWithMultipleEdges(origPort);
+//        }
     }
 
     private void restorePortsWithMultipleEdges(Port origPort) {
@@ -528,22 +547,52 @@ public class SugiyamaLayouter implements PralineLayouter {
         double minX = Double.MAX_VALUE;
         double maxX = Double.MIN_VALUE;
         double y = Double.NaN;
+        Path firstPath = null;
+        Path lastPath = null;
         for (Path path : hyperEdge.getPaths()) {
             Point2D.Double startPoint = ((PolygonalPath) path).getStartPoint();
             Point2D.Double endPoint = ((PolygonalPath) path).getEndPoint();
             if (vertexShape.contains(startPoint)) {
-                minX = Math.min(minX, startPoint.x);
-                maxX = Math.max(maxX, startPoint.x);
+                if (startPoint.x < minX) {
+                    minX = startPoint.x;
+                    firstPath = path;
+                }
+                if (startPoint.x > maxX) {
+                    maxX = startPoint.x;
+                    lastPath = path;
+                }
                 y = startPoint.y;
             }
             if (vertexShape.contains(endPoint)) {
-                minX = Math.min(minX, endPoint.x);
-                maxX = Math.max(maxX, endPoint.x);
+                if (endPoint.x < minX) {
+                    minX = endPoint.x;
+                    firstPath = path;
+                }
+                if (endPoint.x > maxX) {
+                    maxX = endPoint.x;
+                    lastPath = path;
+                }
                 y = endPoint.y;
             }
         }
         //add horizontal segment as replacement for the dummy vertex
-        hyperEdge.addPath(new PolygonalPath(new Point2D.Double(minX, y), new Point2D.Double(maxX, y), null));
+        //we insert it as a connection between the first and the last path (which we unify)
+        hyperEdge.removePath(firstPath);
+        hyperEdge.removePath(lastPath);
+
+        List<Point2D.Double> bendsFirstPath = new ArrayList<>(((PolygonalPath) firstPath).getTerminalAndBendPoints());
+        List<Point2D.Double> bendsLastPath = new ArrayList<>(((PolygonalPath) lastPath).getTerminalAndBendPoints());
+
+        if (bendsFirstPath.get(0).distance(minX, y) == 0) {
+            Collections.reverse(bendsFirstPath);
+        }
+        if (bendsLastPath.get(0).distance(maxX, y) > 0) {
+            Collections.reverse(bendsLastPath);
+        }
+
+        List<Point2D.Double> bendsCombined = bendsFirstPath;
+        bendsCombined.addAll(bendsLastPath);
+        hyperEdge.addPath(new PolygonalPath(bendsCombined));
         getGraph().removeVertex(hyperEdgeDummyVertex);
     }
 
@@ -654,7 +703,8 @@ public class SugiyamaLayouter implements PralineLayouter {
         //add ports of dummy edge to original edge
         for (Port port : dummyEdge.getPorts()) {
             Vertex vertex = port.getVertex();
-            if (!dummyTurningNodes.containsKey(vertex)
+            if (dummyTurningNodes != null
+                    && !dummyTurningNodes.containsKey(vertex)
                     && !dummyNodesLongEdges.containsKey(vertex)
                     && !originalEdge.getPorts().contains(port)) {
                 originalEdge.addPort(port);
