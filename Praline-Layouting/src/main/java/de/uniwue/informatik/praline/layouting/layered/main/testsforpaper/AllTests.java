@@ -304,6 +304,10 @@ public class AllTests {
 
                     sugiy.prepareDrawing();
 
+//                    System.out.println("er: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
+
+                    sugiy.restoreOriginalElements();
+
                     //save number of crossings
                     criterion2method2values.get(Criterion.NUMBER_OF_CROSSINGS).get(method).add(CrossingsCounting.countNumberOfCrossings(graph));
                 }

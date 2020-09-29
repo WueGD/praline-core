@@ -131,15 +131,6 @@ public class NodePlacement {
             addDividingNodePair(rankBottomPorts, rankTopPorts);
             // crate a List with all bottomPorts and one with all topPorts
             for (Vertex node : rankNodes) {
-
-                // algorithm.restore
-                for (OneNodeEdge one : sugy.getOneNodeEdges(node)) {
-                    if (one.hasPortGroup()) one.restore();
-                    for (Port port : one.getPorts()) {
-
-                    }
-                }
-
                 for (Port port : cmResult.getBottomPortOrder().get(node)) {
                     // rankBottomPortsMap.put(port, rankBottomPorts.size());
                     rankBottomPorts.add(port);

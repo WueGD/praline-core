@@ -1,6 +1,5 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm;
 
-import com.google.common.collect.Lists;
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
@@ -24,8 +23,7 @@ import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.
 import de.uniwue.informatik.praline.layouting.layered.algorithm.nodeplacement.NodePlacement;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.DummyCreationResult;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.DummyNodeCreation;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.restore.NoEdgePort;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.restore.OneNodeEdge;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.ImplicitCharacteristics;
 
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
@@ -50,9 +48,10 @@ public class SugiyamaLayouter implements PralineLayouter {
     private Map<Port, Port> replacedPorts;
     private Map<Port, List<Port>> multipleEdgePort2replacePorts;
     protected Map<Port, Port> keptPortPairings;
-    private Map<Vertex, Set<NoEdgePort>> noEdgePorts;
-    private Map<Vertex, Set<OneNodeEdge>> oneNodeEdges;
     private Map<Edge, Edge> dummyEdge2RealEdge;
+    private Map<Vertex, Set<Port>> portsWithoutEdge;
+    private Map<Vertex, Set<Edge>> loopEdges;
+    private Map<Edge, Set<Port>> loopEdge2Ports;
 
     //additional structures
 
@@ -134,15 +133,15 @@ public class SugiyamaLayouter implements PralineLayouter {
         // handle Port if it has no Vertex
         handlePortWithoutNode();
         // handle Edge if connected to more than two Ports
-        handleEdge();
+        handleHyperEdges();
         // handle Port if it has more than one Edge
         handlePort();
         // handle VertexGroup
         handleVertexGroup();
         // handle Port if it has no Edge
-        handleNoEdgePort(); //TODO: re-insert these ports!
+//        handlePortWithoutEdges(); //TODO: re-insert these ports!
         // handle Edge if both Ports have same Vertex
-        handleOneNodeEdge();
+//        handleLoopEdges(); //TODO: check
         // if the Graph is not connected use just biggest connected component
         breakDownToBiggestConnectedComponent();
         //TODO: draw all components
@@ -301,40 +300,19 @@ public class SugiyamaLayouter implements PralineLayouter {
             }
         }
 
-        //TODO: count crossings and bends for hyperedges correctly. There still seems to be something that does not work
-
         //replace dummy vertices
         for (Vertex vertex : new ArrayList<>(this.getGraph().getVertices())) {
             if (hyperEdges.containsKey(vertex)) {
                 replaceHyperEdgeDummyVertex(vertex);
             }
-            //TODO: the following causes plans to be not drawn because ports (without edge/with self loop) are
-            // removed and their vertices of a vertex group are not placed (only with Double.NAN coordinates)
-//            if (vertexGroups.containsKey(vertex)) {
-//                VertexGroup vertexGroup = vertexGroups.get(vertex);
-//                restoreVertexGroup(vertex, vertexGroup);
-//            }
-//            if (plugs.containsKey(vertex)) {
-//                VertexGroup vertexGroup = plugs.get(vertex);
-//                restoreVertexGroup(vertex, vertexGroup);
-//            }
-
-            //TODO: delete after tests for paper; to draw port pairings we need vertex groups
-            for (Port port : vertex.getPorts()) {
-                //if we have saved that there is port pairing but PortUtils does not find one in the graph, we add it
-                // to the graph
-                if (isPaired(port) && !PortUtils.isPaired(port)) {
-                    if (vertex.getVertexGroup() == null) {
-                        VertexGroup dummyVertexGroup = new VertexGroup();
-                        graph.addVertexGroup(dummyVertexGroup);
-                        dummyVertexGroup.addVertex(vertex);
-                    }
-                    vertex.getVertexGroup().addPortPairing(new PortPairing(port, getPairedPort(port)));
-                }
+            if (vertexGroups.containsKey(vertex)) {
+                VertexGroup vertexGroup = vertexGroups.get(vertex);
+                restoreVertexGroup(vertex, vertexGroup);
             }
-            //TODO: end of delete after tests for paper;
-
-
+            if (plugs.containsKey(vertex)) {
+                VertexGroup vertexGroup = plugs.get(vertex);
+                restoreVertexGroup(vertex, vertexGroup);
+            }
 
             if (dummyTurningNodes != null && dummyTurningNodes.containsKey(vertex)) {
                 getGraph().removeVertex(vertex);
@@ -734,8 +712,9 @@ public class SugiyamaLayouter implements PralineLayouter {
         replacedPorts = new LinkedHashMap<>();
         multipleEdgePort2replacePorts = new LinkedHashMap<>();
         keptPortPairings = new LinkedHashMap<>();
-        noEdgePorts = new LinkedHashMap<>();
-        oneNodeEdges = new LinkedHashMap<>();
+        portsWithoutEdge = new LinkedHashMap<>();
+        loopEdges = new LinkedHashMap<>();
+        loopEdge2Ports = new LinkedHashMap<>();
         dummyEdge2RealEdge = new LinkedHashMap<>();
 
         edgeToStart = new LinkedHashMap<>();
@@ -805,7 +784,7 @@ public class SugiyamaLayouter implements PralineLayouter {
             }
         }
     }
-    private void handleEdge () {
+    private void handleHyperEdges() {
         int index1 = 0;
         int index2 = 0;
 
@@ -848,6 +827,19 @@ public class SugiyamaLayouter implements PralineLayouter {
     private void handleVertexGroup () {
         int index1 = 0;
         int index2 = 0;
+        Set<Vertex> deviceVertices = new LinkedHashSet<>();
+        Set<VertexGroup> connectors = new LinkedHashSet<>();
+        for (VertexGroup vertexGroup : getGraph().getVertexGroups()) {
+            if (ImplicitCharacteristics.isConnector(vertexGroup, graph)) {
+                connectors.add(vertexGroup);
+            }
+            for (Vertex containedVertex : vertexGroup.getContainedVertices()) {
+                if (ImplicitCharacteristics.isDeviceVertex(containedVertex, graph)) {
+                    deviceVertices.add(containedVertex);
+                }
+            }
+        }
+
         for (VertexGroup group : new ArrayList<>(getGraph().getVertexGroups())) {
             boolean stickTogether = false;
             boolean hasPortPairings = false;
@@ -858,10 +850,11 @@ public class SugiyamaLayouter implements PralineLayouter {
                 // fill allPairings
                 fillAllPairings(allPairings, group);
 
-                // check for hasPortPairings
-                // this is the case if in one allPairingsPortSet exist two ports with outgoing edges to notGroupNodes
-                hasPortPairings = hasOutgoingPairings(allPairings, group);
-
+//                // check for hasPortPairings
+//                // this is the case if in one allPairingsPortSet exist two ports with outgoing edges to notGroupNodes
+//                hasPortPairings = hasOutgoingPairings(allPairings, group);
+                //EDIT JZ 2020/09/24: we don't want to exclude ports without edges any more -> simpler check
+                hasPortPairings = !allPairings.isEmpty();
             }
 
             Map<Edge, Port> outgoingEdges = new LinkedHashMap<>();
@@ -881,39 +874,30 @@ public class SugiyamaLayouter implements PralineLayouter {
 
             getGraph().addVertex(representative);
             Map<Port, Port> originalPort2representative = new LinkedHashMap<>();
-            for (Edge edge : outgoingEdges.keySet()) {
-                // create new port at unification vertex and remove old one on original vertex,
-                // hang the edges from the old to the new port
-                Port p1 = edge.getPorts().get(0);
-                Port p2 = outgoingEdges.get(edge);
-                if (p2.equals(p1)) p1 = edge.getPorts().get(1);
-                Port replacePort = new Port();
-                createMainLabel(("VG_PortRep_for_" + p1.getLabelManager().getMainLabel().toString() + "_#" + index1 +
-                        "-" + index2), replacePort);
 
-                edge.removePort(p1);
-                edge.addPort(replacePort);
+            for (Vertex containedVertex : group.getContainedVertices()) {
+                for (Port port : containedVertex.getPorts()) {
+                    if (!(deviceVertices.contains(containedVertex) && port.getEdges().isEmpty())) {
+                        // create new port at unification vertex and remove old one on original vertex,
+                        // hang the edges from the old to the new port
+                        Port replacePort = new Port();
+                        createMainLabel(
+                                ("VG_PortRep_for_" + port.getLabelManager().getMainLabel().toString() + "_#" + index1 +
+                                        "-" + index2), replacePort);
 
-                //JZ: I commented the following parts out because we do not really need to create new edges, we can
-                // re-hang the old one
+                        for (Edge edge : new ArrayList<>(port.getEdges())) {
+                            edge.removePort(port);
+                            edge.addPort(replacePort);
+                        }
 
-//                List<Port> rEdgePorts = new LinkedList<>();
-//                rEdgePorts.add(replacePort);
-//                rEdgePorts.add(p2);
-//                Edge replaceEdge = new Edge(rEdgePorts);
-//                createMainLabel(("VG_EdgeRep_for_" + edge.getLabelManager().getMainLabel().toString() + "_#" + index1 + "-" + index2++), replaceEdge);
-//
-//                getGraph().addEdge(replaceEdge);
-//                replacedEdges.put(p2, edge);
-//                dummyEdge2RealEdge.put(replaceEdge, edge);
-//                getGraph().removeEdge(edge);
-//                p2.removeEdge(edge);
 
-                if (stickTogether) {
-                    replacedPorts.put(replacePort, p1);
-                    originalPort2representative.put(p1, replacePort);
-                } else {
-                    representative.addPortComposition(replacePort);
+                        if (stickTogether) {
+                            replacedPorts.put(replacePort, port);
+                            originalPort2representative.put(port, replacePort);
+                        } else {
+                            representative.addPortComposition(replacePort);
+                        }
+                    }
                 }
             }
 
@@ -923,7 +907,7 @@ public class SugiyamaLayouter implements PralineLayouter {
                     representative.addPortComposition(keepPortGroupsRecursive(new PortGroup(),
                             groupNode.getPortCompositions(), originalPort2representative));
                 }
-                if (hasPortPairings) {
+                if (connectors.contains(group)) {
                     keepPortPairings(originalPort2representative, allPairings);
                     plugs.put(representative, group);
                 } else {
@@ -1123,37 +1107,31 @@ public class SugiyamaLayouter implements PralineLayouter {
         }
     }
 
-    private void handleNoEdgePort () {
+    private void handlePortWithoutEdges() {
         for (Vertex node : getGraph().getVertices()) {
-            for (PortComposition portComposition : new LinkedList<>(node.getPortCompositions())) {
-                handleNoEdgePortRec(portComposition);
+            for (Port port : new ArrayList<>(node.getPorts())) {
+                if (port.getEdges().isEmpty()) {
+                    this.portsWithoutEdge.computeIfAbsent(node, k -> new LinkedHashSet<>()).add(port);
+                    node.removePortComposition(port);
+                }
             }
         }
     }
 
-    private void handleNoEdgePortRec (PortComposition portComposition) {
-        //TODO: change this to re-insert (or keep) these ports. See also TODO in NodePlacement
-        if (portComposition instanceof Port) {
-            Port port = ((Port)portComposition);
-            if (port.getEdges().isEmpty()) {
-                new NoEdgePort(noEdgePorts, port);
-            }
-        } else {
-            for (PortComposition member : new ArrayList<>(((PortGroup)portComposition).getPortCompositions())) {
-                handleNoEdgePortRec(member);
-            }
-        }
-    }
+    private void handleLoopEdges() {
+        for (Edge edge : new ArrayList<>(getGraph().getEdges())) {
+            //we have split all hyperedges with >= 3 ports, so it suffices to consider the first two ports
+            Port port0 = edge.getPorts().get(0);
+            Port port1 = edge.getPorts().get(1);
+            if (port0.getVertex().equals(port1.getVertex())) {
+                this.loopEdges.computeIfAbsent(port0.getVertex(), k -> new LinkedHashSet<>()).add(edge);
+                this.loopEdge2Ports.put(edge, new LinkedHashSet<>(Arrays.asList(port0, port1)));
 
-    private void handleOneNodeEdge () {
-        Set<Edge> toDelete = new LinkedHashSet<>();
-        for (Edge edge : getGraph().getEdges()) {
-            if (edge.getPorts().get(0).getVertex().equals(edge.getPorts().get(1).getVertex())) {
-                toDelete.add(edge);
+                //remove loop edge and ports
+                getGraph().removeEdge(edge);
+                port0.getVertex().removePortComposition(port0);
+                port1.getVertex().removePortComposition(port1);
             }
-        }
-        for (Edge edge : toDelete) {
-            new OneNodeEdge(oneNodeEdges, edge, getGraph());
         }
     }
 
@@ -1265,7 +1243,8 @@ public class SugiyamaLayouter implements PralineLayouter {
                 for (Edge edge : topPort.getEdges()) {
                     Port bottomPort = edge.getPorts().get(0);
                     if (topPort.equals(bottomPort)) bottomPort = edge.getPorts().get(1);
-                    int bottomPortPosition = positions.get(bottomPort);
+                    int bottomPortPosition = 0;
+                    bottomPortPosition = positions.get(bottomPort);
                     for (int topPosition = (topPortPosition + 1); topPosition < topPorts.get(layer).size(); topPosition++) {
                         Port crossingTopPort = topPorts.get(layer).get(topPosition);
                         for (Edge crossingEdge : crossingTopPort.getEdges()) {
@@ -1410,27 +1389,35 @@ public class SugiyamaLayouter implements PralineLayouter {
         return orders.getTopPortOrder().get(port.getVertex()).contains(port);
     }
 
-    public Map<Edge, Edge> getDummyEdge2RealEdge() {
+    public Map<Edge, Edge> getDummyEdge2RealEdge () {
         return dummyEdge2RealEdge;
     }
 
-    public Set<NoEdgePort> getNoEdgePorts (Vertex node) {
-        if (noEdgePorts.containsKey(node)) {
-            return Collections.unmodifiableSet(noEdgePorts.get(node));
+    public Set<Port> getPortsWithoutEdge (Vertex node) {
+        if (portsWithoutEdge.containsKey(node)) {
+            return Collections.unmodifiableSet(portsWithoutEdge.get(node));
         } else {
             return Collections.unmodifiableSet(new LinkedHashSet<>());
         }
     }
 
-    public Set<OneNodeEdge> getOneNodeEdges (Vertex node) {
-        if (oneNodeEdges.containsKey(node)) {
-            return Collections.unmodifiableSet(oneNodeEdges.get(node));
+    public Set<Edge> getLoopEdges (Vertex node) {
+        if (loopEdges.containsKey(node)) {
+            return Collections.unmodifiableSet(loopEdges.get(node));
         } else {
             return Collections.unmodifiableSet(new LinkedHashSet<>());
         }
     }
 
-    public boolean hasAssignedLayeres() {
+    public Set<Port> getPortsOfLoopEdge (Edge loopEdge) {
+        if (loopEdge2Ports.containsKey(loopEdge)) {
+            return Collections.unmodifiableSet(loopEdge2Ports.get(loopEdge));
+        } else {
+            return Collections.unmodifiableSet(new LinkedHashSet<>());
+        }
+    }
+
+    public boolean hasAssignedLayers () {
         return hasAssignedLayers;
     }
 

@@ -124,46 +124,49 @@ public class EdgeRouting {
                 portOrder.get(portOrder.size() - 1).getShape().getXPosition()};
         // edge path is going along p1 - e1 - p2 - p3 - e2 - p4
         for (Port p1 : portOrder) {
-            Edge e1 = p1.getEdges().get(0);
-            Port p2 = e1.getPorts().get(0);
-            if (p2.equals(p1)) p2 = e1.getPorts().get(1);
-            if (p2.getVertex().equals(node)) {
-                Port p3 = sugy.getCorrespondingPortAtDummy(p2);
-                Edge e2 = p3.getEdges().get(0);
-                Port p4 = e2.getPorts().get(0);
-                if (p4.equals(p3)) p4 = e2.getPorts().get(1);
+            //if it has an edge
+            if (!p1.getEdges().isEmpty()) {
+                Edge e1 = p1.getEdges().get(0);
+                Port p2 = e1.getPorts().get(0);
+                if (p2.equals(p1)) p2 = e1.getPorts().get(1);
+                if (p2.getVertex().equals(node)) {
+                    Port p3 = sugy.getCorrespondingPortAtDummy(p2);
+                    Edge e2 = p3.getEdges().get(0);
+                    Port p4 = e2.getPorts().get(0);
+                    if (p4.equals(p3)) p4 = e2.getPorts().get(1);
 
-                // create new edge
-                List<Port> ports = new LinkedList<>();
-                ports.add(p1); // add startPort at vertex with dummy
-                ports.add(p4); // add endPort of edge segment
-                Edge newEdge = new Edge(ports);
-                sugy.getGraph().addEdge(newEdge);
-                sugy.assignDirection(newEdge, p1.getVertex(), p4.getVertex());
-                sugy.getDummyEdge2RealEdge().put(newEdge, sugy.getDummyEdge2RealEdge().get(e1));
+                    // create new edge
+                    List<Port> ports = new LinkedList<>();
+                    ports.add(p1); // add startPort at vertex with dummy
+                    ports.add(p4); // add endPort of edge segment
+                    Edge newEdge = new Edge(ports);
+                    sugy.getGraph().addEdge(newEdge);
+                    sugy.assignDirection(newEdge, p1.getVertex(), p4.getVertex());
+                    sugy.getDummyEdge2RealEdge().put(newEdge, sugy.getDummyEdge2RealEdge().get(e1));
 
-                // remove old edges from Ports and Graph
-                p1.removeEdge(e1);
-                p2.removeEdge(e1);
-                p3.removeEdge(e2);
-                p4.removeEdge(e2);
-                sugy.getGraph().removeEdge(e1);
-                sugy.getGraph().removeEdge(e2);
+                    // remove old edges from Ports and Graph
+                    p1.removeEdge(e1);
+                    p2.removeEdge(e1);
+                    p3.removeEdge(e2);
+                    p4.removeEdge(e2);
+                    sugy.getGraph().removeEdge(e1);
+                    sugy.getGraph().removeEdge(e2);
 
-                if (p4.getShape().getXPosition() < p1.getShape().getXPosition()) {
-                    edgesL.add(newEdge);
+                    if (p4.getShape().getXPosition() < p1.getShape().getXPosition()) {
+                        edgesL.add(newEdge);
 
-                    // update interval
-                    if (interval[0] > p4.getShape().getXPosition()) interval[0] = p4.getShape().getXPosition();
-                    if (interval[1] < p1.getShape().getXPosition()) interval[1] = p1.getShape().getXPosition();
+                        // update interval
+                        if (interval[0] > p4.getShape().getXPosition()) interval[0] = p4.getShape().getXPosition();
+                        if (interval[1] < p1.getShape().getXPosition()) interval[1] = p1.getShape().getXPosition();
 
-                } else {
-                    edgesR.add(newEdge);
+                    } else {
+                        edgesR.add(newEdge);
 
-                    // update interval
-                    if (interval[2] > p1.getShape().getXPosition()) interval[2] = p1.getShape().getXPosition();
-                    if (interval[3] < p4.getShape().getXPosition()) interval[3] = p4.getShape().getXPosition();
+                        // update interval
+                        if (interval[2] > p1.getShape().getXPosition()) interval[2] = p1.getShape().getXPosition();
+                        if (interval[3] < p4.getShape().getXPosition()) interval[3] = p4.getShape().getXPosition();
 
+                    }
                 }
             }
         }
@@ -249,68 +252,72 @@ public class EdgeRouting {
             if (!(sugy.isTurningPointDummy(node))) {
                 // for all ports
                 for (Port bottomPort : cmResult.getTopPortOrder().get(node)) {
-                    // cmResult is build with respect to nodes so the topPortOrder are Ports located on the top of the node
-                    // here we work with respect to Edges so a Port on top of a node is a bottomPort for an edge
-                    Edge edge = bottomPort.getEdges().get(0);
-                    Port topPort = edge.getPorts().get(0);
-                    if (bottomPort.equals(topPort)) topPort = edge.getPorts().get(1);
-                    // if it is no turningEdge
-                    if (bottomPort.getShape().getYPosition() != topPort.getShape().getYPosition()) {
-                        // if edge from bottom left to top right
-                        // else if edge from bottom right to top left
-                        // do nothing if it is a straight edge
-                        if (bottomPort.getShape().getXPosition() < topPort.getShape().getXPosition()) {
-                            // place edge at new level
-                            int newContourPointCase = 1;
-                            int minLevel = findMinLevel(bottomPort.getShape().getXPosition(), topPort.getShape().getXPosition(), outlineContourTD, position);
-                            while (activeCandidates.size() < minLevel) activeCandidates.add(Double.MIN_VALUE);
-                            int level = activeCandidates.size();
-                            // find new level
-                            for (int i = (activeCandidates.size() - 1); i >= minLevel; i--) {
-                                if (activeCandidates.get(i) < bottomPort.getShape().getXPosition()) {
-                                    level = i;
-                                    if (newContourPointCase == 0) {
-                                        newContourPointCase = -1;
+                    //if it has an edge
+                    if (!bottomPort.getEdges().isEmpty()) {
+                        // cmResult is build with respect to nodes so the topPortOrder are Ports located on the top of the node
+                        // here we work with respect to Edges so a Port on top of a node is a bottomPort for an edge
+                        Edge edge = bottomPort.getEdges().get(0);
+                        Port topPort = edge.getPorts().get(0);
+                        if (bottomPort.equals(topPort)) topPort = edge.getPorts().get(1);
+                        // if it is no turningEdge
+                        if (bottomPort.getShape().getYPosition() != topPort.getShape().getYPosition()) {
+                            // if edge from bottom left to top right
+                            // else if edge from bottom right to top left
+                            // do nothing if it is a straight edge
+                            if (bottomPort.getShape().getXPosition() < topPort.getShape().getXPosition()) {
+                                // place edge at new level
+                                int newContourPointCase = 1;
+                                int minLevel = findMinLevel(bottomPort.getShape().getXPosition(), topPort.getShape().getXPosition(), outlineContourTD, position);
+                                while (activeCandidates.size() < minLevel) activeCandidates.add(Double.MIN_VALUE);
+                                int level = activeCandidates.size();
+                                // find new level
+                                for (int i = (activeCandidates.size() - 1); i >= minLevel; i--) {
+                                    if (activeCandidates.get(i) < bottomPort.getShape().getXPosition()) {
+                                        level = i;
+                                        if (newContourPointCase == 0) {
+                                            newContourPointCase = -1;
+                                        }
+                                    } else if (activeCandidates.get(i) > topPort.getShape().getXPosition()) {
+                                        if (newContourPointCase == 1) {
+                                            newContourPointCase = 0;
+                                        }
+                                    } else {
+                                        break;
                                     }
-                                } else if (activeCandidates.get(i) > topPort.getShape().getXPosition()) {
-                                    if (newContourPointCase == 1) {
-                                        newContourPointCase = 0;
-                                    }
+                                }
+                                // save position
+                                edgeToLayerLR.put(edge, level);
+                                // update lastPositons
+                                while (lastPositions.get(lastPositions.size() - 1).getxPosition() <
+                                        bottomPort.getShape().getXPosition()) {
+                                    ContourPoint lp = lastPositions.remove(lastPositions.size() - 1);
+                                    lp.setLevel(lastPositions.get(lastPositions.size() - 1).getLevel());
+                                    outlineContourLR.add(lp);
+                                }
+                                // update activeCandidates
+                                if (level < activeCandidates.size()) {
+                                    activeCandidates.set(level, topPort.getShape().getXPosition());
                                 } else {
-                                    break;
+                                    activeCandidates.add(topPort.getShape().getXPosition());
                                 }
-                            }
-                            // save position
-                            edgeToLayerLR.put(edge, level);
-                            // update lastPositons
-                            while (lastPositions.get(lastPositions.size() - 1).getxPosition() < bottomPort.getShape().getXPosition()) {
-                                ContourPoint lp = lastPositions.remove(lastPositions.size() - 1);
-                                lp.setLevel(lastPositions.get(lastPositions.size() - 1).getLevel());
-                                outlineContourLR.add(lp);
-                            }
-                            // update activeCandidates
-                            if (level < activeCandidates.size()) {
-                                activeCandidates.set(level, topPort.getShape().getXPosition());
-                            } else {
-                                activeCandidates.add(topPort.getShape().getXPosition());
-                            }
-                            // update outlineContour
-                            if (newContourPointCase > -1) {
-                                // create new lastPosition and delete all lastPositions left of it
-                                ContourPoint newLp = new ContourPoint(level, topPort.getShape().getXPosition());
-                                while (lastPositions.get(lastPositions.size() - 1).getxPosition() < newLp.getxPosition()) {
-                                    lastPositions.remove(lastPositions.size() - 1);
-                                }
-                                lastPositions.add(newLp);
                                 // update outlineContour
-                                outlineContourLR.add(new ContourPoint(level, bottomPort.getShape().getXPosition()));
-                            }
-                            // add to conflictCandidates to find possible conflicts
-                            conflictCandidates.put(bottomPort.getShape().getXPosition(), edge);
-                        } else if (bottomPort.getShape().getXPosition() > topPort.getShape().getXPosition()) {
-                            // conflict
-                            if (conflictCandidates.keySet().contains(topPort.getShape().getXPosition())) {
-                                conflicts.put(edge, conflictCandidates.get(topPort.getShape().getXPosition()));
+                                if (newContourPointCase > -1) {
+                                    // create new lastPosition and delete all lastPositions left of it
+                                    ContourPoint newLp = new ContourPoint(level, topPort.getShape().getXPosition());
+                                    while (lastPositions.get(lastPositions.size() - 1).getxPosition() < newLp.getxPosition()) {
+                                        lastPositions.remove(lastPositions.size() - 1);
+                                    }
+                                    lastPositions.add(newLp);
+                                    // update outlineContour
+                                    outlineContourLR.add(new ContourPoint(level, bottomPort.getShape().getXPosition()));
+                                }
+                                // add to conflictCandidates to find possible conflicts
+                                conflictCandidates.put(bottomPort.getShape().getXPosition(), edge);
+                            } else if (bottomPort.getShape().getXPosition() > topPort.getShape().getXPosition()) {
+                                // conflict
+                                if (conflictCandidates.keySet().contains(topPort.getShape().getXPosition())) {
+                                    conflicts.put(edge, conflictCandidates.get(topPort.getShape().getXPosition()));
+                                }
                             }
                         }
                     }
@@ -384,58 +391,61 @@ public class EdgeRouting {
             if (!(sugy.isTurningPointDummy(node))) {
                 // for all ports
                 for (Port topPort : cmResult.getBottomPortOrder().get(node)) {
-                    Edge edge = topPort.getEdges().get(0);
-                    Port bottomPort = edge.getPorts().get(0);
-                    if (topPort.equals(bottomPort)) bottomPort = edge.getPorts().get(1);
-                    // if it is no turningEdge
-                    if (bottomPort.getShape().getYPosition() != topPort.getShape().getYPosition()) {
-                        // if edge from bottom right to top left
-                        // else do nothing
-                        if (topPort.getShape().getXPosition() < bottomPort.getShape().getXPosition()) {
-                            // place edge at new level
-                            int newContourPointCase = 1;
-                            int minLevel = findMinLevel(topPort.getShape().getXPosition(), bottomPort.getShape().getXPosition(), outlineContourTD, position);
-                            while (activeCandidates.size() < minLevel) activeCandidates.add(Double.MIN_VALUE);
-                            int level = activeCandidates.size();
-                            // find new level
-                            for (int i = (activeCandidates.size() - 1); i >= minLevel; i--) {
-                                if (activeCandidates.get(i) < topPort.getShape().getXPosition()) {
-                                    level = i;
-                                    if (newContourPointCase == 0) {
-                                        newContourPointCase = -1;
+                    //if it has an edge
+                    if (!topPort.getEdges().isEmpty()) {
+                        Edge edge = topPort.getEdges().get(0);
+                        Port bottomPort = edge.getPorts().get(0);
+                        if (topPort.equals(bottomPort)) bottomPort = edge.getPorts().get(1);
+                        // if it is no turningEdge
+                        if (bottomPort.getShape().getYPosition() != topPort.getShape().getYPosition()) {
+                            // if edge from bottom right to top left
+                            // else do nothing
+                            if (topPort.getShape().getXPosition() < bottomPort.getShape().getXPosition()) {
+                                // place edge at new level
+                                int newContourPointCase = 1;
+                                int minLevel = findMinLevel(topPort.getShape().getXPosition(), bottomPort.getShape().getXPosition(), outlineContourTD, position);
+                                while (activeCandidates.size() < minLevel) activeCandidates.add(Double.MIN_VALUE);
+                                int level = activeCandidates.size();
+                                // find new level
+                                for (int i = (activeCandidates.size() - 1); i >= minLevel; i--) {
+                                    if (activeCandidates.get(i) < topPort.getShape().getXPosition()) {
+                                        level = i;
+                                        if (newContourPointCase == 0) {
+                                            newContourPointCase = -1;
+                                        }
+                                    } else if (activeCandidates.get(i) > bottomPort.getShape().getXPosition()) {
+                                        if (newContourPointCase == 1) {
+                                            newContourPointCase = 0;
+                                        }
+                                    } else {
+                                        break;
                                     }
-                                } else if (activeCandidates.get(i) > bottomPort.getShape().getXPosition()) {
-                                    if (newContourPointCase == 1) {
-                                        newContourPointCase = 0;
-                                    }
+                                }
+                                // save position
+                                edgeToLayer.put(edge, level);
+                                // update lastPositons
+                                while (lastPositions.get(lastPositions.size() - 1).getxPosition() < topPort.getShape().getXPosition()) {
+                                    ContourPoint lp = lastPositions.remove(lastPositions.size() - 1);
+                                    lp.setLevel(lastPositions.get(lastPositions.size() - 1).getLevel());
+                                    outlineContourRL.add(lp);
+                                }
+                                // update activeCandidates
+                                if (level < activeCandidates.size()) {
+                                    activeCandidates.set(level, bottomPort.getShape().getXPosition());
                                 } else {
-                                    break;
+                                    activeCandidates.add(bottomPort.getShape().getXPosition());
                                 }
-                            }
-                            // save position
-                            edgeToLayer.put(edge, level);
-                            // update lastPositons
-                            while (lastPositions.get(lastPositions.size() - 1).getxPosition() < topPort.getShape().getXPosition()) {
-                                ContourPoint lp = lastPositions.remove(lastPositions.size() - 1);
-                                lp.setLevel(lastPositions.get(lastPositions.size() - 1).getLevel());
-                                outlineContourRL.add(lp);
-                            }
-                            // update activeCandidates
-                            if (level < activeCandidates.size()) {
-                                activeCandidates.set(level, bottomPort.getShape().getXPosition());
-                            } else {
-                                activeCandidates.add(bottomPort.getShape().getXPosition());
-                            }
-                            // update outlineContour
-                            if (newContourPointCase > -1) {
-                                // create new lastPosition and delete all lastPositions left of it
-                                ContourPoint newLp = new ContourPoint(level, bottomPort.getShape().getXPosition());
-                                while (lastPositions.get(lastPositions.size() - 1).getxPosition() < newLp.getxPosition()) {
-                                    lastPositions.remove(lastPositions.size() - 1);
-                                }
-                                lastPositions.add(newLp);
                                 // update outlineContour
-                                outlineContourRL.add(new ContourPoint(level, topPort.getShape().getXPosition()));
+                                if (newContourPointCase > -1) {
+                                    // create new lastPosition and delete all lastPositions left of it
+                                    ContourPoint newLp = new ContourPoint(level, bottomPort.getShape().getXPosition());
+                                    while (lastPositions.get(lastPositions.size() - 1).getxPosition() < newLp.getxPosition()) {
+                                        lastPositions.remove(lastPositions.size() - 1);
+                                    }
+                                    lastPositions.add(newLp);
+                                    // update outlineContour
+                                    outlineContourRL.add(new ContourPoint(level, topPort.getShape().getXPosition()));
+                                }
                             }
                         }
                     }

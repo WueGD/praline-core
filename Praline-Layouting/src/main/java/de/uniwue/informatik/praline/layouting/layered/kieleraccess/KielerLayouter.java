@@ -72,7 +72,7 @@ public class KielerLayouter implements PralineLayouter {
         //the first steps have already be done
         sugiyForInternalUse = sugiyWithPrecomputedDirectedGraph;
 
-        if (!sugiyForInternalUse.hasAssignedLayeres()) {
+        if (!sugiyForInternalUse.hasAssignedLayers()) {
             sugiyWithPrecomputedDirectedGraph.assignLayers();
         }
     }
@@ -83,6 +83,8 @@ public class KielerLayouter implements PralineLayouter {
 
         Graph pralineGraph = getStoredPralineGraph();
         writeResultToPralineGraph(pralineGraph);
+
+        sugiyForInternalUse.restoreOriginalElements();
     }
 
     @Override

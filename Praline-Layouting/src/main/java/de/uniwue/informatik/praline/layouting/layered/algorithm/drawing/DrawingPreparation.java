@@ -34,6 +34,8 @@ public class DrawingPreparation {
         }
         // do path for edges
         doPathForEdges();
+        // adjust port shapes
+        adjustPortShapes();
         // add Edges with Paths for remaining dummyNodes
         drawEdgesForDummys();
     }
@@ -106,18 +108,17 @@ public class DrawingPreparation {
                     path.setEndPoint(new Point2D.Double(end.getX(), (end.getY() - drawInfo.getPortHeight())));
                 }
             }
-            // after the path is set
-            createPortShapes(edge);
         }
     }
 
-    private void createPortShapes(Edge edge) {
-        for (Port port : edge.getPorts()) {
-            Rectangle portShape = (Rectangle) port.getShape();
-            if (sugy.isTopPort(port)) {
-                port.setShape(new Rectangle((portShape.getXPosition() - (drawInfo.getPortWidth() / 2)), portShape.getYPosition(), portShape.getWidth(), portShape.getHeight(), null));
-            } else {
-                port.setShape(new Rectangle((portShape.getXPosition() - (drawInfo.getPortWidth() / 2)), (portShape.getYPosition() - drawInfo.getPortHeight()), portShape.getWidth(), portShape.getHeight(), null));
+    private void adjustPortShapes() {
+        for (Vertex vertex : sugy.getGraph().getVertices()) {
+            for (Port port : vertex.getPorts()) {
+                Rectangle portShape = (Rectangle) port.getShape();
+                portShape.x = portShape.getXPosition() - (drawInfo.getPortWidth() / 2);
+                if (!sugy.isTopPort(port)) {
+                    portShape.y = portShape.getYPosition() - drawInfo.getPortHeight();
+                }
             }
         }
     }

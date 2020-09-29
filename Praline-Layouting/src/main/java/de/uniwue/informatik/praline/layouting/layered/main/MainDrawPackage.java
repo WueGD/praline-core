@@ -22,8 +22,8 @@ public class MainDrawPackage {
     public static final String PATH_DATA_SET =
 //            "Praline-Layouting/data/generated_2020-06-04_18-39-49";
 //            "Praline-Layouting/data/generated_2020-08-20_04-42-39";
-            "Praline-Layouting/data/lc-praline-package-2020-05-18";
-//            "Praline-Layouting/data/praline-package-2020-05-18";
+//            "Praline-Layouting/data/lc-praline-package-2020-05-18";
+            "Praline-Layouting/data/praline-package-2020-05-18";
 //            "Praline-Layouting/data/5plansOriginalPseudo";
 
 
@@ -35,11 +35,13 @@ public class MainDrawPackage {
 
     private static final CrossingMinimizationMethod CROSSING_MINIMIZATION_METHOD = CrossingMinimizationMethod.PORTS;
 
-    private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 5;
+    private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 1; //5;
 
-    private static final int NUMBER_OF_FORCE_DIRECTED_ITERATIONS = 10;
+    private static final int NUMBER_OF_FORCE_DIRECTED_ITERATIONS = 1; //10;
 
-    private static final int NUMBER_OF_CROSSING_REDUCTION_ITERATIONS = 3;
+    private static final int NUMBER_OF_CROSSING_REDUCTION_ITERATIONS = 1; //3;
+
+    private static final int NUMBER_OF_PARALLEL_THREADS = 1; //8;
 
 
     private static int progressCounter = 0;
@@ -65,7 +67,7 @@ public class MainDrawPackage {
         new File(PATH_RESULTS).mkdirs();
 
         List<Callable<String>> tasks = new ArrayList<>();
-        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(16);
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUMBER_OF_PARALLEL_THREADS);
         int jj = 0;
         progressCounter = 0;
         totalSteps = files.size();
@@ -110,6 +112,7 @@ public class MainDrawPackage {
             sugy.nodePositioning();
             sugy.edgeRouting();
             sugy.prepareDrawing();
+            sugy.restoreOriginalElements();
 
             if (bestNumberOfCrossings > numberOfCrossings) {
                 bestNumberOfCrossings = numberOfCrossings;

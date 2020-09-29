@@ -190,7 +190,7 @@ public class CrossingMinimization2 {
                 Set<PortComposition> freePortCompositions = new LinkedHashSet<>();
                 for (PortComposition portComposition : node.getPortCompositions()) {
                     // check whether portComposition is located on the top or bottom of the node
-                    Port port = findPort(portComposition);
+                    Port port = findPortWithEdgesIfExistent(portComposition);
                     if (port.getEdges().isEmpty()) {
                         freePortCompositions.add(portComposition);
                     } else {
@@ -201,15 +201,14 @@ public class CrossingMinimization2 {
                         }
                     }
                 }
-                // handle PortCompositions with no Edges by distributing them equally
-                boolean onTheTop = true;
+                // handle PortCompositions with no edges by adding them to the side with fewer ports
                 for (PortComposition portComposition : freePortCompositions) {
-                    if (onTheTop) {
+                    int portsTop = countPorts(portCompositionsTop);
+                    int portsBottom = countPorts(portCompositionsBottom);
+                    if (portsTop < portsBottom || (portsTop == portsBottom && Constants.random.nextDouble() < 0.5)) {
                         portCompositionsTop.add(portComposition);
-                        onTheTop = false;
                     } else {
                         portCompositionsBottom.add(portComposition);
-                        onTheTop = true;
                     }
                 }
 
@@ -242,6 +241,14 @@ public class CrossingMinimization2 {
 
         //update current values acc to type
         updateCurrentValues();
+    }
+
+    private static int countPorts(Collection<PortComposition> portCompositionsTop) {
+        int sum = 0;
+        for (PortComposition portComposition : portCompositionsTop) {
+            sum += PortUtils.getPortsRecursively(portComposition).size();
+        }
+        return sum;
     }
 
     private void placeTurningDummiesNextToTheirVertices() {
@@ -379,14 +386,14 @@ public class CrossingMinimization2 {
                     || this.adjacentToDummyTurningPoints.contains(node)));
     }
 
-    private Port findPort(PortComposition portComposition) {
+    private Port findPortWithEdgesIfExistent(PortComposition portComposition) {
         Port port = null;
         if (portComposition instanceof Port) {
-            port = (Port)portComposition;
+            port = (Port) portComposition;
         } else if (portComposition instanceof PortGroup) {
             for (PortComposition member : ((PortGroup)portComposition).getPortCompositions()) {
-                port = findPort(member);
-                if (port != null) break;
+                port = findPortWithEdgesIfExistent(member);
+                if (port != null && !port.getEdges().isEmpty()) break;
             }
         }
         return port;

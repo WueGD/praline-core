@@ -133,9 +133,11 @@ public class LayerAssignment {
                     }
                 }
                 ranks.replace(node, (smallestRank - 1));
-                tree.add(possibleTreeEdge);
-                treeNodes.get(node).add(possibleTreeEdge);
-                treeNodes.get(sugy.getEndNode(possibleTreeEdge)).add(possibleTreeEdge);
+                if (possibleTreeEdge != null) {
+                    tree.add(possibleTreeEdge);
+                    treeNodes.get(node).add(possibleTreeEdge);
+                    treeNodes.get(sugy.getEndNode(possibleTreeEdge)).add(possibleTreeEdge);
+                }
             }
         }
 
