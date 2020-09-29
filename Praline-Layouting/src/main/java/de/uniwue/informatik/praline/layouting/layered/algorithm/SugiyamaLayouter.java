@@ -333,9 +333,9 @@ public class SugiyamaLayouter implements PralineLayouter {
         //second we replace the ports that were created during the phase where ports with multiple edges were split to
         // multiple ports; now we re-unify all these ports back to one. If there is a port pairing involved, we keep
         // the one on the opposite site to the port pairing; otherwise we keep the/a middle one
-//        for (Port origPort : multipleEdgePort2replacePorts.keySet()) {
-//            restorePortsWithMultipleEdges(origPort);
-//        }
+        for (Port origPort : multipleEdgePort2replacePorts.keySet()) {
+            restorePortsWithMultipleEdges(origPort);
+        }
     }
 
     private void restorePortsWithMultipleEdges(Port origPort) {

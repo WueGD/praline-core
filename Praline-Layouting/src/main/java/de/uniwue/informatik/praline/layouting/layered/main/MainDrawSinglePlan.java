@@ -26,12 +26,14 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-06001ee4-a1ee-4d84-85ff-93792f56e5c7.json";
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-a01bd68a-b853-480a-b2bc-58851f52c673.json";
             //check vertices a66062305ffbb6ac + 84a0e499304ed15b
-            "Praline-Layouting/data/praline-package-2020-05-18/praline-d4cbdce2-3a35-4fc1-9ed8-69e196371ee5.json";
+//            "Praline-Layouting/data/praline-package-2020-05-18/praline-d4cbdce2-3a35-4fc1-9ed8-69e196371ee5.json";
 //            //small, but many vertex groups
 //            //several loops
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-bc0a6948-ff41-4c1f-9b98-c2042b575adb.json";
 //            //not clear if several connectors? device connectors? several loops?
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-491452a2-600e-4482-9981-8f2204e77ab8.json";
+            //diagonal edge at 69e1713fe58318a9 in MainDrawPackage (everything set to 1; SEED=1234L)
+            "Praline-Layouting/data/praline-package-2020-05-18/praline-8e12ddec-870d-49ac-bd12-f67300df8166.json";
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-58f687b4-cce6-4938-8e08-a5d0155790da.json";
 //            "Praline-Layouting/data/generated_2020-06-04_18-39-49/praline-pseudo-plan-2dfedde45c413b8f.json";
 //            "Praline-Layouting/data/example-very-small/praline-a0b0b5a2-2c23-43b0-bb87-4ddeb34d5a02.json";
