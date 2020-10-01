@@ -84,6 +84,7 @@ public class KielerLayouter implements PralineLayouter {
         Graph pralineGraph = getStoredPralineGraph();
         writeResultToPralineGraph(pralineGraph);
 
+        //TODO: fix the following when using KielerLayouter
         sugiyForInternalUse.restoreOriginalElements();
     }
 

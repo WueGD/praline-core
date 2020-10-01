@@ -65,7 +65,6 @@ public class MainDrawSinglePlan {
         sugy.nodePositioning();
         sugy.edgeRouting();
         sugy.prepareDrawing();
-        sugy.restoreOriginalElements();
 
         System.out.println("Computed drawing with " + CrossingsCounting.countNumberOfCrossings(graph) + " crossings " +
                 "and " + BendsCounting.countNumberOfBends(graph) + " bends.");

@@ -112,7 +112,6 @@ public class MainDrawPackage {
             sugy.nodePositioning();
             sugy.edgeRouting();
             sugy.prepareDrawing();
-            sugy.restoreOriginalElements();
 
             if (bestNumberOfCrossings > numberOfCrossings) {
                 bestNumberOfCrossings = numberOfCrossings;

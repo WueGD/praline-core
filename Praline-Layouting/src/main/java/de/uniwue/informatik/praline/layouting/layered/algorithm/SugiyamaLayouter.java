@@ -47,7 +47,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     private Map<Vertex, Vertex> dummyTurningNodes;
     private Map<Port, Port> replacedPorts;
     private Map<Port, List<Port>> multipleEdgePort2replacePorts;
-    protected Map<Port, Port> keptPortPairings;
+    private Map<Port, Port> keptPortPairings;
     private Map<Edge, Edge> dummyEdge2RealEdge;
     private Map<Vertex, Set<Edge>> loopEdges;
     private Map<Edge, Set<Port>> loopEdge2Ports;
@@ -115,7 +115,6 @@ public class SugiyamaLayouter implements PralineLayouter {
         nodePositioning();
         edgeRouting();
         prepareDrawing();
-        restoreOriginalElements();
     }
 
     // change graph so that
@@ -264,426 +263,14 @@ public class SugiyamaLayouter implements PralineLayouter {
         DrawingPreparation dp = new DrawingPreparation(this);
         dp.prepareDrawing(drawInfo, orders);
     }
-    // todo: change method back to private when done with debugging and testing
 
-    public void restoreOriginalElements () {
-        //replace dummy edges
-        boolean hasChanged = true;
-        while (hasChanged) {
-            hasChanged = false;
-            for (Edge edge : new ArrayList<>(this.getGraph().getEdges())) {
-                if (dummyEdge2RealEdge.containsKey(edge)) {
-                    Edge originalEdge = dummyEdge2RealEdge.get(edge);
-                    replaceByOriginalEdge(edge, originalEdge);
-                    hasChanged = true;
-                }
-            }
-        }
-
-        //until now all edges are deg 2 (so there are no hyperedges)
-        //because they are composite of many different edge parts each contributing a path, they have multiple paths
-        // now. We unify all the paths to one long path
-        for (Edge edge : this.getGraph().getEdges()) {
-            unifyPathsOfDeg2Edge(edge);
-        }
-
-        //unify single parts of hyperedges to one edge each
-        for (Edge edge : new ArrayList<>(this.getGraph().getEdges())) {
-            if (hyperEdgeParts.containsKey(edge)) {
-                restoreHyperedgePart(edge);
-            }
-        }
-
-        //replace dummy vertices
-        for (Vertex vertex : new ArrayList<>(this.getGraph().getVertices())) {
-            if (hyperEdges.containsKey(vertex)) {
-                replaceHyperEdgeDummyVertex(vertex);
-            }
-            if (vertexGroups.containsKey(vertex)) {
-                VertexGroup vertexGroup = vertexGroups.get(vertex);
-                restoreVertexGroup(vertex, vertexGroup);
-            }
-            if (plugs.containsKey(vertex)) {
-                VertexGroup vertexGroup = plugs.get(vertex);
-                restoreVertexGroup(vertex, vertexGroup);
-            }
-
-            if (dummyTurningNodes != null && dummyTurningNodes.containsKey(vertex)) {
-                getGraph().removeVertex(vertex);
-            }
-            if (dummyNodesLongEdges.containsKey(vertex)) {
-                getGraph().removeVertex(vertex);
-            }
-        }
-
-        //TODO: add ports without edges, loop-edges, ports with loop-edges, ports of vertexGroup that are paired
-        // within the vertex group but do not have outgoing edges
-        //TODO: check that #ports, #vertices, #edges is in the end the same as at the beginning
-
-        //first we have already replaced in restoreVertexGroup (...) the ports that were created during vertex group
-        // handeling; these are the ports in replacedPorts where the original vertex is not in
-        // multipleEdgePort2replacePorts
-
-        //second we replace the ports that were created during the phase where ports with multiple edges were split to
-        // multiple ports; now we re-unify all these ports back to one. If there is a port pairing involved, we keep
-        // the one on the opposite site to the port pairing; otherwise we keep the/a middle one
-        for (Port origPort : multipleEdgePort2replacePorts.keySet()) {
-            restorePortsWithMultipleEdges(origPort);
-        }
-        //TODO: make vertices shorter that became very broad because of distant ports, which were removed now
-    }
-
-    private void restorePortsWithMultipleEdges(Port origPort) {
-        List<Port> replacePorts = multipleEdgePort2replacePorts.get(origPort);
-        Shape shapeOfPairedPort = null;
-        Vertex vertex = replacePorts.iterator().next().getVertex();
-        PortGroup portGroupOfThisReplacement = replacePorts.iterator().next().getPortGroup();
-        PortGroup containingPortGroup = portGroupOfThisReplacement.getPortGroup(); //second call because
-        // first port group is just the port group created extra for the replace ports
-        // re-add orig port
-        if (containingPortGroup == null) {
-            vertex.addPortComposition(origPort);
-        }
-        else {
-            containingPortGroup.addPortComposition(origPort);
-        }
-        //remove all replace ports and possible save shape
-        for (Port replacePort : replacePorts) {
-            if (isPaired(replacePort)) {
-                shapeOfPairedPort = replacePort.getShape();
-            }
-            vertex.removePortComposition(replacePort);
-        }
-        vertex.removePortComposition(portGroupOfThisReplacement);
-        //find shape of origPort
-        if (shapeOfPairedPort != null) {
-            origPort.setShape(shapeOfPairedPort.clone());
-        }
-        else {
-            replacePorts.sort(Comparator.comparing(p -> p.getShape().getXPosition()));
-            //pick the shape of the (left) middle one
-            origPort.setShape(replacePorts.get((replacePorts.size() - 1) / 2).getShape().clone());
-        }
-        //re-hang edges
-        //find target point
-        Rectangle origPortShape = (Rectangle) origPort.getShape();
-        Point2D.Double targetPoint = new Point2D.Double(
-                origPortShape.getXPosition() + 0.5 * origPortShape.getWidth(),
-                origPortShape.getYPosition() < vertex.getShape().getYPosition() ?
-                        origPortShape.getYPosition() : origPortShape.getYPosition() + origPortShape.getHeight()
-        );
-        //re-draw edges
-        for (Port replacePort : replacePorts) {
-            for (Edge edge : new ArrayList<>(replacePort.getEdges())) {
-                //change ports
-                edge.removePort(replacePort);
-                edge.addPort(origPort);
-                //change drawn path at the port
-                //make path of this edge part longer to reach the middle of the old dummy vertex
-                Rectangle shapeReplacePort = (Rectangle) replacePort.getShape();
-                if (shapeReplacePort.equals(origPortShape)) {
-                    continue;
-                }
-                for (Path path : edge.getPaths()) {
-                    Point2D.Double startPoint = ((PolygonalPath) path).getStartPoint();
-                    Point2D.Double endPoint = ((PolygonalPath) path).getEndPoint();
-                    Point2D.Double pointAtPort =  null;
-                    Point2D.Double foreLastPoint = null;
-                    Point2D.Double newForeLastPoint = new Point2D.Double();
-                    if (shapeReplacePort.liesOnBoundary(startPoint)) {
-                        pointAtPort = startPoint;
-                        foreLastPoint = ((PolygonalPath) path).getBendPoints().isEmpty() ?
-                                ((PolygonalPath) path).getEndPoint() :
-                                ((PolygonalPath) path).getBendPoints().get(0);
-                    }
-                    else if (shapeReplacePort.liesOnBoundary(endPoint)) {
-                        pointAtPort = endPoint;
-                        foreLastPoint = ((PolygonalPath) path).getBendPoints().isEmpty() ?
-                                ((PolygonalPath) path).getStartPoint() :
-                                ((PolygonalPath) path).getBendPoints().get(
-                                        ((PolygonalPath) path).getBendPoints().size() -1);
-                    }
-                    if (pointAtPort != null) {
-                        newForeLastPoint.x = pointAtPort.x;
-                        newForeLastPoint.y = pointAtPort.y +
-                                //TODO: transform the .75 into a variable in DrawingInformation
-                                drawInfo.getEdgeDistanceVertical() * (foreLastPoint.y > pointAtPort.y ? .75 : -.75);
-                        if (pointAtPort == startPoint) {
-                            ((PolygonalPath) path).getBendPoints().add(0, newForeLastPoint);
-                            startPoint.setLocation(targetPoint);
-                        }
-                        else {
-                            ((PolygonalPath) path).getBendPoints().add(
-                                    ((PolygonalPath) path).getBendPoints().size(), newForeLastPoint);
-                            endPoint.setLocation(targetPoint);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private void restoreVertexGroup(Vertex dummyUnificationVertex, VertexGroup vertexGroup) {
-        //-1: bottom side, 0: undefined, 1: top side
-        Map<Integer, List<Vertex>> vertexSide2origVertex = new LinkedHashMap<>();
-        Map<Vertex, Double> minX = new LinkedHashMap<>();
-        Map<Vertex, Double> maxX = new LinkedHashMap<>();
-        for (Vertex originalVertex : vertexGroup.getAllRecursivelyContainedVertices()) {
-            minX.put(originalVertex, Double.POSITIVE_INFINITY);
-            maxX.put(originalVertex, Double.NEGATIVE_INFINITY);
-            int vertexSide = 0; //-1: bottom side, 0: undefined, 1: top side
-            for (Port port : orders.getTopPortOrder().get(dummyUnificationVertex)) {
-                int changeTo = 1;
-                vertexSide =
-                        changeVertexSideIfContained(minX, maxX, originalVertex, vertexSide, port, changeTo);
-            }
-            for (Port port : orders.getBottomPortOrder().get(dummyUnificationVertex)) {
-                int changeTo = -1;
-                vertexSide =
-                        changeVertexSideIfContained(minX, maxX, originalVertex, vertexSide, port, changeTo);
-            }
-            if (!vertexSide2origVertex.containsKey(vertexSide)) {
-                vertexSide2origVertex.put(vertexSide, new ArrayList<>());
-            }
-            vertexSide2origVertex.get(vertexSide).add(originalVertex);
-        }
-
-        int numberOfDifferentSides = vertexSide2origVertex.keySet().size();
-        int yShiftMultiplier = 0;
-        for (int vertexSide = -1; vertexSide <= 1; vertexSide++) {
-            List<Vertex> originalVertices = vertexSide2origVertex.get(vertexSide);
-            if (originalVertices != null) {
-                double xPos = dummyUnificationVertex.getShape().getXPosition();
-                //sort by x-coordinates
-                originalVertices.sort(Comparator.comparing(minX::get));
-                for (int j = 0; j < originalVertices.size(); j++) {
-                    Vertex originalVertex = originalVertices.get(j);
-                    //determine shape for original vertex
-                    originalVertex.setShape(dummyUnificationVertex.getShape().clone());
-                    Rectangle originalVertexShape = (Rectangle) originalVertex.getShape();
-                    originalVertexShape.height = originalVertexShape.height / (double) numberOfDifferentSides;
-                    originalVertexShape.y = originalVertexShape.y +
-                            (double) yShiftMultiplier * originalVertexShape.getHeight();
-                    originalVertexShape.x = xPos;
-                    double endXPos = j + 1 == originalVertices.size() ?
-                            dummyUnificationVertex.getShape().getXPosition() +
-                                    ((Rectangle) dummyUnificationVertex.getShape()).width :
-                            (maxX.get(originalVertex) + minX.get(originalVertices.get(j + 1))) / 2.0;
-                    originalVertexShape.width = endXPos - xPos;
-                    xPos = endXPos;
-                    graph.addVertex(originalVertex);
-                }
-                ++yShiftMultiplier;
-            }
-        }
-        //transfer shape of the replace ports to the original ports
-        for (Port replacePort : dummyUnificationVertex.getPorts()) {
-            Port origPort = replacedPorts.get(replacePort);
-            origPort.setShape(replacePort.getShape().clone());
-            if (keptPortPairings.containsKey(replacePort)) {
-                keptPortPairings.put(origPort, keptPortPairings.get(replacePort));
-                keptPortPairings.remove(replacePort);
-            }
-            //re-hang edges
-            for (Edge edge : new ArrayList<>(replacePort.getEdges())) {
-                edge.removePort(replacePort);
-                edge.addPort(origPort);
-            }
-        }
-        //remove unification dummy node
-        graph.removeVertex(dummyUnificationVertex);
-        //re-add vertex group
-        graph.addVertexGroup(plugs.get(dummyUnificationVertex));
-        graph.addVertexGroup(vertexGroups.get(dummyUnificationVertex));
-    }
-
-    private int changeVertexSideIfContained(Map<Vertex, Double> minX, Map<Vertex, Double> maxX, Vertex originalVertex,
-                                            int vertexSide, Port port, int changeTo) {
-        Port portBeforeUnification = replacedPorts.get(port);
-        if (originalVertex.getPorts().contains(portBeforeUnification) || originalVertex.getPorts().contains(port)) {
-            vertexSide = changeTo;
-            double xBeginPort = port.getShape().getXPosition();
-            if (xBeginPort < minX.get(originalVertex)) {
-                minX.replace(originalVertex, xBeginPort);
-            }
-            double xEndPort = xBeginPort + ((Rectangle) port.getShape()).width;
-            if (xEndPort > maxX.get(originalVertex)) {
-                maxX.replace(originalVertex, xEndPort);
-            }
-        }
-        return vertexSide;
-    }
-
-    private void replaceHyperEdgeDummyVertex(Vertex hyperEdgeDummyVertex) {
-        Rectangle vertexShape = (Rectangle) hyperEdgeDummyVertex.getShape();
-        Edge hyperEdge = hyperEdges.get(hyperEdgeDummyVertex);
-        double minX = Double.MAX_VALUE;
-        double maxX = Double.MIN_VALUE;
-        double y = Double.NaN;
-        Path firstPath = null;
-        Path lastPath = null;
-        for (Path path : hyperEdge.getPaths()) {
-            Point2D.Double startPoint = ((PolygonalPath) path).getStartPoint();
-            Point2D.Double endPoint = ((PolygonalPath) path).getEndPoint();
-            if (vertexShape.contains(startPoint)) {
-                if (startPoint.x < minX) {
-                    minX = startPoint.x;
-                    firstPath = path;
-                }
-                if (startPoint.x > maxX) {
-                    maxX = startPoint.x;
-                    lastPath = path;
-                }
-                y = startPoint.y;
-            }
-            if (vertexShape.contains(endPoint)) {
-                if (endPoint.x < minX) {
-                    minX = endPoint.x;
-                    firstPath = path;
-                }
-                if (endPoint.x > maxX) {
-                    maxX = endPoint.x;
-                    lastPath = path;
-                }
-                y = endPoint.y;
-            }
-        }
-        //add horizontal segment as replacement for the dummy vertex
-        //we insert it as a connection between the first and the last path (which we unify)
-        hyperEdge.removePath(firstPath);
-        hyperEdge.removePath(lastPath);
-
-        List<Point2D.Double> bendsFirstPath = new ArrayList<>(((PolygonalPath) firstPath).getTerminalAndBendPoints());
-        List<Point2D.Double> bendsLastPath = new ArrayList<>(((PolygonalPath) lastPath).getTerminalAndBendPoints());
-
-        if (bendsFirstPath.get(0).distance(minX, y) == 0) {
-            Collections.reverse(bendsFirstPath);
-        }
-        if (bendsLastPath.get(0).distance(maxX, y) > 0) {
-            Collections.reverse(bendsLastPath);
-        }
-
-        List<Point2D.Double> bendsCombined = bendsFirstPath;
-        bendsCombined.addAll(bendsLastPath);
-        hyperEdge.addPath(new PolygonalPath(bendsCombined));
-        getGraph().removeVertex(hyperEdgeDummyVertex);
-    }
-
-    private void restoreHyperedgePart(Edge edgePart) {
-        Vertex dummyVertexHyperEdge = hyperEdgeParts.get(edgePart);
-        Rectangle shapeDummyVertex = (Rectangle) dummyVertexHyperEdge.getShape();
-        //make path of this edge part longer to reach the middle of the old dummy vertex
-        Port portAtDummyVertex = PortUtils.getPortAtVertex(edgePart, dummyVertexHyperEdge);
-        Rectangle shapeDummyPort = (Rectangle) portAtDummyVertex.getShape();
-        Point2D.Double startPoint = ((PolygonalPath) edgePart.getPaths().get(0)).getStartPoint();
-        Point2D.Double endPoint = ((PolygonalPath) edgePart.getPaths().get(0)).getEndPoint();
-        Point2D.Double pointAtPort = shapeDummyPort.liesOnBoundary(startPoint) ?
-                startPoint : shapeDummyPort.liesOnBoundary(endPoint) ? endPoint : null;
-        double extraLength = shapeDummyPort.getHeight() + shapeDummyVertex.getHeight() / 2.0;
-        if (pointAtPort.getY() < dummyVertexHyperEdge.getShape().getYPosition()) {
-            //make longer in +y direction -> move point up
-            pointAtPort.y = pointAtPort.y + extraLength;
-        }
-        else {
-            //make longer in -y direction -> move point down
-            pointAtPort.y = pointAtPort.y - extraLength;
-        }
-        //include dummy edge part into original hyperedge
-        Edge originalEdge = hyperEdges.get(dummyVertexHyperEdge);
-        replaceByOriginalEdge(edgePart, originalEdge);
-    }
-
-    private void unifyPathsOfDeg2Edge(Edge edge) {
-        //first find all segments of the edge paths
-        Set<Line2D.Double> allSegments = new LinkedHashSet<>();
-        for (Path path : edge.getPaths()) {
-            allSegments.addAll(((PolygonalPath) path).getSegments());
-        }
-        //now re-construct whole paths beginning from the start port
-        Port startPort = edge.getPorts().get(0);
-        Port endPort = edge.getPorts().get(1);
-        Point2D.Double nextPoint = findSegmentPointAt((Rectangle) startPort.getShape(), allSegments);
-        Point2D.Double endPoint = findSegmentPointAt((Rectangle) endPort.getShape(), allSegments);
-        PolygonalPath newPath = new PolygonalPath();
-        newPath.setStartPoint(nextPoint);
-        newPath.setEndPoint(endPoint);
-        //find all inner bend points
-        Point2D.Double prevPoint = null;
-        Point2D.Double curPoint = null;
-        while (curPoint == null || !nextPoint.equals(endPoint)) {
-            prevPoint = curPoint;
-            curPoint = nextPoint;
-            Line2D.Double curSegment = findSegmentAt(curPoint, allSegments);
-            allSegments.remove(curSegment);
-            nextPoint = getOtherEndPoint(curSegment, curPoint);
-
-            if (prevPoint != null && !areOnALine(prevPoint, curPoint, nextPoint)) {
-                newPath.getBendPoints().add(curPoint);
-            }
-        }
-        //add new path and remove all old ones
-        edge.removeAllPaths();
-        edge.addPath(newPath);
-    }
-
-    private boolean areOnALine(Point2D.Double prevPoint, Point2D.Double curPoint, Point2D.Double nextPoint) {
-        return new Line2D.Double(prevPoint, nextPoint).ptSegDist(curPoint) == 0;
-    }
-
-    private Point2D.Double getOtherEndPoint(Line2D.Double segment, Point2D.Double point) {
-        if (segment.getP1().equals(point)) {
-            return (Point2D.Double) segment.getP2();
-        }
-        return (Point2D.Double) segment.getP1();
-    }
-
-    private Line2D.Double findSegmentAt(Point2D.Double point, Set<Line2D.Double> allSegments) {
-        for (Line2D.Double segment : allSegments) {
-            if (point.equals(segment.getP1())) {
-                return segment;
-            }
-            if (point.equals(segment.getP2())) {
-                return segment;
-            }
-        }
-        return null;
-    }
-
-    private Point2D.Double findSegmentPointAt(Rectangle portRectangle, Set<Line2D.Double> allSegments) {
-        for (Line2D.Double segment : allSegments) {
-            if (portRectangle.intersectsLine(new Line2D.Double(segment.getP1(), segment.getP1()))) {
-                return (Point2D.Double) segment.getP1();
-            }
-            if (portRectangle.intersectsLine(new Line2D.Double(segment.getP2(), segment.getP2()))) {
-                return (Point2D.Double) segment.getP2();
-            }
-        }
-        return null;
-    }
-
-    private void replaceByOriginalEdge(Edge dummyEdge, Edge originalEdge) {
-        if (!getGraph().getEdges().contains(originalEdge)) {
-            getGraph().addEdge(originalEdge);
-            if (!originalEdge.getPaths().isEmpty()) {
-                //TODO this was introduced to avoid doubling of edge paths. but ideally that should not be necessary
-                // (and this could even lead to new problems) -- so better fix edge-path insertion and edge-removal
-                // in DrawingPreparation
-                originalEdge.removeAllPaths();
-            }
-        }
-        //transfer the paths form the dummy to the original edge
-        originalEdge.addPaths(dummyEdge.getPaths());
-        //add ports of dummy edge to original edge
-        for (Port port : dummyEdge.getPorts()) {
-            Vertex vertex = port.getVertex();
-            if (dummyTurningNodes != null
-                    && !dummyTurningNodes.containsKey(vertex)
-                    && !dummyNodesLongEdges.containsKey(vertex)
-                    && !originalEdge.getPorts().contains(port)) {
-                originalEdge.addPort(port);
-            }
-        }
-        getGraph().removeEdge(dummyEdge);
+    /**
+     * This is already done when calling {@link SugiyamaLayouter#prepareDrawing()}.
+     * So only use this if, the former one is not used!
+     */
+    public void restoreOriginalElements() {
+        DrawingPreparation dp = new DrawingPreparation(this);
+        dp.restoreOriginalElements();
     }
 
     // todo: change method back to private when done with debugging and testing
@@ -1381,6 +968,46 @@ public class SugiyamaLayouter implements PralineLayouter {
     @Override
     public void setDrawingInformation(DrawingInformation drawInfo) {
         this.drawInfo = drawInfo;
+    }
+
+    public CMResult getOrders() {
+        return orders;
+    }
+
+    public Map<Vertex, VertexGroup> getPlugs() {
+        return plugs;
+    }
+
+    public Map<Vertex, VertexGroup> getVertexGroups() {
+        return vertexGroups;
+    }
+
+    public Map<Vertex, Edge> getHyperEdges() {
+        return hyperEdges;
+    }
+
+    public Map<Edge, Vertex> getHyperEdgeParts() {
+        return hyperEdgeParts;
+    }
+
+    public Map<Vertex, Edge> getDummyNodesLongEdges() {
+        return dummyNodesLongEdges;
+    }
+
+    public Map<Vertex, Vertex> getDummyTurningNodes() {
+        return dummyTurningNodes;
+    }
+
+    public Map<Port, Port> getReplacedPorts() {
+        return replacedPorts;
+    }
+
+    public Map<Port, List<Port>> getMultipleEdgePort2replacePorts() {
+        return multipleEdgePort2replacePorts;
+    }
+
+    public Map<Port, Port> getKeptPortPairings() {
+        return keptPortPairings;
     }
 
     /////////////////
