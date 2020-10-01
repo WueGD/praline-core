@@ -3,6 +3,7 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment
 import de.uniwue.informatik.praline.datastructure.graphs.Edge;
 import de.uniwue.informatik.praline.datastructure.graphs.Vertex;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.ConnectedComponentClusterer;
 
 import java.util.*;
 
@@ -17,14 +18,7 @@ public class LayerAssignment {
 
     public LayerAssignment (SugiyamaLayouter sugy) {
         this.sugy = sugy;
-        this.tree = new LinkedHashSet<>();
-        this.treeNodes = new LinkedHashMap<>();
-        for (Vertex node : sugy.getGraph().getVertices()) {
-            treeNodes.put(node, new LinkedHashSet<>());
-        }
         this.ranks = new LinkedHashMap<>();
-        tailComponent = new LinkedHashSet<>();
-        headComponent = new LinkedHashSet<>();
     }
 
     /**
@@ -39,7 +33,19 @@ public class LayerAssignment {
      */
 
     public Map<Vertex, Integer> networkSimplex () {
-        initialiseRankAndTree();
+        //execute individually for each connected component
+        ConnectedComponentClusterer connectedComponentClusterer = new ConnectedComponentClusterer(sugy.getGraph());
+        Set<Set<Vertex>> components = connectedComponentClusterer.getConnectedComponents();
+
+        for (Set<Vertex> component : components) {
+            networkSimplexPerComponent(component);
+        }
+
+        return ranks;
+    }
+
+    private void networkSimplexPerComponent(Set<Vertex> component) {
+        initialiseRankAndTree(component);
         // find edge with negative cut value and replace it
         // do till no more such edges can be found
         while (true) {
@@ -50,7 +56,7 @@ public class LayerAssignment {
                 treeNodes.get(sugy.getStartNode(edge)).remove(edge);
                 treeNodes.get(sugy.getEndNode(edge)).remove(edge);
                 // find edge with negative cutValue
-                if (calculateCutValue(edge) < 0) {
+                if (calculateCutValue(edge, component) < 0) {
                     negative = edge;
                     break;
                 }
@@ -73,15 +79,19 @@ public class LayerAssignment {
         for (Map.Entry<Vertex, Integer> entry : ranks.entrySet()) {
             entry.setValue(entry.getValue()-minRank);
         }
-        return ranks;
     }
 
-    private void initialiseRankAndTree () {
+    private void initialiseRankAndTree(Set<Vertex> component) {
+        this.tree = new LinkedHashSet<>();
+        this.treeNodes = new LinkedHashMap<>();
+        for (Vertex node : component) {
+            treeNodes.put(node, new LinkedHashSet<>());
+        }
         Map<Vertex, Collection<Edge>> edges = new LinkedHashMap<>();
-        for (Vertex node : sugy.getGraph().getVertices()) {
+        for (Vertex node : component) {
             edges.put(node, new LinkedHashSet<>(sugy.getIncomingEdges(node)));
         }
-        List<Vertex> vertices = new LinkedList<>(sugy.getGraph().getVertices());
+        List<Vertex> vertices = new LinkedList<>(component);
         int rank = 0;
 
         // iterate over all vertices
@@ -124,31 +134,34 @@ public class LayerAssignment {
         // so the outgoing edge to the neighbouring node with lowest rank is computed and used for this purpose
         for (Vertex node : treeNodes.keySet()) {
             if (treeNodes.get(node).isEmpty()) {
-                int smallestRank = Integer.MAX_VALUE;
-                Edge possibleTreeEdge = null;
-                for (Edge outEdge : sugy.getOutgoingEdges(node)) {
-                    if (smallestRank > ranks.get(sugy.getEndNode(outEdge))) {
-                        smallestRank = ranks.get(sugy.getEndNode(outEdge));
-                        possibleTreeEdge = outEdge;
+                if (!sugy.getOutgoingEdges(node).isEmpty()) {
+                    int smallestRank = Integer.MAX_VALUE;
+                    Edge possibleTreeEdge = null;
+                    for (Edge outEdge : sugy.getOutgoingEdges(node)) {
+                        if (smallestRank > ranks.get(sugy.getEndNode(outEdge))) {
+                            smallestRank = ranks.get(sugy.getEndNode(outEdge));
+                            possibleTreeEdge = outEdge;
+                        }
                     }
-                }
-                ranks.replace(node, (smallestRank - 1));
-                if (possibleTreeEdge != null) {
-                    tree.add(possibleTreeEdge);
-                    treeNodes.get(node).add(possibleTreeEdge);
-                    treeNodes.get(sugy.getEndNode(possibleTreeEdge)).add(possibleTreeEdge);
+                    ranks.replace(node, (smallestRank - 1));
+                    if (possibleTreeEdge != null) {
+                        tree.add(possibleTreeEdge);
+                        treeNodes.get(node).add(possibleTreeEdge);
+                        treeNodes.get(sugy.getEndNode(possibleTreeEdge)).add(possibleTreeEdge);
+                    }
                 }
             }
         }
 
         // if the tree is not connected
         while (tree.size() != (treeNodes.size() - 1)) {
-            Set<Vertex> connectedComponent = new LinkedHashSet<Vertex>();
-            if (sugy.getGraph().getVertices().isEmpty()) {
-                System.out.println("No vertex found in graph " + sugy.getGraph() +". Abort layer assignment.");
+            Set<Vertex> connectedComponent = new LinkedHashSet<>();
+            if (component.isEmpty()) {
+                System.out.println("No vertex found in (a component of) graph " + sugy.getGraph() +". Abort layer " +
+                        "assignment.");
                 return;
             }
-            Vertex firstNode = sugy.getGraph().getVertices().get(0);
+            Vertex firstNode = component.iterator().next();
             connectedComponent.add(firstNode);
             // find a connected component
             findConnectedComponent(connectedComponent, firstNode);
@@ -194,10 +207,10 @@ public class LayerAssignment {
 
     // calculates the cut value of an given edge
     // edge must be already removed from the tree so that the tree is split into two components
-    private int calculateCutValue (Edge toCheck) {
+    private int calculateCutValue (Edge toCheck, Set<Vertex> component) {
 
         // initialise the two components of the tree new by using a simple bfs
-        tailComponent = new LinkedHashSet<>(sugy.getGraph().getVertices());
+        tailComponent = new LinkedHashSet<>(component);
         headComponent = new LinkedHashSet<>();
 
         // start bfs //

@@ -49,7 +49,6 @@ public class SugiyamaLayouter implements PralineLayouter {
     private Map<Port, List<Port>> multipleEdgePort2replacePorts;
     protected Map<Port, Port> keptPortPairings;
     private Map<Edge, Edge> dummyEdge2RealEdge;
-    private Map<Vertex, Set<Port>> portsWithoutEdge;
     private Map<Vertex, Set<Edge>> loopEdges;
     private Map<Edge, Set<Port>> loopEdge2Ports;
 
@@ -138,13 +137,8 @@ public class SugiyamaLayouter implements PralineLayouter {
         handlePort();
         // handle VertexGroup
         handleVertexGroup();
-        // handle Port if it has no Edge
-//        handlePortWithoutEdges(); //TODO: re-insert these ports!
         // handle Edge if both Ports have same Vertex
 //        handleLoopEdges(); //TODO: check
-        // if the Graph is not connected use just biggest connected component
-        breakDownToBiggestConnectedComponent();
-        //TODO: draw all components
     }
     // todo: change method back to private when done with debugging and testing
 
@@ -336,6 +330,7 @@ public class SugiyamaLayouter implements PralineLayouter {
         for (Port origPort : multipleEdgePort2replacePorts.keySet()) {
             restorePortsWithMultipleEdges(origPort);
         }
+        //TODO: make vertices shorter that became very broad because of distant ports, which were removed now
     }
 
     private void restorePortsWithMultipleEdges(Port origPort) {
@@ -712,7 +707,6 @@ public class SugiyamaLayouter implements PralineLayouter {
         replacedPorts = new LinkedHashMap<>();
         multipleEdgePort2replacePorts = new LinkedHashMap<>();
         keptPortPairings = new LinkedHashMap<>();
-        portsWithoutEdge = new LinkedHashMap<>();
         loopEdges = new LinkedHashMap<>();
         loopEdge2Ports = new LinkedHashMap<>();
         dummyEdge2RealEdge = new LinkedHashMap<>();
@@ -1107,17 +1101,6 @@ public class SugiyamaLayouter implements PralineLayouter {
         }
     }
 
-    private void handlePortWithoutEdges() {
-        for (Vertex node : getGraph().getVertices()) {
-            for (Port port : new ArrayList<>(node.getPorts())) {
-                if (port.getEdges().isEmpty()) {
-                    this.portsWithoutEdge.computeIfAbsent(node, k -> new LinkedHashSet<>()).add(port);
-                    node.removePortComposition(port);
-                }
-            }
-        }
-    }
-
     private void handleLoopEdges() {
         for (Edge edge : new ArrayList<>(getGraph().getEdges())) {
             //we have split all hyperedges with >= 3 ports, so it suffices to consider the first two ports
@@ -1131,75 +1114,6 @@ public class SugiyamaLayouter implements PralineLayouter {
                 getGraph().removeEdge(edge);
                 port0.getVertex().removePortComposition(port0);
                 port1.getVertex().removePortComposition(port1);
-            }
-        }
-    }
-
-    private void breakDownToBiggestConnectedComponent() {
-        // todo: could be adapted to compute the algorithm for each connectedComponent
-        Set<Vertex> biggestConnectedComponent = new LinkedHashSet<>();
-        Set<Vertex> vertices = new LinkedHashSet<>(getGraph().getVertices());
-
-        // delete all nodes without any connection
-        for (Vertex node : getGraph().getVertices()) {
-            if (node.getPortCompositions().isEmpty()) vertices.remove(node);
-        }
-
-        while (!vertices.isEmpty()) {
-            // find next connected component
-            Vertex node = null;
-            for (Vertex n : vertices) {
-                node = n;
-                break;
-            }
-            Set<Vertex> connectedComponent = new LinkedHashSet<>();
-            computeConnectedComponentRecursive(node, connectedComponent);
-            for (Vertex n : connectedComponent) {
-                vertices.remove(n);
-            }
-            if (biggestConnectedComponent.size() < connectedComponent.size()) {
-                biggestConnectedComponent = connectedComponent;
-            }
-        }
-        // remove all elements from Graph which are not connected to the biggestConnectedComponent
-        vertices = new LinkedHashSet<>(getGraph().getVertices());
-        Set<Edge> edges = new LinkedHashSet<>(getGraph().getEdges());
-        for (Edge edge : edges) {
-            for (Port port : edge.getPorts()) {
-                if (!biggestConnectedComponent.contains(port.getVertex())) {
-                    getGraph().removeEdge(edge);
-                    break;
-                }
-            }
-        }
-        for (Vertex vertex : vertices) {
-            if (!biggestConnectedComponent.contains(vertex)) {
-                getGraph().removeVertex(vertex);
-            }
-        }
-    }
-
-    private void computeConnectedComponentRecursive (Vertex node, Set<Vertex> connectedComponent) {
-        if (!connectedComponent.contains(node)) {
-            connectedComponent.add(node);
-            for (PortComposition portComposition : node.getPortCompositions()) {
-                computeConnectedComponentRecursive(portComposition, connectedComponent);
-            }
-        }
-    }
-
-    private void computeConnectedComponentRecursive (PortComposition portComposition, Set<Vertex> connectedComponent) {
-        if (portComposition instanceof PortGroup) {
-            for (PortComposition groupMember : ((PortGroup) portComposition).getPortCompositions()) {
-                computeConnectedComponentRecursive(groupMember, connectedComponent);
-            }
-        } else if (portComposition instanceof Port) {
-            for (Edge edge : ((Port) portComposition).getEdges()) {
-                for (Port port : edge.getPorts()) {
-                    if (!connectedComponent.contains(port.getVertex())) {
-                        computeConnectedComponentRecursive(port.getVertex(), connectedComponent);
-                    }
-                }
             }
         }
     }
@@ -1391,14 +1305,6 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public Map<Edge, Edge> getDummyEdge2RealEdge () {
         return dummyEdge2RealEdge;
-    }
-
-    public Set<Port> getPortsWithoutEdge (Vertex node) {
-        if (portsWithoutEdge.containsKey(node)) {
-            return Collections.unmodifiableSet(portsWithoutEdge.get(node));
-        } else {
-            return Collections.unmodifiableSet(new LinkedHashSet<>());
-        }
     }
 
     public Set<Edge> getLoopEdges (Vertex node) {

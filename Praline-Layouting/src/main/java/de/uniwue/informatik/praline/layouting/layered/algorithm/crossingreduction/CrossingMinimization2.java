@@ -2,6 +2,7 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreducti
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.ConnectedComponentClusterer;
 import edu.uci.ics.jung.graph.util.Pair;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
@@ -156,11 +157,26 @@ public class CrossingMinimization2 {
         maxRank = sugy.getMaxRank();
         if (currentNodeOrder == null) {
             // generate random order for each rank if nothing is given
+            // do that for one component after the other
+            ConnectedComponentClusterer connectedComponentClusterer = new ConnectedComponentClusterer(sugy.getGraph());
+            List<Set<Vertex>> components = new ArrayList<>(connectedComponentClusterer.getConnectedComponents());
+            Collections.shuffle(components, Constants.random);
+
             for (int r = 0; r <= maxRank; r++) {
-                List<Vertex> order = new ArrayList<>(sugy.getAllNodesWithRank(r));
-                Collections.shuffle(order, Constants.random);
+                Collection<Vertex> allNodesWithRank = sugy.getAllNodesWithRank(r);
+                List<Vertex> order = new ArrayList<>(allNodesWithRank.size());
+                for (Set<Vertex> component : components) {
+                    List<Vertex> compVtcsOnR = getSetIntersection(allNodesWithRank, component);
+                    Collections.shuffle(compVtcsOnR, Constants.random);
+                    order.addAll(compVtcsOnR);
+                }
                 this.currentNodeOrder.add(order);
             }
+
+            //TODO: maybe forbid swaps between nodes/ports of different components to have all components
+            // cleanly separated from each other in the end.
+            // Alternatively run the whole crossing minimization once for each component and put the single components
+            // layer-wise together in the end.
         }
         else {
             copyCurrentNodeOrder(currentNodeOrder);
@@ -241,6 +257,16 @@ public class CrossingMinimization2 {
 
         //update current values acc to type
         updateCurrentValues();
+    }
+
+    private static <E> List<E> getSetIntersection(Collection<E> collection0, Set<E> collection1) {
+        List<E> intersectionList = new ArrayList<>();
+        for (E e : collection0) {
+            if (collection1.contains(e)) {
+                intersectionList.add(e);
+            }
+        }
+        return intersectionList;
     }
 
     private static int countPorts(Collection<PortComposition> portCompositionsTop) {
