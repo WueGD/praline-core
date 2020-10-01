@@ -3,6 +3,7 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm.nodeplacement;
 import de.uniwue.informatik.praline.datastructure.graphs.Edge;
 import de.uniwue.informatik.praline.datastructure.graphs.Port;
 import de.uniwue.informatik.praline.datastructure.graphs.Vertex;
+import de.uniwue.informatik.praline.datastructure.graphs.VertexGroup;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
@@ -190,17 +191,26 @@ public class NodePlacement {
             newOrder.add(order.get(0));
             double currentWidth = 0;
             double minWidth = 0;
+            double currentWidthUnionNode = 0;
             Vertex currentNode = dummyVertex;
+            Vertex currentUnionNode = null;
             int nodePosition = 0;
             for (int position = 1; position < order.size(); position++) {
                 if (currentNode.equals(dummyVertex)) {
                     currentNode = order.get(position).getVertex();
+                    //special case: if current node is a union node, consider the single parts
+                    if (sugy.isUnionNode(currentNode)) {
+                        currentUnionNode = currentNode;
+                        currentWidthUnionNode = (delta);
+                        currentNode = sugy.getReplacedPorts().get(order.get(position)).getVertex();
+                    }
                     nodePosition = position;
                     currentWidth = (delta);
                     minWidth = 0;
                     if (currentNode.equals(dummyVertex)) {
                         newOrder.add(order.get(position));
-                    } else {
+                    } else if (!sugy.getDeviceVertices().contains(currentNode)) {
+                        //we will handle device vertices in the end via the union node
                         minWidth = sugy.getTextWidthForNode(currentNode);
                     }
                     heightOfLayers.set(layer, Math.max(heightOfLayers.get(layer), sugy.getNodeName(currentNode).length));
@@ -209,32 +219,82 @@ public class NodePlacement {
                                 * drawInfo.getEdgeDistanceVertical()) / layerHeight);
                         heightOfLayers.set(layer, Math.max(heightOfLayers.get(layer), (int)Math.ceil(value)));
                     }
-                } else if (order.get(position).getVertex().equals(currentNode)) {
+                } else if (order.get(position).getVertex().equals(currentNode)
+                        || (sugy.getReplacedPorts().containsKey(order.get(position))
+                                && sugy.getReplacedPorts().get(order.get(position)).getVertex().equals(currentNode))) {
                     currentWidth += (delta);
-                } else {
-                    LinkedList<Port> nodeOrder = new LinkedList<>(order.subList(nodePosition, position));
-                    boolean first = true;
-                    while (currentWidth < minWidth) {
-                        Port p = new Port();
-                        createMainLabel(p);
-                        currentNode.addPortComposition(p);
-                        dummyPorts.add(p);
-                        if (first) {
-                            first = false;
-                            nodeOrder.addFirst(p);
-                        } else {
-                            first = true;
-                            nodeOrder.addLast(p);
-                        }
-                        currentWidth += (delta);
-                    }
+                    currentWidthUnionNode += (delta);
+                } else if (order.get(position).getVertex().equals(currentUnionNode)) {
+                    //still the same union node but different sub-node
+                    List<Port> nodeOrder = addDummyPortsAndGetNewOrder(order, currentWidth, minWidth, currentUnionNode,
+                            nodePosition, position);
                     newOrder.addAll(nodeOrder);
-                    newOrder.add(order.get(position));
+
+                    currentNode = sugy.getReplacedPorts().get(order.get(position)).getVertex();
+                    nodePosition = position;
+                    currentWidth = (delta);
+                    currentWidthUnionNode += (delta);
+                    minWidth = sugy.getTextWidthForNode(currentNode);
+                } else {
+                    List<Port> nodeOrder = addDummyPortsAndGetNewOrder(order, currentWidth, minWidth,
+                            currentUnionNode != null ? currentUnionNode : currentNode, nodePosition, position);
+                    newOrder.addAll(nodeOrder);
                     currentNode = dummyVertex;
+                    //special case: if we have passed over a union node check if we need additional width
+                    if (currentUnionNode != null) {
+                        Vertex deviceVertex = null;
+                        VertexGroup vertexGroup = sugy.getVertexGroups().get(currentUnionNode);
+                        if (vertexGroup != null) {
+                            for (Vertex containedVertex : vertexGroup.getContainedVertices()) {
+                                if (sugy.getDeviceVertices().contains(containedVertex)) {
+                                    deviceVertex = containedVertex;
+                                }
+                            }
+                        }
+                        if (deviceVertex != null) {
+                            //TODO: currently we just padd to the right. Maybe make it symmetric later? (low priority)
+                            double minWidthUnionNode = sugy.getTextWidthForNode(deviceVertex);
+                            while (currentWidthUnionNode < minWidthUnionNode) {
+                                Port p = new Port();
+                                createMainLabel(p);
+                                currentUnionNode.addPortComposition(p);
+                                dummyPorts.add(p);
+                                //TODO: add for each dummy port to which (original) vertex it belongs which will be
+                                // used when restoring vertex groups
+                                newOrder.add(p);
+                                currentWidthUnionNode += (delta);
+                            }
+                        }
+                        currentUnionNode = null;
+                    }
+                    newOrder.add(order.get(position));
                 }
             }
             structure.set(layer, newOrder);
         }
+    }
+
+    private List<Port> addDummyPortsAndGetNewOrder(List<Port> order, double currentWidth, double minWidth,
+                                                         Vertex currentNode, int nodePosition, int position) {
+        LinkedList<Port> nodeOrder = new LinkedList<>(order.subList(nodePosition, position));
+        boolean first = true;
+        while (currentWidth < minWidth) {
+            Port p = new Port();
+            createMainLabel(p);
+            currentNode.addPortComposition(p);
+            dummyPorts.add(p);
+            //TODO: add for each dummy port to which (original) vertex it belongs which will be
+            // used when restoring vertex groups
+            if (first) {
+                first = false;
+                nodeOrder.addFirst(p);
+            } else {
+                first = true;
+                nodeOrder.addLast(p);
+            }
+            currentWidth += (delta);
+        }
+        return nodeOrder;
     }
 
     private void initialisePortValues() {

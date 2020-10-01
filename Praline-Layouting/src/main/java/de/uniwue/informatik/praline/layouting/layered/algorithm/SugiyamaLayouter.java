@@ -65,6 +65,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     private Map<Integer, Collection<Vertex>> rankToNodes;
     private CMResult orders;
     private boolean hasAssignedLayers;
+    private Set<Object> deviceVertices;
 
     //TODO: take into account pre-set values like port.getOrientationAtVertex(), fixed order port groups
     //TODO: edge bundles
@@ -408,7 +409,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     private void handleVertexGroup () {
         int index1 = 0;
         int index2 = 0;
-        Set<Vertex> deviceVertices = new LinkedHashSet<>();
+        deviceVertices = new LinkedHashSet<>();
         Set<VertexGroup> connectors = new LinkedHashSet<>();
         for (VertexGroup vertexGroup : getGraph().getVertexGroups()) {
             if (ImplicitCharacteristics.isConnector(vertexGroup, graph)) {
@@ -866,8 +867,11 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     public boolean isPlug (Vertex possiblePlug) {
-        if (plugs.keySet().contains(possiblePlug)) return true;
-        return false;
+        return plugs.keySet().contains(possiblePlug);
+    }
+
+    public boolean isUnionNode (Vertex node) {
+        return vertexGroups.keySet().contains(node) || plugs.keySet().contains(node);
     }
 
     public boolean isDummy (Vertex node) {
@@ -1008,6 +1012,10 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public Map<Port, Port> getKeptPortPairings() {
         return keptPortPairings;
+    }
+
+    public Set<Object> getDeviceVertices() {
+        return deviceVertices;
     }
 
     /////////////////
