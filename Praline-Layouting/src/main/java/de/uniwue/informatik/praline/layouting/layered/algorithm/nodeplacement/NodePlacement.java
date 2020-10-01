@@ -10,7 +10,6 @@ import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CMResult;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.restore.OneNodeEdge;
 
 import java.util.*;
 
@@ -206,7 +205,8 @@ public class NodePlacement {
                     }
                     heightOfLayers.set(layer, Math.max(heightOfLayers.get(layer), sugy.getNodeName(currentNode).length));
                     if (sugy.isTurningPointDummy(currentNode)) {
-                        double value = (((currentNode.getPorts().size() / 2) * drawInfo.getEdgeDistanceVertical()) / layerHeight);
+                        double value = (((currentNode.getPorts().size() / 2.0)
+                                * drawInfo.getEdgeDistanceVertical()) / layerHeight);
                         heightOfLayers.set(layer, Math.max(heightOfLayers.get(layer), (int)Math.ceil(value)));
                     }
                 } else if (order.get(position).getVertex().equals(currentNode)) {
