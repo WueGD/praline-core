@@ -77,7 +77,21 @@ public class ImplicitCharacteristics {
         return vertexType == getVertexType(vertex, graph);
     }
 
-
+    /**
+     *
+     * @param vertexGroup
+     * @param graph
+     * @return
+     *      null if there is no DEVICE_VERTEX in this {@link VertexGroup}
+     */
+    public static Vertex getDeviceVertex(VertexGroup vertexGroup, Graph graph) {
+        for (Vertex vertex : vertexGroup.getAllRecursivelyContainedVertices()) {
+            if (isDeviceVertex(vertex, graph)) {
+                return vertex;
+            }
+        }
+        return null;
+    }
 
 
 

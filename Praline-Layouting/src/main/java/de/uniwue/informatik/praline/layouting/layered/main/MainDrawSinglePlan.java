@@ -18,7 +18,7 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18/lc-praline-5c5becad-d634-4081-b7c1-8a652fc6d023.json";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18/lc-praline-1f8afa02-a5a7-4646-abe1-83d91173cff4.json";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18/lc-praline-9c4d6586-fff2-4e06-bcbf-bf0922467654.json";
-//            "Praline-Layouting/data/praline-package-2020-05-18/praline-0488185b-18b4-4780-a6c8-1d9ece91252e.json";
+            "Praline-Layouting/data/praline-package-2020-05-18/praline-0488185b-18b4-4780-a6c8-1d9ece91252e.json";
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-efde956f-b3ea-43da-b736-35c65463525a.json";
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-7c84fecd-8d2c-4f71-b95e-c496c68b8109.json";
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-d5311cb8-84d5-45e6-afcb-7a28c4451b89.json";
@@ -36,7 +36,7 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-8e12ddec-870d-49ac-bd12-f67300df8166.json";
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-58f687b4-cce6-4938-8e08-a5d0155790da.json";
 //            "Praline-Layouting/data/generated_2020-06-04_18-39-49/praline-pseudo-plan-2dfedde45c413b8f.json";
-            "Praline-Layouting/data/generated_2020-08-20_04-42-39/praline-pseudo-plan-a7118c7293f015c8.json";
+//            "Praline-Layouting/data/generated_2020-08-20_04-42-39/praline-pseudo-plan-a7118c7293f015c8.json";
 //            "Praline-Layouting/data/example-very-small/praline-a0b0b5a2-2c23-43b0-bb87-4ddeb34d5a02.json";
 //            "Praline-Layouting/data/example-very-small/praline-pseudo-plan-0e59d04df679e020.json";
 

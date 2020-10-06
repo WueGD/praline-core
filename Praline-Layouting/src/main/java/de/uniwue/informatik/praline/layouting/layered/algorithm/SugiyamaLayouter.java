@@ -51,6 +51,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     private Map<Edge, Edge> dummyEdge2RealEdge;
     private Map<Vertex, Set<Edge>> loopEdges;
     private Map<Edge, Set<Port>> loopEdge2Ports;
+    private Map<Vertex, Set<Port>> dummyPortsForLabelPadding;
 
     //additional structures
 
@@ -250,7 +251,7 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public void nodePositioning () {
         NodePlacement np = new NodePlacement(this, orders, drawInfo);
-        np.placeNodes();
+        dummyPortsForLabelPadding = np.placeNodes();
     }
     // todo: change method back to private when done with debugging and testing
 
@@ -262,7 +263,7 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public void prepareDrawing () {
         DrawingPreparation dp = new DrawingPreparation(this);
-        dp.prepareDrawing(drawInfo, orders);
+        dp.prepareDrawing(drawInfo, orders, dummyPortsForLabelPadding);
     }
 
     /**
@@ -445,12 +446,13 @@ public class SugiyamaLayouter implements PralineLayouter {
             Vertex representative = new Vertex();
 
             // create main Label
-            String groupLabelText = "no_GroupMainLabel";
-            if (group.getLabelManager().getMainLabel() != null) {
-                groupLabelText = group.getLabelManager().getMainLabel().toString();
-            }
-            String idV = ("GroupRep_for_" + groupLabelText + "_#" + index1++);
-            if (stickTogether) idV = ("PlugRep_for_" + groupLabelText + "_#" + (index1-1));
+            String groupLabelText = ""; //"no_GroupMainLabel";
+//            if (group.getLabelManager().getMainLabel() != null) {
+//                groupLabelText = group.getLabelManager().getMainLabel().toString();
+//            }
+//            String idV = ("GroupRep_for_" + groupLabelText + "_#" + index1++);
+            String idV = ("R#" + index1++);
+//            if (stickTogether) idV = ("PlugRep_for_" + groupLabelText + "_#" + (index1-1));
             createMainLabel(idV, representative);
             index2 = 0;
 

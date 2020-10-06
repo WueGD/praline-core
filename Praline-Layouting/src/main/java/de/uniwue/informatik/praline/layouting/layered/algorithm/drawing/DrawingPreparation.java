@@ -9,6 +9,7 @@ import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CMResult;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.ImplicitCharacteristics;
 
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
@@ -19,23 +20,24 @@ public class DrawingPreparation {
     private SugiyamaLayouter sugy;
     private DrawingInformation drawInfo;
     private CMResult cmResult;
+    private Map<Vertex, Set<Port>> dummyPortsForLabelPadding;
     private double delta;
 
     public DrawingPreparation (SugiyamaLayouter sugy) {
         this.sugy = sugy;
     }
 
-    private void initialise (DrawingInformation drawInfo, CMResult cmResult) {
+    private void initialise(DrawingInformation drawInfo, CMResult cmResult,
+                            Map<Vertex, Set<Port>> dummyPortsForLabelPadding) {
         this.drawInfo = drawInfo;
         this.delta = Math.max(drawInfo.getEdgeDistanceHorizontal(), drawInfo.getPortWidth() + drawInfo.getPortSpacing());
         this.cmResult = cmResult;
+        this.dummyPortsForLabelPadding = dummyPortsForLabelPadding;
     }
 
-    public void prepareDrawing(DrawingInformation drawInfo, CMResult cmResult) {
-        initialise(drawInfo, cmResult);
-        //tighten nodes for the first time to make union-nodes (vertex groups & plugs) smaller before their original
-        // vertices are restored
-        tightenNodes(false);
+    public void prepareDrawing(DrawingInformation drawInfo, CMResult cmResult,
+                               Map<Vertex, Set<Port>> dummyPortsForLabelPadding) {
+        initialise(drawInfo, cmResult, dummyPortsForLabelPadding);
         // do path for edges
         doPathForEdges();
         // adjust port shapes
@@ -44,14 +46,22 @@ public class DrawingPreparation {
         drawEdgesForDummys();
         // restore original elements
         restoreOriginalElements();
-        //tighten nodes once again -- now after unifying ports with multiple edges
-        // we ignore vertex groups to avoid a mismatch between vertices that stick together
-        tightenNodes(true);
+        //tighten nodes after unifying ports with multiple edges
+        // we also handle vertex groups as one unit
+        tightenNodes();
     }
 
-    private void tightenNodes(boolean ignoreVertexGroups) {
+    private void tightenNodes() {
+        Set<VertexGroup> processedVertexGroups = new LinkedHashSet<>();
         for (Vertex node : sugy.getGraph().getVertices()) {
-            if (!ignoreVertexGroups || node.getVertexGroup() == null) {
+            VertexGroup vertexGroup = node.getVertexGroup();
+            if (vertexGroup != null) {
+                if (!processedVertexGroups.contains(vertexGroup)) {
+                    tightenUnionNode(vertexGroup);
+                    processedVertexGroups.add(vertexGroup);
+                }
+            }
+            else {
                 tightenNode(node);
             }
         }
@@ -60,37 +70,174 @@ public class DrawingPreparation {
     private void tightenNode(Vertex node) {
         // tighten node to smallest width possible
         // find leftmost and rightmost Port
-        Rectangle nodeShape = (Rectangle) node.getShape();
-        double minL = nodeShape.getXPosition();
-        double maxL = nodeShape.getXPosition() + nodeShape.getWidth();
-        double minR = minL;
-        double maxR = maxL;
-        for (Port port : node.getPorts()) {
-            maxL = Math.min(maxL, port.getShape().getXPosition());
-            minR = Math.max(minR, port.getShape().getXPosition());
-        }
-        maxL -= ((drawInfo.getPortWidth() + delta) / 2);
-        minR += ((drawInfo.getPortWidth() + delta) / 2);
+        VertexPortBounds vertexPortBounds = new VertexPortBounds(node).determine();
+        double minL = vertexPortBounds.getMinL();
+        double maxL = vertexPortBounds.getMaxL();
+        double minR = vertexPortBounds.getMinR();
+        double maxR = vertexPortBounds.getMaxR();
         // tighten to smallest width possible
+        node.setShape(getReducedShape(node, minL, maxL, minR, maxR, true, true));
+    }
+
+    private void tightenUnionNode(VertexGroup vertexGroup) {
+        //first determine start points for bottom and top vertices
+        double yMin = Double.MAX_VALUE;
+        double yMax = Double.MIN_VALUE;
+        for (Vertex node : vertexGroup.getContainedVertices()) {
+            Rectangle nodeShape = (Rectangle) node.getShape();
+            yMin = Math.min(yMin, nodeShape.y);
+            yMax = Math.max(yMax, nodeShape.y);
+        }
+
+        //now determine port positions
+        double minLBottom = Double.MAX_VALUE;
+        double maxLBottom = Double.MAX_VALUE;
+        Vertex vLBottom = null;
+        double minLTop = Double.MAX_VALUE;
+        double maxLTop = Double.MAX_VALUE;
+        Vertex vLTop = null;
+        double minRBottom = Double.MIN_VALUE;
+        double maxRBottom = Double.MIN_VALUE;
+        Vertex vRBottom = null;
+        double minRTop = Double.MIN_VALUE;
+        double maxRTop = Double.MIN_VALUE;
+        Vertex vRTop = null;
+        for (Vertex node : vertexGroup.getContainedVertices()) {
+            VertexPortBounds vertexPortBounds = new VertexPortBounds(node).determine();
+            Rectangle nodeShape = (Rectangle) node.getShape();
+
+            if (nodeShape.y == yMin) {
+                yMin = nodeShape.y;
+                if (vertexPortBounds.getMinL() < minLBottom) {
+                    vLBottom = node;
+                    minLBottom = vertexPortBounds.getMinL();
+                    maxLBottom = vertexPortBounds.getMaxL();
+                }
+                if (vertexPortBounds.getMaxR() > maxRBottom) {
+                    vRBottom = node;
+                    minRBottom = vertexPortBounds.getMinR();
+                    maxRBottom = vertexPortBounds.getMaxR();
+                }
+            }
+            if (nodeShape.y == yMax) {
+                yMax = nodeShape.y;
+                if (vertexPortBounds.getMinL() < minLTop) {
+                    vLTop = node;
+                    minLTop = vertexPortBounds.getMinL();
+                    maxLTop = vertexPortBounds.getMaxL();
+                }
+                if (vertexPortBounds.getMaxR() > maxRTop) {
+                    vRTop = node;
+                    minRTop = vertexPortBounds.getMinR();
+                    maxRTop = vertexPortBounds.getMaxR();
+                }
+            }
+        }
+        //if there are no ports on the bottom or top side, take values from the other side
+        if (maxLTop == maxRTop) maxLTop = maxLBottom;
+        if (minRTop == minLTop) minRTop = minRBottom;
+        if (maxLBottom == maxRBottom) maxLBottom = maxLTop;
+        if (minRBottom == minLBottom) minRBottom = minRTop;
+
+
+        // tighten to smallest width possible
+        //check bottom side
+        Rectangle idealShapeLBottom =
+                getReducedShape(vLBottom, minLBottom, maxLBottom, minRBottom, maxRBottom, true, vLBottom == vRBottom);
+        Rectangle idealShapeRBottom =
+                getReducedShape(vRBottom, minLBottom, maxLBottom, minRBottom, maxRBottom, vLBottom == vRBottom, true);
+        //check top side
+        Rectangle idealShapeLTop = getReducedShape(vLTop, minLTop, maxLTop, minRTop, maxRTop, true, vLTop == vRTop);
+        Rectangle idealShapeRTop = getReducedShape(vRTop, minLTop, maxLTop, minRTop, maxRTop, vLTop == vRTop, true);
+        //check device vertex (potentially in the middle)
+        Vertex deviceVertex = ImplicitCharacteristics.getDeviceVertex(vertexGroup, sugy.getGraph());
+        Rectangle idealShapeDevice = null;
+        if (deviceVertex != null) {
+            VertexPortBounds devicePortBounds = new VertexPortBounds(deviceVertex).determine();
+            double deviceMaxL = Math.min(devicePortBounds.getMaxL(), Math.min(maxLBottom, maxLTop));
+            double deviceMinR = Math.min(devicePortBounds.getMinR(), Math.min(minRBottom, minRTop));
+            idealShapeDevice = getReducedShape(deviceVertex, devicePortBounds.getMinL(), deviceMaxL,
+                    deviceMinR, devicePortBounds.getMaxR(), true, true);
+        }
+
+        //determine left border
+        double newL = Math.min(idealShapeLBottom.x, idealShapeLTop.x);
+        if (idealShapeDevice != null) {
+            newL = Math.min(newL, idealShapeDevice.x);
+        }
+        //determine right border
+        double newR = Math.max(idealShapeRBottom.x + idealShapeRBottom.width, idealShapeRTop.x + idealShapeRTop.width);
+        if (idealShapeDevice != null) {
+            newR = Math.max(newR, idealShapeDevice.x + idealShapeDevice.width);
+        }
+        //apply borders
+        applyBorders(vLBottom, vRBottom, newL, newR);
+        applyBorders(vLTop, vRTop, newL, newR);
+        if (deviceVertex != null) {
+            applyBorders(deviceVertex, deviceVertex, newL, newR);
+        }
+    }
+
+    private void applyBorders(Vertex vL, Vertex vR, double newL, double newR) {
+        Rectangle realShapeL = (Rectangle) vL.getShape();
+        realShapeL.width -= Math.max(0, newL - realShapeL.x);
+        realShapeL.x = Math.max(realShapeL.x, newL);
+        Rectangle realShapeR = (Rectangle) vR.getShape();
+        realShapeR.width -= Math.max(0, (realShapeR.x + realShapeR.width) - newR);
+        realShapeR.x = Math.min(realShapeR.x, newR);
+    }
+
+    /**
+     *
+     * @param node
+     * @param minL
+     * @param maxL
+     * @param minR
+     * @param maxR
+     * @param tightenLeft
+     * @param tightenRight
+     * @return
+     *      if it is not reduced, it returns the old shape instead
+     */
+    private Rectangle getReducedShape(Vertex node, double minL, double maxL, double minR, double maxR,
+                                      boolean tightenLeft, boolean tightenRight) {
+        Rectangle nodeShape = (Rectangle) node.getShape();
+        //check that mins and maxs are in scope of the node
+        minL = Math.max(minL, nodeShape.x);
+        maxL = Math.max(maxL, nodeShape.x);
+        minR = Math.min(minR, nodeShape.x + nodeShape.width);
+        maxR = Math.min(maxR, nodeShape.x + nodeShape.width);
+
         double size = nodeShape.getWidth();
         double minSize = minR - maxL;
         minSize = Math.max(minSize, (sugy.getTextWidthForNode(node) + (drawInfo.getBorderWidth() * 2)));
+        Rectangle tightenedRectangle = nodeShape;
         if (minSize < size) {
             double dif = size - minSize;
-            double newL;
-            double newR;
-            if ((maxL - minL) < (dif / 2)) {
-                newL = maxL;
-                newR = maxR - (dif - (maxL - minL));
-            } else if ((maxR - minR) < (dif / 2)) {
-                newL = minL + (dif - (maxR - minR));
-                newR = minR;
-            } else {
-                newL = minL + (dif / 2);
-                newR = maxR - (dif / 2);
+            double newL = minL;
+            double newR = maxR;
+            if (tightenLeft && !tightenRight) {
+                newL = Math.min(maxL, minL + dif);
             }
-            node.setShape(new Rectangle(newL, nodeShape.getYPosition(), (newR - newL), nodeShape.getHeight(), null));
+            else if (!tightenLeft && tightenRight) {
+                newR = Math.max(minR, maxR - dif);
+            }
+            else if (tightenLeft && tightenRight) {
+                if ((maxL - minL) < (dif / 2)) {
+                    newL = maxL;
+                    newR = maxR - (dif - (maxL - minL));
+                } else if ((maxR - minR) < (dif / 2)) {
+                    newL = minL + (dif - (maxR - minR));
+                    newR = minR;
+                } else {
+                    newL = minL + (dif / 2);
+                    newR = maxR - (dif / 2);
+                }
+            }
+            tightenedRectangle =
+                    new Rectangle(newL, nodeShape.getYPosition(), (newR - newL), nodeShape.getHeight(), null);
         }
+        return tightenedRectangle;
     }
 
     private void doPathForEdges() {
@@ -246,23 +393,33 @@ public class DrawingPreparation {
             }
         }
 
-        //replace dummy vertices
+        //replace and remove dummy vertices and ports
         for (Vertex vertex : new ArrayList<>(sugy.getGraph().getVertices())) {
+
             if (sugy.getHyperEdges().containsKey(vertex)) {
                 replaceHyperEdgeDummyVertex(vertex);
             }
+
             if (sugy.getVertexGroups().containsKey(vertex)) {
                 VertexGroup vertexGroup = sugy.getVertexGroups().get(vertex);
                 restoreVertexGroup(vertex, vertexGroup);
             }
+
             if (sugy.getPlugs().containsKey(vertex)) {
                 VertexGroup vertexGroup = sugy.getPlugs().get(vertex);
                 restoreVertexGroup(vertex, vertexGroup);
             }
 
+            if (dummyPortsForLabelPadding.containsKey(vertex)) {
+                for (Port dummyPort : dummyPortsForLabelPadding.get(vertex)) {
+                    vertex.removePortComposition(dummyPort);
+                }
+            }
+
             if (sugy.getDummyTurningNodes() != null && sugy.getDummyTurningNodes().containsKey(vertex)) {
                 sugy.getGraph().removeVertex(vertex);
             }
+
             if (sugy.getDummyNodesLongEdges().containsKey(vertex)) {
                 sugy.getGraph().removeVertex(vertex);
             }
@@ -385,13 +542,11 @@ public class DrawingPreparation {
             int vertexSide = 0; //-1: bottom side, 0: undefined, 1: top side
             for (Port port : sugy.getOrders().getTopPortOrder().get(dummyUnificationVertex)) {
                 int changeTo = 1;
-                vertexSide =
-                        changeVertexSideIfContained(minX, maxX, originalVertex, vertexSide, port, changeTo);
+                vertexSide = changeVertexSideIfContained(minX, maxX, originalVertex, vertexSide, port, changeTo);
             }
             for (Port port : sugy.getOrders().getBottomPortOrder().get(dummyUnificationVertex)) {
                 int changeTo = -1;
-                vertexSide =
-                        changeVertexSideIfContained(minX, maxX, originalVertex, vertexSide, port, changeTo);
+                vertexSide = changeVertexSideIfContained(minX, maxX, originalVertex, vertexSide, port, changeTo);
             }
             if (!vertexSide2origVertex.containsKey(vertexSide)) {
                 vertexSide2origVertex.put(vertexSide, new ArrayList<>());
@@ -430,15 +585,17 @@ public class DrawingPreparation {
         //transfer shape of the replace ports to the original ports
         for (Port replacePort : dummyUnificationVertex.getPorts()) {
             Port origPort = sugy.getReplacedPorts().get(replacePort);
-            origPort.setShape(replacePort.getShape().clone());
-            if (sugy.getKeptPortPairings().containsKey(replacePort)) {
-                sugy.getKeptPortPairings().put(origPort, sugy.getKeptPortPairings().get(replacePort));
-                sugy.getKeptPortPairings().remove(replacePort);
-            }
-            //re-hang edges
-            for (Edge edge : new ArrayList<>(replacePort.getEdges())) {
-                edge.removePort(replacePort);
-                edge.addPort(origPort);
+            if (origPort != null ) { //may be null because it is a dummy port for label padding
+                origPort.setShape(replacePort.getShape().clone());
+                if (sugy.getKeptPortPairings().containsKey(replacePort)) {
+                    sugy.getKeptPortPairings().put(origPort, sugy.getKeptPortPairings().get(replacePort));
+                    sugy.getKeptPortPairings().remove(replacePort);
+                }
+                //re-hang edges
+                for (Edge edge : new ArrayList<>(replacePort.getEdges())) {
+                    edge.removePort(replacePort);
+                    edge.addPort(origPort);
+                }
             }
         }
         //remove unification dummy node
@@ -450,8 +607,11 @@ public class DrawingPreparation {
 
     private int changeVertexSideIfContained(Map<Vertex, Double> minX, Map<Vertex, Double> maxX, Vertex originalVertex,
                                             int vertexSide, Port port, int changeTo) {
-        Port portBeforeUnification = sugy.getReplacedPorts().get(port);
-        if (originalVertex.getPorts().contains(portBeforeUnification) || originalVertex.getPorts().contains(port)) {
+        //two cases: (A) a port corresponding to an original port before unification, (B) a dummy port for padding
+        Port portBeforeUnification = sugy.getReplacedPorts().get(port); //for case (A)
+        Set<Port> dummyPortsForPadding = dummyPortsForLabelPadding.get(originalVertex); //for case (B)
+        if (originalVertex.getPorts().contains(portBeforeUnification) || originalVertex.getPorts().contains(port)
+                || (dummyPortsForPadding != null && dummyPortsForPadding.contains(port))) {
             vertexSide = changeTo;
             double xBeginPort = port.getShape().getXPosition();
             if (xBeginPort < minX.get(originalVertex)) {
@@ -635,5 +795,59 @@ public class DrawingPreparation {
             }
         }
         sugy.getGraph().removeEdge(dummyEdge);
+    }
+
+    private class VertexPortBounds {
+        private Vertex node;
+        private Rectangle nodeShape;
+        private double minL;
+        private double maxL;
+        private double minR;
+        private double maxR;
+
+        public VertexPortBounds(Vertex node) {
+            this.node = node;
+        }
+
+        public Rectangle getNodeShape() {
+            return nodeShape;
+        }
+
+        public double getMinL() {
+            return minL;
+        }
+
+        public double getMaxL() {
+            return maxL;
+        }
+
+        public double getMinR() {
+            return minR;
+        }
+
+        public double getMaxR() {
+            return maxR;
+        }
+
+        public VertexPortBounds determine() {
+            nodeShape = (Rectangle) node.getShape();
+            minL = nodeShape.getXPosition();
+            maxL = nodeShape.getXPosition() + nodeShape.getWidth();
+            minR = minL;
+            maxR = maxL;
+            boolean hasVisiblePorts = false;
+            for (Port port : node.getPorts()) {
+                if (!Double.isNaN(port.getShape().getXPosition())) {
+                    maxL = Math.min(maxL, port.getShape().getXPosition());
+                    minR = Math.max(minR, port.getShape().getXPosition());
+                    hasVisiblePorts = true;
+                }
+            }
+            if (hasVisiblePorts) {
+                maxL -= ((drawInfo.getPortWidth() + delta) / 2);
+                minR += ((drawInfo.getPortWidth() + delta) / 2);
+            }
+            return this;
+        }
     }
 }

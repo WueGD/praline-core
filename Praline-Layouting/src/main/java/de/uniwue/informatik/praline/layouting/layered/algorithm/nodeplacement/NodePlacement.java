@@ -23,7 +23,7 @@ public class NodePlacement {
     private List<Integer> heightOfLayers;
     private Vertex dummyVertex;
     private double layerHeight;
-    private List<Port> dummyPorts;
+    private Map<Vertex, Set<Port>> dummyPorts;
     private List<Edge> dummyEdges;
     private Set<Edge> oneNodeEdges;
     private int portnumber;
@@ -37,10 +37,13 @@ public class NodePlacement {
         this.drawInfo = drawingInformation;
     }
 
-    //TODO: re-insert ports without edges in this step. Take care: this may be a "unification" node and then the
-    // ports should end up in different port groups (be inserted in the correct order on the correct side of the vertex)
-
-    public void placeNodes () {
+    /**
+     *
+     * @return
+     *      Map linking to all dummy ports that were inserted for padding the width of a vertex due to a (long) label.
+     *      These ports are still in the data structure and should be removed later.
+     */
+    public Map<Vertex, Set<Port>> placeNodes () {
         Map<Port, Double> xValues = new LinkedHashMap<>();
         initialise();
         // create lists of ports for layers
@@ -97,15 +100,14 @@ public class NodePlacement {
         makePositive();
         // creates shapes for all nodes
         draw();
-        // delete dummyPorts from nodes
-        for (Port dummy : dummyPorts) {
-            dummy.getVertex().removePortComposition(dummy);
-        }
+        // remove the dummy edges of port pairings und dummy vertices of multiple-layers-spanning edges
         for (Edge dummy : dummyEdges) {
             for (Port port : new LinkedList<>(dummy.getPorts())) {
                 port.removeEdge(dummy);
             }
         }
+
+        return dummyPorts;
     }
 
     private void initialise() {
@@ -113,7 +115,7 @@ public class NodePlacement {
         portValues = new LinkedHashMap<>();
         delta = Math.max(drawInfo.getEdgeDistanceHorizontal(), drawInfo.getPortWidth() + drawInfo.getPortSpacing());
         heightOfLayers = new ArrayList<>();
-        dummyPorts = new LinkedList<>();
+        dummyPorts = new LinkedHashMap<>();
         dummyEdges = new LinkedList<>();
         dummyVertex = new Vertex();
         dummyVertex.getLabelManager().addLabel(new TextLabel("dummyVertex"));
@@ -226,8 +228,8 @@ public class NodePlacement {
                     currentWidthUnionNode += (delta);
                 } else if (order.get(position).getVertex().equals(currentUnionNode)) {
                     //still the same union node but different sub-node
-                    List<Port> nodeOrder = addDummyPortsAndGetNewOrder(order, currentWidth, minWidth, currentUnionNode,
-                            nodePosition, position);
+                    List<Port> nodeOrder = addDummyPortsAndGetNewOrder(order, currentWidth, minWidth,
+                            currentUnionNode, currentNode, nodePosition, position);
                     newOrder.addAll(nodeOrder);
 
                     currentNode = sugy.getReplacedPorts().get(order.get(position)).getVertex();
@@ -237,7 +239,7 @@ public class NodePlacement {
                     minWidth = sugy.getTextWidthForNode(currentNode);
                 } else {
                     List<Port> nodeOrder = addDummyPortsAndGetNewOrder(order, currentWidth, minWidth,
-                            currentUnionNode != null ? currentUnionNode : currentNode, nodePosition, position);
+                            currentUnionNode, currentNode, nodePosition, position);
                     newOrder.addAll(nodeOrder);
                     currentNode = dummyVertex;
                     //special case: if we have passed over a union node check if we need additional width
@@ -258,9 +260,8 @@ public class NodePlacement {
                                 Port p = new Port();
                                 createMainLabel(p);
                                 currentUnionNode.addPortComposition(p);
-                                dummyPorts.add(p);
-                                //TODO: add for each dummy port to which (original) vertex it belongs which will be
-                                // used when restoring vertex groups
+                                dummyPorts.putIfAbsent(deviceVertex, new LinkedHashSet<>());
+                                dummyPorts.get(deviceVertex).add(p);
                                 newOrder.add(p);
                                 currentWidthUnionNode += (delta);
                             }
@@ -274,17 +275,33 @@ public class NodePlacement {
         }
     }
 
+    /**
+     *
+     * @param order
+     * @param currentWidth
+     * @param minWidth
+     * @param currentUnionNode
+     *      may be null
+     * @param currentNode
+     *      may be not null
+     * @param nodePosition
+     * @param position
+     * @return
+     */
     private List<Port> addDummyPortsAndGetNewOrder(List<Port> order, double currentWidth, double minWidth,
-                                                         Vertex currentNode, int nodePosition, int position) {
+                                                   Vertex currentUnionNode, Vertex currentNode, int nodePosition,
+                                                   int position) {
+        if (currentUnionNode == null) {
+            currentUnionNode = currentNode;
+        }
         LinkedList<Port> nodeOrder = new LinkedList<>(order.subList(nodePosition, position));
         boolean first = true;
         while (currentWidth < minWidth) {
             Port p = new Port();
             createMainLabel(p);
-            currentNode.addPortComposition(p);
-            dummyPorts.add(p);
-            //TODO: add for each dummy port to which (original) vertex it belongs which will be
-            // used when restoring vertex groups
+            currentUnionNode.addPortComposition(p);
+            dummyPorts.putIfAbsent(currentNode, new LinkedHashSet<>());
+            dummyPorts.get(currentNode).add(p);
             if (first) {
                 first = false;
                 nodeOrder.addFirst(p);

@@ -200,6 +200,8 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
     /**
      *
      * @param pc
+     *      the passed {@link PortComposition} does not need to be on the top level -- it can also be contained
+     *      somewhere in the hierarchy tree of {@link PortGroup}s of this {@link Vertex}.
      * @return
      *      if false is returned there is no such {@link PortComposition} or something else went wrong (e. g. failed
      *      by removing {@link Port}s contained in the passed {@link PortComposition})
