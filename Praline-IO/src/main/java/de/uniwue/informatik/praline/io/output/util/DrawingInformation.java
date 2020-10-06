@@ -12,11 +12,13 @@ import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
 public class DrawingInformation {
 
     public final static double DEFAULT_BORDER_WIDTH = 2;
-    public final static double DEFAULT_VERTEX_HEIGHT = 24;
-    public final static double DEFAULT_VERTEX_MINIMUM_WIDTH = 20;
+    public final static double DEFAULT_VERTEX_HEIGHT = 24; //32; //48;
+    public final static double DEFAULT_VERTEX_MINIMUM_WIDTH = 12; //20;
+    private static final Color DEFAULT_VERTEX_COLOR = null; //Color.lightGray; //null for transparent;
     public final static double DEFAULT_PORT_WIDTH = 8;
     public final static double DEFAULT_PORT_HEIGHT = 4;
     public final static double DEFAULT_PORT_SPACING = 4;
+    private static final Color DEFAULT_PORT_COLOR = null; //Color.black; //null for transparent;
     public final static double DEFAULT_EDGE_DISTANCE_HORIZONTAL = 10;
     public final static double DEFAULT_EDGE_DISTANCE_VERTICAL = 10;
     public final static double DEFAULT_DISTANCE_BETWEEN_LAYERS = 20;
@@ -27,7 +29,7 @@ public class DrawingInformation {
     public final static boolean DEFAULT_SHOW_PORT_PAIRINGS = true;
     public final static Color DEFAULT_PORT_GROUP_COLOR = Color.LIGHT_GRAY;
     public final static double DEFAULT_PORT_GROUP_BORDER = 2;
-    public final static boolean DEFAULT_SHOW_PORT_GROUPS = true;
+    public final static boolean DEFAULT_SHOW_PORT_GROUPS = false;
 
 
     //TODO: JZ: I think this should not be static, but instance-wide, moreover set font in constructor
@@ -38,9 +40,11 @@ public class DrawingInformation {
     private double borderWidth;
     private double vertexHeight; //TODO: as minimum height/flexible for diff. heights (multiple labels above each other)
     private double vertexMinimumWidth;
+    private Color vertexColor; //null for transparent
     private double portWidth;
     private double portHeight;
     private double portSpacing;
+    private Color portColor; //null for transparent
     private double edgeDistanceHorizontal;
     private double edgeDistanceVertical;
     private double distanceBetweenLayers;
@@ -54,26 +58,28 @@ public class DrawingInformation {
     private boolean showPortGroups;
 
     public DrawingInformation() {
-        this(DEFAULT_BORDER_WIDTH, DEFAULT_VERTEX_HEIGHT, DEFAULT_VERTEX_MINIMUM_WIDTH, DEFAULT_PORT_WIDTH,
-                DEFAULT_PORT_HEIGHT, DEFAULT_PORT_SPACING, DEFAULT_EDGE_DISTANCE_HORIZONTAL,
-                DEFAULT_EDGE_DISTANCE_VERTICAL, DEFAULT_DISTANCE_BETWEEN_LAYERS, DEFAULT_FONT,
-                DEFAULT_HORIZONTAL_TEXT_OFFSET, DEFAULT_VERTICAL_TEXT_OFFSET, DEFAULT_PORT_PAIRING_COLOR,
+        this(DEFAULT_BORDER_WIDTH, DEFAULT_VERTEX_HEIGHT, DEFAULT_VERTEX_MINIMUM_WIDTH, DEFAULT_VERTEX_COLOR,
+                DEFAULT_PORT_WIDTH, DEFAULT_PORT_HEIGHT, DEFAULT_PORT_SPACING, DEFAULT_PORT_COLOR,
+                DEFAULT_EDGE_DISTANCE_HORIZONTAL, DEFAULT_EDGE_DISTANCE_VERTICAL, DEFAULT_DISTANCE_BETWEEN_LAYERS,
+                DEFAULT_FONT, DEFAULT_HORIZONTAL_TEXT_OFFSET, DEFAULT_VERTICAL_TEXT_OFFSET, DEFAULT_PORT_PAIRING_COLOR,
                 DEFAULT_SHOW_PORT_PAIRINGS, DEFAULT_PORT_GROUP_COLOR, DEFAULT_PORT_GROUP_BORDER,
                 DEFAULT_SHOW_PORT_GROUPS);
     }
 
-    public DrawingInformation(double borderWidth, double vertexHeight, double vertexMinimumWidth, double portWidth,
-                              double portHeight, double portSpacing, double edgeDistanceHorizontal,
-                              double edgeDistanceVertical, double distanceBetweenLayers, Font font,
-                              double horizontalTextOffset, double verticalTextOffset, Color portPairingColor,
-                              boolean showPortPairings, Color portGroupColor, double portGroupBorder,
-                              boolean showPortGroups) {
+    public DrawingInformation(double borderWidth, double vertexHeight, double vertexMinimumWidth, Color vertexColor,
+                              double portWidth, double portHeight, double portSpacing, Color portColor,
+                              double edgeDistanceHorizontal, double edgeDistanceVertical,
+                              double distanceBetweenLayers, Font font, double horizontalTextOffset,
+                              double verticalTextOffset, Color portPairingColor, boolean showPortPairings,
+                              Color portGroupColor, double portGroupBorder, boolean showPortGroups) {
         this.borderWidth = borderWidth;
         this.vertexHeight = vertexHeight;
         this.vertexMinimumWidth = vertexMinimumWidth;
+        this.vertexColor = vertexColor;
         this.portWidth = portWidth;
         this.portHeight = portHeight;
         this.portSpacing = portSpacing;
+        this.portColor = portColor;
         this.edgeDistanceHorizontal = edgeDistanceHorizontal;
         this.edgeDistanceVertical = edgeDistanceVertical;
         this.distanceBetweenLayers = distanceBetweenLayers;
@@ -123,6 +129,10 @@ public class DrawingInformation {
         return vertexMinimumWidth;
     }
 
+    public Color getVertexColor() {
+        return vertexColor;
+    }
+
     public double getEdgeDistanceHorizontal() {
         return edgeDistanceHorizontal;
     }
@@ -141,6 +151,10 @@ public class DrawingInformation {
 
     public double getPortSpacing() {
         return portSpacing;
+    }
+
+    public Color getPortColor() {
+        return portColor;
     }
 
     public double getDistanceBetweenLayers() {
@@ -191,6 +205,10 @@ public class DrawingInformation {
         this.vertexMinimumWidth = vertexMinimumWidth;
     }
 
+    public void setVertexColor(Color vertexColor) {
+        this.vertexColor = vertexColor;
+    }
+
     public void setPortWidth(double portWidth) {
         this.portWidth = portWidth;
     }
@@ -201,6 +219,10 @@ public class DrawingInformation {
 
     public void setPortSpacing(double portSpacing) {
         this.portSpacing = portSpacing;
+    }
+
+    public void setPortColor(Color portColor) {
+        this.portColor = portColor;
     }
 
     public void setEdgeDistanceHorizontal(double edgeDistanceHorizontal) {

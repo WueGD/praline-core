@@ -68,12 +68,26 @@ public class SVGDrawer {
         int canvasHeight = (int) (bounds.getHeight());
         g2d.setSVGCanvasSize(new Dimension(canvasWidth, canvasHeight));
 
+        LinkedHashSet<Port> portPairingsAlreadyDrawn = new LinkedHashSet<>();
 
-        //draw connection of port pairings (do first then labels are drawn on top of it)
-        if (drawInfo.isShowPortPairings()) {
-            LinkedHashSet<Port> portPairingsAlreadyDrawn = new LinkedHashSet<>();
-            for (Vertex vertex : graph.getVertices()) {
-                for (Port port : vertex.getPorts()) {
+        for (Vertex node : graph.getVertices()) {
+            //determine node rectangle
+            if (node.getShape() == null) {
+                node.setShape(new Rectangle(drawInfo.getVertexMinimumWidth(), drawInfo.getVertexHeight()));
+            }
+            //draw node rectangle (possibly filled)
+            Rectangle2D nodeRectangle = (Rectangle2D) node.getShape();
+            if (drawInfo.getVertexColor() != null) {
+                g2d.setColor(drawInfo.getVertexColor());
+                g2d.fill(nodeRectangle);
+                g2d.setColor(Color.BLACK);
+            }
+            g2d.draw(nodeRectangle);
+        }
+        for (Vertex node : graph.getVertices()) {
+            //draw port pairings
+            if (drawInfo.isShowPortPairings()) {
+                for (Port port : node.getPorts()) {
                     if (PortUtils.isPaired(port) && !portPairingsAlreadyDrawn.contains(port)) {
                         Port otherPort = PortUtils.getPairedPort(port);
                         drawPortPairing(port, otherPort, g2d);
@@ -82,24 +96,19 @@ public class SVGDrawer {
                     }
                 }
             }
-        }
-
-
-        for (Vertex node : graph.getVertices()) {
-            if (node.getShape() == null) {
-                node.setShape(new Rectangle(drawInfo.getVertexMinimumWidth(), drawInfo.getVertexHeight()));
+            //draw ports and port groups
+            for (PortComposition pc : node.getPortCompositions()) {
+                paintPortComposition(pc, g2d);
             }
+            //draw node label
             Rectangle2D nodeRectangle = (Rectangle2D) node.getShape();
-            g2d.draw(nodeRectangle);
             g2d.drawString(node.getLabelManager().getMainLabel().toString(),
                     (float) ((nodeRectangle).getX() + drawInfo.getHorizontalTextOffset()),
                     (float) (((nodeRectangle).getY()
                             + (nodeRectangle).getHeight()
                             + drawInfo.getVerticalTextOffset())));
-            for (PortComposition pc : node.getPortCompositions()) {
-                paintPortComposition(pc, g2d);
-            }
         }
+        //draw edges
         for (Edge edge : graph.getEdges()) {
             if (edge.getPaths().isEmpty()) {
                 Point2D.Double start = new Point2D.Double(edge.getPorts().get(0).getShape().getXPosition(), edge.getPorts().get(0).getShape().getYPosition());
@@ -207,8 +216,14 @@ public class SVGDrawer {
             return groupRect;
         }
         if (pc instanceof Port) {
-            g2d.draw((Rectangle2D)((Port)pc).getShape());
-            return (Rectangle2D)((Port)pc).getShape();
+            Rectangle2D portRectangle = (Rectangle2D) ((Port) pc).getShape();
+            if (drawInfo.getPortColor() != null) {
+                g2d.setColor(drawInfo.getPortColor());
+                g2d.fill(portRectangle);
+                g2d.setColor(Color.BLACK);
+            }
+            g2d.draw(portRectangle);
+            return portRectangle;
             // g2d.drawString(((Port) pc).getLabelManager().getMainLabel().toString(), ((float)(((Rectangle2D)(((Port) pc).getShape())).getX())), ((float)(((Rectangle2D)(((Port) pc).getShape())).getY())));
         }
         return null;
