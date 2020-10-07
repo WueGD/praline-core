@@ -532,52 +532,67 @@ public class DrawingPreparation {
     }
 
     private void restoreVertexGroup(Vertex dummyUnificationVertex, VertexGroup vertexGroup) {
-        //-1: bottom side, 0: undefined, 1: top side
+        //find for each original vertex to which side of the unification vertex it has ports to the outside
+        //-1: bottom side, 0: device vertex (whole length + can be both or in the middle) or undefined, 1: top side
         Map<Integer, List<Vertex>> vertexSide2origVertex = new LinkedHashMap<>();
         Map<Vertex, Double> minX = new LinkedHashMap<>();
         Map<Vertex, Double> maxX = new LinkedHashMap<>();
+        Vertex dummyDeviceRepresenter = new Vertex();
+        Shape unionVertexShape = dummyUnificationVertex.getShape();
         for (Vertex originalVertex : vertexGroup.getAllRecursivelyContainedVertices()) {
-            minX.put(originalVertex, Double.POSITIVE_INFINITY);
-            maxX.put(originalVertex, Double.NEGATIVE_INFINITY);
-            int vertexSide = 0; //-1: bottom side, 0: undefined, 1: top side
+            int vertexSide = 0; //-1: bottom side, 0: device vertex or undefined, 1: top side
+            boolean isDevice = sugy.getDeviceVertices().contains(originalVertex);
+            if (isDevice) {
+                vertexSide2origVertex.putIfAbsent(vertexSide, new ArrayList<>());
+                vertexSide2origVertex.get(vertexSide).add(originalVertex);
+                minX.put(originalVertex, unionVertexShape.getXPosition());
+                maxX.put(originalVertex, unionVertexShape.getXPosition() + ((Rectangle) unionVertexShape).width);
+            }
+            Vertex consideredVertex = isDevice ? dummyDeviceRepresenter : originalVertex;
             for (Port port : sugy.getOrders().getTopPortOrder().get(dummyUnificationVertex)) {
                 int changeTo = 1;
-                vertexSide = changeVertexSideIfContained(minX, maxX, originalVertex, vertexSide, port, changeTo);
+                vertexSide = changeVertexSideIfContained(minX, maxX, originalVertex, consideredVertex, vertexSide,
+                        port, changeTo);
             }
             for (Port port : sugy.getOrders().getBottomPortOrder().get(dummyUnificationVertex)) {
                 int changeTo = -1;
-                vertexSide = changeVertexSideIfContained(minX, maxX, originalVertex, vertexSide, port, changeTo);
+                vertexSide = changeVertexSideIfContained(minX, maxX, originalVertex, consideredVertex, vertexSide,
+                        port, changeTo);
             }
-            if (!vertexSide2origVertex.containsKey(vertexSide)) {
-                vertexSide2origVertex.put(vertexSide, new ArrayList<>());
+            if (minX.containsKey(consideredVertex)) {
+                vertexSide2origVertex.putIfAbsent(vertexSide, new ArrayList<>());
+                vertexSide2origVertex.get(vertexSide).add(consideredVertex);
             }
-            vertexSide2origVertex.get(vertexSide).add(originalVertex);
         }
 
+        //draw for each side of the unification vertex its contained original vertices next to each other in the order
+        // found just in the step before
         int numberOfDifferentSides = vertexSide2origVertex.keySet().size();
         int yShiftMultiplier = 0;
         for (int vertexSide = -1; vertexSide <= 1; vertexSide++) {
             List<Vertex> originalVertices = vertexSide2origVertex.get(vertexSide);
             if (originalVertices != null) {
-                double xPos = dummyUnificationVertex.getShape().getXPosition();
+                double xPos = unionVertexShape.getXPosition();
                 //sort by x-coordinates
                 originalVertices.sort(Comparator.comparing(minX::get));
                 for (int j = 0; j < originalVertices.size(); j++) {
                     Vertex originalVertex = originalVertices.get(j);
                     //determine shape for original vertex
-                    originalVertex.setShape(dummyUnificationVertex.getShape().clone());
+                    originalVertex.setShape(unionVertexShape.clone());
                     Rectangle originalVertexShape = (Rectangle) originalVertex.getShape();
                     originalVertexShape.height = originalVertexShape.height / (double) numberOfDifferentSides;
                     originalVertexShape.y = originalVertexShape.y +
                             (double) yShiftMultiplier * originalVertexShape.getHeight();
                     originalVertexShape.x = xPos;
                     double endXPos = j + 1 == originalVertices.size() ?
-                            dummyUnificationVertex.getShape().getXPosition() +
-                                    ((Rectangle) dummyUnificationVertex.getShape()).width :
+                            unionVertexShape.getXPosition() +
+                                    ((Rectangle) unionVertexShape).width :
                             (maxX.get(originalVertex) + minX.get(originalVertices.get(j + 1))) / 2.0;
                     originalVertexShape.width = endXPos - xPos;
                     xPos = endXPos;
-                    sugy.getGraph().addVertex(originalVertex);
+                    if (originalVertex != dummyDeviceRepresenter) {
+                        sugy.getGraph().addVertex(originalVertex);
+                    }
                 }
                 ++yShiftMultiplier;
             }
@@ -606,7 +621,7 @@ public class DrawingPreparation {
     }
 
     private int changeVertexSideIfContained(Map<Vertex, Double> minX, Map<Vertex, Double> maxX, Vertex originalVertex,
-                                            int vertexSide, Port port, int changeTo) {
+                                            Vertex vertexForMinMaxX, int vertexSide, Port port, int changeTo) {
         //two cases: (A) a port corresponding to an original port before unification, (B) a dummy port for padding
         Port portBeforeUnification = sugy.getReplacedPorts().get(port); //for case (A)
         Set<Port> dummyPortsForPadding = dummyPortsForLabelPadding.get(originalVertex); //for case (B)
@@ -614,12 +629,14 @@ public class DrawingPreparation {
                 || (dummyPortsForPadding != null && dummyPortsForPadding.contains(port))) {
             vertexSide = changeTo;
             double xBeginPort = port.getShape().getXPosition();
-            if (xBeginPort < minX.get(originalVertex)) {
-                minX.replace(originalVertex, xBeginPort);
+            minX.putIfAbsent(vertexForMinMaxX, Double.POSITIVE_INFINITY);
+            maxX.putIfAbsent(vertexForMinMaxX, Double.NEGATIVE_INFINITY);
+            if (xBeginPort < minX.get(vertexForMinMaxX)) {
+                minX.replace(vertexForMinMaxX, xBeginPort);
             }
             double xEndPort = xBeginPort + ((Rectangle) port.getShape()).width;
-            if (xEndPort > maxX.get(originalVertex)) {
-                maxX.replace(originalVertex, xEndPort);
+            if (xEndPort > maxX.get(vertexForMinMaxX)) {
+                maxX.replace(vertexForMinMaxX, xEndPort);
             }
         }
         return vertexSide;
