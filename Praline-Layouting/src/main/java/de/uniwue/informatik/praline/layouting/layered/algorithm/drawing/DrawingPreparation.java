@@ -336,14 +336,14 @@ public class DrawingPreparation {
             Rectangle currentShape = (Rectangle) node.getShape();
             currentShape.y = currentShape.getY() + shiftValue;
             for (PortComposition portComposition : node.getPortCompositions()) {
-                shift(shiftValue, portComposition);
+                shift(shiftValue, portComposition, false);
             }
             if (shiftEdges) {
                 // shift edgePaths
                 for (Port bottomPort : cmResult.getBottomPortOrder().get(node)) {
                     for (Edge edge : bottomPort.getEdges()) {
-                        if (!edge.getPaths().isEmpty()) {
-                            for (Point2D.Double pathPoint : ((PolygonalPath) edge.getPaths().get(0)).getTerminalAndBendPoints()) {
+                        for (Path path : edge.getPaths()) {
+                            for (Point2D.Double pathPoint : ((PolygonalPath) path).getTerminalAndBendPoints()) {
                                 pathPoint.setLocation(pathPoint.getX(), (pathPoint.getY() + shiftValue));
                             }
                         }
@@ -353,13 +353,28 @@ public class DrawingPreparation {
         }
     }
 
-    private void shift (double shiftValue, PortComposition portComposition) {
+    private void shift (double shiftValue, PortComposition portComposition, boolean shiftEdge) {
         if (portComposition instanceof Port) {
+            if (shiftEdge) {
+                for (Edge edge : ((Port) portComposition).getEdges()) {
+                    lengthenEdge(edge, (Rectangle) ((Port) portComposition).getShape(), shiftValue);
+                }
+            }
             Rectangle currentShape = (Rectangle) ((Port)portComposition).getShape();
             currentShape.y = currentShape.getY() + shiftValue;
         } else if (portComposition instanceof PortGroup) {
             for (PortComposition member : ((PortGroup)portComposition).getPortCompositions()) {
-                shift(shiftValue, member);
+                shift(shiftValue, member, shiftEdge);
+            }
+        }
+    }
+
+    private void lengthenEdge(Edge edge, Rectangle portShape, double shiftValue) {
+        for (Path path : edge.getPaths()) {
+            for (Point2D.Double terminalPoint : ((PolygonalPath) path).getTerminalPoints()) {
+                if (portShape.liesOnBoundary(terminalPoint)) {
+                    terminalPoint.y += shiftValue;
+                }
             }
         }
     }
@@ -538,15 +553,17 @@ public class DrawingPreparation {
         Map<Vertex, Double> minX = new LinkedHashMap<>();
         Map<Vertex, Double> maxX = new LinkedHashMap<>();
         Vertex dummyDeviceRepresenter = new Vertex();
+        Vertex deviceVertex = null;
         Shape unionVertexShape = dummyUnificationVertex.getShape();
         for (Vertex originalVertex : vertexGroup.getAllRecursivelyContainedVertices()) {
             int vertexSide = 0; //-1: bottom side, 0: device vertex or undefined, 1: top side
             boolean isDevice = sugy.getDeviceVertices().contains(originalVertex);
             if (isDevice) {
-                vertexSide2origVertex.putIfAbsent(vertexSide, new ArrayList<>());
-                vertexSide2origVertex.get(vertexSide).add(originalVertex);
-                minX.put(originalVertex, unionVertexShape.getXPosition());
-                maxX.put(originalVertex, unionVertexShape.getXPosition() + ((Rectangle) unionVertexShape).width);
+                deviceVertex = originalVertex;
+                vertexSide2origVertex.putIfAbsent(0, new ArrayList<>());
+                vertexSide2origVertex.get(0).add(deviceVertex);
+                minX.put(deviceVertex, unionVertexShape.getXPosition());
+                maxX.put(deviceVertex, unionVertexShape.getXPosition() + ((Rectangle) unionVertexShape).width);
             }
             Vertex consideredVertex = isDevice ? dummyDeviceRepresenter : originalVertex;
             for (Port port : sugy.getOrders().getTopPortOrder().get(dummyUnificationVertex)) {
@@ -602,6 +619,7 @@ public class DrawingPreparation {
             Port origPort = sugy.getReplacedPorts().get(replacePort);
             if (origPort != null ) { //may be null because it is a dummy port for label padding
                 origPort.setShape(replacePort.getShape().clone());
+                //adjust at port pairings
                 if (sugy.getKeptPortPairings().containsKey(replacePort)) {
                     sugy.getKeptPortPairings().put(origPort, sugy.getKeptPortPairings().get(replacePort));
                     sugy.getKeptPortPairings().remove(replacePort);
@@ -610,6 +628,17 @@ public class DrawingPreparation {
                 for (Edge edge : new ArrayList<>(replacePort.getEdges())) {
                     edge.removePort(replacePort);
                     edge.addPort(origPort);
+                }
+                //if we have a dummyDeviceRepresenter in use, we have to move the ports of the device
+                if (deviceVertex != null && origPort.getVertex() == deviceVertex) {
+                    Rectangle deviceShape = (Rectangle) deviceVertex.getShape();
+                    Rectangle portShape = (Rectangle) origPort.getShape();
+                    if (deviceShape.y > portShape.y + portShape.height) {
+                        shift(deviceShape.y - portShape.height - portShape.y, origPort, true);
+                    }
+                    else if (deviceShape.y + deviceShape.height < portShape.y) {
+                        shift(deviceShape.y + portShape.height - portShape.y, origPort, true);
+                    }
                 }
             }
         }

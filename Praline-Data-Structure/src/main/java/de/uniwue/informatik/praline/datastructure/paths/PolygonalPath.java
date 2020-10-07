@@ -117,6 +117,15 @@ public class PolygonalPath extends Path {
         return Collections.unmodifiableList(allPoints);
     }
 
+    /**
+     *
+     * @return
+     *      concatenation of {@link PolygonalPath#getStartPoint()} + {@link PolygonalPath#getEndPoint()}.
+     */
+    public List<Point2D.Double> getTerminalPoints() {
+        return Collections.unmodifiableList(Arrays.asList(getStartPoint(), getEndPoint()));
+    }
+
     public List<Line2D.Double> getSegments() {
         List<Line2D.Double> allSegments = new ArrayList<>(bendPoints.size() + 1);
         Point2D.Double prevPoint = null;
