@@ -22,6 +22,7 @@ public class DrawingPreparation {
     private CMResult cmResult;
     private Map<Vertex, Set<Port>> dummyPortsForLabelPadding;
     private double delta;
+    private Map<Integer, Double> layer2shiftForUnionNodes;
 
     public DrawingPreparation (SugiyamaLayouter sugy) {
         this.sugy = sugy;
@@ -33,6 +34,7 @@ public class DrawingPreparation {
         this.delta = Math.max(drawInfo.getEdgeDistanceHorizontal(), drawInfo.getPortWidth() + drawInfo.getPortSpacing());
         this.cmResult = cmResult;
         this.dummyPortsForLabelPadding = dummyPortsForLabelPadding;
+        this.layer2shiftForUnionNodes = new LinkedHashMap<>();
     }
 
     public void prepareDrawing(DrawingInformation drawInfo, CMResult cmResult,
@@ -330,32 +332,63 @@ public class DrawingPreparation {
         }
     }
 
+    private void shiftAllUpToRank (double shiftValue, int rank) {
+        shiftAllUpToRank(shiftValue, rank, shiftValue);
+    }
+
+    private void shiftAllUpToRank (double shiftValue, int rank, double shiftValueEdges) {
+        Set<Path> pathsAlreadyShifted = new LinkedHashSet<>();
+        for (int i = sugy.getMaxRank(); i >= rank; i--) {
+            shift(shiftValue, i, shiftValueEdges, pathsAlreadyShifted);
+        }
+    }
+
     // shift all nodes of rank rank with their ports and all edgePaths to nodes below
-    private void shift (double shiftValue, int rank, boolean shiftEdges) {
+    private void shift (double shiftValue, int rank, Set<Path> pathsAlreadyShifted) {
+        shift(shiftValue, rank, shiftValue, pathsAlreadyShifted);
+    }
+
+    // shift all nodes of rank rank with their ports and all edgePaths to nodes below
+    private void shift (double shiftValue, int rank, double shiftValueEdges, Set<Path> pathsAlreadyShifted) {
         for (Vertex node : cmResult.getNodeOrder().get(rank)) {
             Rectangle currentShape = (Rectangle) node.getShape();
             currentShape.y = currentShape.getY() + shiftValue;
             for (PortComposition portComposition : node.getPortCompositions()) {
-                shift(shiftValue, portComposition, false);
+                shift(shiftValue, portComposition, true);
             }
-            if (shiftEdges) {
-                // shift edgePaths
+            // shift edgePaths on the top side ports
+            for (Port topPort : cmResult.getTopPortOrder().get(node)) {
+                for (Edge edge : topPort.getEdges()) {
+                    shiftInnerPartOfEdge(shiftValueEdges, edge, pathsAlreadyShifted);
+                }
+            }
+        }
+        // shift also edgePaths on the bottom sides one layer above if it has not been shifted
+        if (rank < sugy.getMaxRank()) {
+            for (Vertex node : cmResult.getNodeOrder().get(rank + 1)) {
                 for (Port bottomPort : cmResult.getBottomPortOrder().get(node)) {
                     for (Edge edge : bottomPort.getEdges()) {
-                        for (Path path : edge.getPaths()) {
-                            for (Point2D.Double pathPoint : ((PolygonalPath) path).getTerminalAndBendPoints()) {
-                                pathPoint.setLocation(pathPoint.getX(), (pathPoint.getY() + shiftValue));
-                            }
-                        }
+                        shiftInnerPartOfEdge(shiftValueEdges, edge, pathsAlreadyShifted);
                     }
                 }
             }
         }
     }
 
-    private void shift (double shiftValue, PortComposition portComposition, boolean shiftEdge) {
+    private void shiftInnerPartOfEdge(double shiftValue, Edge edge, Set<Path> pathsAlreadyShifted) {
+        for (Path path : edge.getPaths()) {
+            if (!pathsAlreadyShifted.contains(path)) {
+                for (Point2D.Double innerPoint : ((PolygonalPath) path).getBendPoints()) {
+                    innerPoint.setLocation(innerPoint.getX(), (innerPoint.getY() + shiftValue));
+                }
+                pathsAlreadyShifted.add(path);
+            }
+        }
+    }
+
+    private void shift (double shiftValue, PortComposition portComposition, boolean lengthenEdges) {
         if (portComposition instanceof Port) {
-            if (shiftEdge) {
+            if (lengthenEdges) {
                 for (Edge edge : ((Port) portComposition).getEdges()) {
                     lengthenEdge(edge, (Rectangle) ((Port) portComposition).getShape(), shiftValue);
                 }
@@ -364,7 +397,7 @@ public class DrawingPreparation {
             currentShape.y = currentShape.getY() + shiftValue;
         } else if (portComposition instanceof PortGroup) {
             for (PortComposition member : ((PortGroup)portComposition).getPortCompositions()) {
-                shift(shiftValue, member, shiftEdge);
+                shift(shiftValue, member, lengthenEdges);
             }
         }
     }
@@ -381,6 +414,20 @@ public class DrawingPreparation {
 
 
     public void restoreOriginalElements () {
+
+        //restore vertex groups
+        for (Vertex vertex : new ArrayList<>(sugy.getGraph().getVertices())) {
+            if (sugy.getVertexGroups().containsKey(vertex)) {
+                VertexGroup vertexGroup = sugy.getVertexGroups().get(vertex);
+                restoreVertexGroup(vertex, vertexGroup);
+            }
+
+            if (sugy.getPlugs().containsKey(vertex)) {
+                VertexGroup vertexGroup = sugy.getPlugs().get(vertex);
+                restoreVertexGroup(vertex, vertexGroup);
+            }
+        }
+
         //replace dummy edges
         boolean hasChanged = true;
         while (hasChanged) {
@@ -413,16 +460,6 @@ public class DrawingPreparation {
 
             if (sugy.getHyperEdges().containsKey(vertex)) {
                 replaceHyperEdgeDummyVertex(vertex);
-            }
-
-            if (sugy.getVertexGroups().containsKey(vertex)) {
-                VertexGroup vertexGroup = sugy.getVertexGroups().get(vertex);
-                restoreVertexGroup(vertex, vertexGroup);
-            }
-
-            if (sugy.getPlugs().containsKey(vertex)) {
-                VertexGroup vertexGroup = sugy.getPlugs().get(vertex);
-                restoreVertexGroup(vertex, vertexGroup);
             }
 
             if (dummyPortsForLabelPadding.containsKey(vertex)) {
@@ -554,7 +591,7 @@ public class DrawingPreparation {
         Map<Vertex, Double> maxX = new LinkedHashMap<>();
         Vertex dummyDeviceRepresenter = new Vertex();
         Vertex deviceVertex = null;
-        Shape unionVertexShape = dummyUnificationVertex.getShape();
+        Rectangle unionVertexShape = (Rectangle) dummyUnificationVertex.getShape();
         for (Vertex originalVertex : vertexGroup.getAllRecursivelyContainedVertices()) {
             int vertexSide = 0; //-1: bottom side, 0: device vertex or undefined, 1: top side
             boolean isDevice = sugy.getDeviceVertices().contains(originalVertex);
@@ -563,7 +600,7 @@ public class DrawingPreparation {
                 vertexSide2origVertex.putIfAbsent(0, new ArrayList<>());
                 vertexSide2origVertex.get(0).add(deviceVertex);
                 minX.put(deviceVertex, unionVertexShape.getXPosition());
-                maxX.put(deviceVertex, unionVertexShape.getXPosition() + ((Rectangle) unionVertexShape).width);
+                maxX.put(deviceVertex, unionVertexShape.getXPosition() + unionVertexShape.width);
             }
             Vertex consideredVertex = isDevice ? dummyDeviceRepresenter : originalVertex;
             for (Port port : sugy.getOrders().getTopPortOrder().get(dummyUnificationVertex)) {
@@ -585,6 +622,37 @@ public class DrawingPreparation {
         //draw for each side of the unification vertex its contained original vertices next to each other in the order
         // found just in the step before
         int numberOfDifferentSides = vertexSide2origVertex.keySet().size();
+        //adjust height of vertex by the number of sides it uses
+        //for this also shift the drawing to get extra space
+        double shiftNodeBy = (double) (numberOfDifferentSides - 1) * drawInfo.getVertexHeight();
+        double shiftLayerBy = 0;
+        int layer = sugy.getRank(dummyUnificationVertex);
+        if (layer2shiftForUnionNodes.containsKey(layer)) {
+            if (layer2shiftForUnionNodes.get(layer) < shiftNodeBy) {
+                shiftLayerBy = shiftNodeBy - layer2shiftForUnionNodes.get(layer);
+                layer2shiftForUnionNodes.put(layer, shiftNodeBy);
+            }
+        }
+        else if (shiftNodeBy > 0) {
+            shiftLayerBy = shiftNodeBy;
+            layer2shiftForUnionNodes.put(layer, shiftNodeBy);
+        }
+        if (shiftLayerBy > 0) {
+            shiftAllUpToRank(shiftLayerBy / 2.0, layer, shiftLayerBy);
+            if (layer < sugy.getMaxRank()) {
+                shiftAllUpToRank(shiftLayerBy / 2.0, layer + 1, 0);
+            }
+        }
+        unionVertexShape.height += shiftNodeBy;
+        unionVertexShape.y -= shiftNodeBy / 2.0;
+        for (Port port : sugy.getOrders().getBottomPortOrder().get(dummyUnificationVertex)) {
+            shift(-shiftNodeBy / 2.0, port, true);
+        }
+        for (Port port : sugy.getOrders().getTopPortOrder().get(dummyUnificationVertex)) {
+            shift(shiftNodeBy / 2.0, port, true);
+        }
+
+        //draw each original vertex
         int yShiftMultiplier = 0;
         for (int vertexSide = -1; vertexSide <= 1; vertexSide++) {
             List<Vertex> originalVertices = vertexSide2origVertex.get(vertexSide);
@@ -602,51 +670,65 @@ public class DrawingPreparation {
                             (double) yShiftMultiplier * originalVertexShape.getHeight();
                     originalVertexShape.x = xPos;
                     double endXPos = j + 1 == originalVertices.size() ?
-                            unionVertexShape.getXPosition() +
-                                    ((Rectangle) unionVertexShape).width :
+                            unionVertexShape.getXPosition() + unionVertexShape.width :
                             (maxX.get(originalVertex) + minX.get(originalVertices.get(j + 1))) / 2.0;
                     originalVertexShape.width = endXPos - xPos;
                     xPos = endXPos;
+                    int indexUnionVertex = cmResult.getNodeOrder().get(layer).indexOf(dummyUnificationVertex);
                     if (originalVertex != dummyDeviceRepresenter) {
                         sugy.getGraph().addVertex(originalVertex);
+                        cmResult.getNodeOrder().get(layer).add(indexUnionVertex, originalVertex);
+                        cmResult.getBottomPortOrder().put(originalVertex, new ArrayList<>());
+                        cmResult.getTopPortOrder().put(originalVertex, new ArrayList<>());
                     }
                 }
                 ++yShiftMultiplier;
             }
         }
         //transfer shape of the replace ports to the original ports
-        for (Port replacePort : dummyUnificationVertex.getPorts()) {
-            Port origPort = sugy.getReplacedPorts().get(replacePort);
-            if (origPort != null ) { //may be null because it is a dummy port for label padding
-                origPort.setShape(replacePort.getShape().clone());
-                //adjust at port pairings
-                if (sugy.getKeptPortPairings().containsKey(replacePort)) {
-                    sugy.getKeptPortPairings().put(origPort, sugy.getKeptPortPairings().get(replacePort));
-                    sugy.getKeptPortPairings().remove(replacePort);
-                }
-                //re-hang edges
-                for (Edge edge : new ArrayList<>(replacePort.getEdges())) {
-                    edge.removePort(replacePort);
-                    edge.addPort(origPort);
-                }
-                //if we have a dummyDeviceRepresenter in use, we have to move the ports of the device
-                if (deviceVertex != null && origPort.getVertex() == deviceVertex) {
-                    Rectangle deviceShape = (Rectangle) deviceVertex.getShape();
-                    Rectangle portShape = (Rectangle) origPort.getShape();
-                    if (deviceShape.y > portShape.y + portShape.height) {
-                        shift(deviceShape.y - portShape.height - portShape.y, origPort, true);
-                    }
-                    else if (deviceShape.y + deviceShape.height < portShape.y) {
-                        shift(deviceShape.y + portShape.height - portShape.y, origPort, true);
-                    }
-                }
-            }
+        Map<Vertex, List<Port>> bottomPortOrder = cmResult.getBottomPortOrder();
+        for (Port replacePort : bottomPortOrder.get(dummyUnificationVertex)) {
+            transferPortProperties(deviceVertex, bottomPortOrder, replacePort);
+        }
+        Map<Vertex, List<Port>> topPortOrder = cmResult.getTopPortOrder();
+        for (Port replacePort : topPortOrder.get(dummyUnificationVertex)) {
+            transferPortProperties(deviceVertex, topPortOrder, replacePort);
         }
         //remove unification dummy node
         sugy.getGraph().removeVertex(dummyUnificationVertex);
         //re-add vertex group
         sugy.getGraph().addVertexGroup(sugy.getPlugs().get(dummyUnificationVertex));
         sugy.getGraph().addVertexGroup(sugy.getVertexGroups().get(dummyUnificationVertex));
+    }
+
+    private void transferPortProperties(Vertex deviceVertex, Map<Vertex, List<Port>> portOrder, Port replacePort) {
+        Port origPort = sugy.getReplacedPorts().get(replacePort);
+        if (origPort != null ) { //may be null because it is a dummy port for label padding
+            Vertex originalVertex = origPort.getVertex();
+            portOrder.get(originalVertex).add(origPort);
+            origPort.setShape(replacePort.getShape().clone());
+            //adjust at port pairings
+            if (sugy.getKeptPortPairings().containsKey(replacePort)) {
+                sugy.getKeptPortPairings().put(origPort, sugy.getKeptPortPairings().get(replacePort));
+                sugy.getKeptPortPairings().remove(replacePort);
+            }
+            //re-hang edges
+            for (Edge edge : new ArrayList<>(replacePort.getEdges())) {
+                edge.removePort(replacePort);
+                edge.addPort(origPort);
+            }
+            //if we have a dummyDeviceRepresenter in use, we have to move the ports of the device
+            if (deviceVertex != null && originalVertex == deviceVertex) {
+                Rectangle deviceShape = (Rectangle) deviceVertex.getShape();
+                Rectangle portShape = (Rectangle) origPort.getShape();
+                if (deviceShape.y > portShape.y + portShape.height) {
+                    shift(deviceShape.y - portShape.height - portShape.y, origPort, true);
+                }
+                else if (deviceShape.y + deviceShape.height < portShape.y) {
+                    shift(deviceShape.y + portShape.height - portShape.y, origPort, true);
+                }
+            }
+        }
     }
 
     private int changeVertexSideIfContained(Map<Vertex, Double> minX, Map<Vertex, Double> maxX, Vertex originalVertex,
