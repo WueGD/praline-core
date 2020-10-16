@@ -146,7 +146,7 @@ public class NodePlacement {
                     }
 
                     // add new Edge if DummyNode
-                    if (sugy.isDummy(node) && cmResult.getBottomPortOrder().get(node).size() == 1) {
+                    if (sugy.isDummyNodeOfLongEdge(node) && cmResult.getBottomPortOrder().get(node).size() == 1) {
                         List<Port> ports = new ArrayList<>();
                         ports.add(port);
                         ports.add(cmResult.getTopPortOrder().get(node).get(0));
@@ -348,10 +348,10 @@ public class NodePlacement {
                                 } else {
                                     // solve conflict by preferring one edge
                                     // prefer dummy to dummy edge
-                                    if ((sugy.isDummy(top[0].getVertex()) || sugy.isTurningPointDummy(top[0].getVertex())) && (sugy.isDummy(top[1].getVertex()) || sugy.isTurningPointDummy(top[1].getVertex()))) {
+                                    if ((sugy.isDummyNodeOfLongEdge(top[0].getVertex()) || sugy.isTurningPointDummy(top[0].getVertex())) && (sugy.isDummyNodeOfLongEdge(top[1].getVertex()) || sugy.isTurningPointDummy(top[1].getVertex()))) {
                                         stack.push(top);
                                         break;
-                                    } else if (!((sugy.isDummy(stackEntry[0].getVertex()) || sugy.isTurningPointDummy(stackEntry[0].getVertex())) && (sugy.isDummy(stackEntry[1].getVertex()) || sugy.isTurningPointDummy(stackEntry[1].getVertex())))) {
+                                    } else if (!((sugy.isDummyNodeOfLongEdge(stackEntry[0].getVertex()) || sugy.isTurningPointDummy(stackEntry[0].getVertex())) && (sugy.isDummyNodeOfLongEdge(stackEntry[1].getVertex()) || sugy.isTurningPointDummy(stackEntry[1].getVertex())))) {
                                         // prefer edge with min index distance (just an arbitrary heuristic - maybe can do better)
                                         if (Math.abs(portValues.get(stackEntry[1]).getPosition() - portValues.get(stackEntry[0]).getPosition()) >
                                                 Math.abs(portValues.get(top[1]).getPosition() - portValues.get(top[0]).getPosition())) {

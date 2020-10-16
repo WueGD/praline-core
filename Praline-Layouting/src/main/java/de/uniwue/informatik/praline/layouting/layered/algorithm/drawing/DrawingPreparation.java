@@ -293,7 +293,7 @@ public class DrawingPreparation {
         Collection<Vertex> vertices;
         vertices = new LinkedHashSet<>(sugy.getGraph().getVertices());
         for (Vertex node : vertices) {
-            if (sugy.isDummy(node)) {
+            if (sugy.isDummyNodeOfLongEdge(node)) {
                 Port p1 = (Port) node.getPortCompositions().get(0);
                 Port p2 = (Port) node.getPortCompositions().get(1);
                 Edge originalEdge = sugy.getDummyEdge2RealEdge().get(p1.getEdges().get(0));

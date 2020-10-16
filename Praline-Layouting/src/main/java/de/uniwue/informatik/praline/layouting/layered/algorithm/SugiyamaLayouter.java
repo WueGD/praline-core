@@ -4,10 +4,6 @@ import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
-import de.uniwue.informatik.praline.datastructure.paths.Path;
-import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
-import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
-import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.io.output.svg.SVGDrawer;
 import de.uniwue.informatik.praline.layouting.PralineLayouter;
@@ -25,8 +21,6 @@ import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.Du
 import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.DummyNodeCreation;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.ImplicitCharacteristics;
 
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
 import java.util.*;
 
 public class SugiyamaLayouter implements PralineLayouter {
@@ -876,7 +870,11 @@ public class SugiyamaLayouter implements PralineLayouter {
         return vertexGroups.keySet().contains(node) || plugs.keySet().contains(node);
     }
 
-    public boolean isDummy (Vertex node) {
+    public boolean isDummy(Vertex node) {
+        return isDummyNodeOfLongEdge(node) || isTurningPointDummy(node) || getHyperEdges().containsKey(node);
+    }
+
+    public boolean isDummyNodeOfLongEdge(Vertex node) {
         return dummyNodesLongEdges.containsKey(node);
     }
 
@@ -923,7 +921,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     public String[] getNodeName (Vertex node) {
         String[] nodeName;
         // todo: implement other cases
-        if (isDummy(node) || hyperEdges.keySet().contains(node)) {
+        if (isDummy(node)) {
             nodeName = new String[1];
             nodeName[0] = "";
         } else if (isPlug(node)) {

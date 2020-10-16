@@ -69,13 +69,6 @@ public class EdgeRouting {
 
             createBendpoints(conflicts, edgeToLayer, maxLevel, level0);
         }
-        // remove TurningPointDummys
-        Collection<Vertex> vertices = new LinkedHashSet<>(sugy.getGraph().getVertices());
-        for (Vertex node : vertices) {
-            if (sugy.isTurningPointDummy(node)) {
-                sugy.getGraph().removeVertex(node);
-            }
-        }
     }
 
     private void handleDummyLayer(List<Vertex> vertices, boolean top, Map<Edge, Integer> edgeToLayer, List<ContourPoint> outlineContour) {
