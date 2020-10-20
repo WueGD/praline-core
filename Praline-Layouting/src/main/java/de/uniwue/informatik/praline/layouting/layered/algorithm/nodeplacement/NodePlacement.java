@@ -20,7 +20,7 @@ public class NodePlacement {
     private DrawingInformation drawInfo;
     private List<List<Port>> structure;
     private CMResult cmResult;
-    private List<Integer> heightOfLayers;
+    private List<Double> heightOfLayers;
     private Vertex dummyVertex;
     private double layerHeight;
     private Map<Vertex, Set<Port>> dummyPorts;
@@ -125,7 +125,15 @@ public class NodePlacement {
     }
 
     private void initialiseStructure() {
+        int layer = -1;
         for (List<Vertex> rankNodes : cmResult.getNodeOrder()) {
+            ++layer;
+            heightOfLayers.add(0.0);
+            for (Vertex node : rankNodes) {
+                heightOfLayers.set(layer, Math.max(heightOfLayers.get(layer),
+                        sugy.isDummy(node) ? 0.0 : sugy.getNodeName(node).length));
+            }
+
             List<Port> rankBottomPorts = new ArrayList<>();
             List<Port> rankTopPorts = new ArrayList<>();
             // Map<Port, Integer> rankBottomPortsMap = new LinkedHashMap<>();
@@ -164,9 +172,6 @@ public class NodePlacement {
             structure.add(rankTopPorts);
             //structureMap.add(rankBottomPortsMap);
             //structureMap.add(rankTopPortsMap);
-        }
-        for (int i = 0; i < structure.size(); i++) {
-            heightOfLayers.add(0);
         }
     }
 
@@ -214,12 +219,6 @@ public class NodePlacement {
                     } else if (!sugy.getDeviceVertices().contains(currentNode)) {
                         //we will handle device vertices in the end via the union node
                         minWidth = sugy.getTextWidthForNode(currentNode);
-                    }
-                    heightOfLayers.set(layer, Math.max(heightOfLayers.get(layer), sugy.getNodeName(currentNode).length));
-                    if (sugy.isTurningPointDummy(currentNode)) {
-                        double value = (((currentNode.getPorts().size() / 2.0)
-                                * drawInfo.getEdgeDistanceVertical()) / layerHeight);
-                        heightOfLayers.set(layer, Math.max(heightOfLayers.get(layer), (int)Math.ceil(value)));
                     }
                 } else if (order.get(position).getVertex().equals(currentNode)
                         || (sugy.getReplacedPorts().containsKey(order.get(position))
@@ -492,31 +491,31 @@ public class NodePlacement {
         double currentY = drawInfo.getPortHeight();
         for (int layer = 0; layer < structure.size(); layer++) {
             // x1, y1, x2, y2
-            double[] coordinates = new double[4];
             int nodePosition = 0;
             // initialise shape of first node
-            coordinates[0] = (portValues.get(structure.get(layer).get(0)).getX() + (delta / 2.0));
-            coordinates[1] = currentY;
+            double xPos = (portValues.get(structure.get(layer).get(0)).getX() + (delta / 2.0));
+            double yPos = currentY;
 
             for (int pos = 1; pos < structure.get(layer).size(); pos++) {
                 Port port = structure.get(layer).get(pos);
                 if (port.getVertex().equals(dummyVertex)) {
                     // one node done - create Rectangle
-                    coordinates[2] = (portValues.get(port).getX() - (delta / 2.0));
-                    coordinates[3] = (coordinates[1] + (layerHeight * heightOfLayers.get(layer)) + (2.0 * drawInfo.getBorderWidth()));
-                    Rectangle nodeShape = new Rectangle(coordinates[0], coordinates[1], coordinates[2] - coordinates[0], coordinates[3] - coordinates [1], null);
-                    cmResult.getNodeOrder().get(layer / 2).get(nodePosition++).setShape(nodeShape);
+                    Vertex nodeInTheGraph = cmResult.getNodeOrder().get(layer / 2).get(nodePosition++);
+                    double width = (portValues.get(port).getX() - (delta / 2.0)) - xPos;
+                    double height = layerHeight * heightOfLayers.get(layer / 2) + 2.0 * drawInfo.getBorderWidth();
+                    Rectangle nodeShape = new Rectangle(xPos, yPos, width, height, null);
+                    nodeInTheGraph.setShape(nodeShape);
 
                     // initialise shape of next node
-                    coordinates[0] = (portValues.get(port).getX() + (delta / 2.0));
-                    coordinates[1] = currentY;
+                    xPos = (portValues.get(port).getX() + (delta / 2.0));
+                    yPos = currentY;
                 } else {
                     Rectangle portShape = new Rectangle(portValues.get(port).getX(), currentY, drawInfo.getPortWidth(), drawInfo.getPortHeight(),null);
                     port.setShape(portShape);
                 }
             }
 
-            currentY += ((layerHeight * heightOfLayers.get(layer)) + (2.0 * drawInfo.getBorderWidth()));
+            currentY += ((layerHeight * heightOfLayers.get(layer / 2)) + (2.0 * drawInfo.getBorderWidth()));
             layer++;
 
             for (int pos = 1; pos < structure.get(layer).size(); pos++) {

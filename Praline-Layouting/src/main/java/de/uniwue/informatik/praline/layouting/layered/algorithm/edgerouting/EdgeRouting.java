@@ -46,6 +46,13 @@ public class EdgeRouting {
             handleDummyLayer(cmResult.getNodeOrder().get(rank + 1), false, edgeToLayer, outlineContourBB);
             handleDummyLayer(cmResult.getNodeOrder().get(rank), true, edgeToLayerTop, outlineContourTT);
 
+            // remove dummy turning points of this layer
+            for (Vertex node : cmResult.getNodeOrder().get(rank)) {
+                if (sugy.isTurningPointDummy(node)) {
+                    sugy.getGraph().removeVertex(node);
+                }
+            }
+
             List<ContourPoint> outlineContourTop = new LinkedList<>();
             Map<Edge, Edge> conflicts = new LinkedHashMap<>();
 
@@ -508,7 +515,7 @@ public class EdgeRouting {
                 bendPoints.add(new Point2D.Double(end.getShape().getXPosition(), location2));
                 bendPoints.add(new Point2D.Double(end.getShape().getXPosition(), end.getShape().getYPosition()));
             }
-            edge.addPath(new PolygonalPath(bendPoints.removeFirst(), bendPoints.removeLast(), bendPoints, drawInfo.getPortWidth()));
+            edge.addPath(new PolygonalPath(bendPoints.removeFirst(), bendPoints.removeLast(), bendPoints));
         }
     }
 

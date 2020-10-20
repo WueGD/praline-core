@@ -353,8 +353,14 @@ public class DrawingPreparation {
         for (Vertex node : cmResult.getNodeOrder().get(rank)) {
             Rectangle currentShape = (Rectangle) node.getShape();
             currentShape.y = currentShape.getY() + shiftValue;
-            for (PortComposition portComposition : node.getPortCompositions()) {
-                shift(shiftValue, portComposition, true);
+            //shift top or bottom side first, such that no new overlaps occur
+            List<List<Port>> portsToBeShifted = shiftValue > 0 ?
+                    Arrays.asList(cmResult.getTopPortOrder().get(node), cmResult.getBottomPortOrder().get(node)) :
+                    Arrays.asList(cmResult.getBottomPortOrder().get(node), cmResult.getTopPortOrder().get(node));
+            for (List<Port> ports : portsToBeShifted) {
+                for (Port port : ports) {
+                    shiftPort(shiftValue, port);
+                }
             }
             // shift edgePaths on the top side ports
             for (Port topPort : cmResult.getTopPortOrder().get(node)) {
@@ -386,18 +392,16 @@ public class DrawingPreparation {
         }
     }
 
-    private void shift (double shiftValue, PortComposition portComposition, boolean lengthenEdges) {
+    private void shiftPort(double shiftValue, PortComposition portComposition) {
         if (portComposition instanceof Port) {
-            if (lengthenEdges) {
-                for (Edge edge : ((Port) portComposition).getEdges()) {
-                    lengthenEdge(edge, (Rectangle) ((Port) portComposition).getShape(), shiftValue);
-                }
+            for (Edge edge : ((Port) portComposition).getEdges()) {
+                lengthenEdge(edge, (Rectangle) ((Port) portComposition).getShape(), shiftValue);
             }
             Rectangle currentShape = (Rectangle) ((Port)portComposition).getShape();
             currentShape.y = currentShape.getY() + shiftValue;
         } else if (portComposition instanceof PortGroup) {
             for (PortComposition member : ((PortGroup)portComposition).getPortCompositions()) {
-                shift(shiftValue, member, lengthenEdges);
+                shiftPort(shiftValue, member);
             }
         }
     }
@@ -646,10 +650,10 @@ public class DrawingPreparation {
         unionVertexShape.height += shiftNodeBy;
         unionVertexShape.y -= shiftNodeBy / 2.0;
         for (Port port : sugy.getOrders().getBottomPortOrder().get(dummyUnificationVertex)) {
-            shift(-shiftNodeBy / 2.0, port, true);
+            shiftPort(-shiftNodeBy / 2.0, port);
         }
         for (Port port : sugy.getOrders().getTopPortOrder().get(dummyUnificationVertex)) {
-            shift(shiftNodeBy / 2.0, port, true);
+            shiftPort(shiftNodeBy / 2.0, port);
         }
 
         //draw each original vertex
@@ -722,10 +726,10 @@ public class DrawingPreparation {
                 Rectangle deviceShape = (Rectangle) deviceVertex.getShape();
                 Rectangle portShape = (Rectangle) origPort.getShape();
                 if (deviceShape.y > portShape.y + portShape.height) {
-                    shift(deviceShape.y - portShape.height - portShape.y, origPort, true);
+                    shiftPort(deviceShape.y - portShape.height - portShape.y, origPort);
                 }
                 else if (deviceShape.y + deviceShape.height < portShape.y) {
-                    shift(deviceShape.y + portShape.height - portShape.y, origPort, true);
+                    shiftPort(deviceShape.y + portShape.height - portShape.y, origPort);
                 }
             }
         }
@@ -906,7 +910,7 @@ public class DrawingPreparation {
             if (!originalEdge.getPaths().isEmpty()) {
                 //TODO this was introduced to avoid doubling of edge paths. but ideally that should not be necessary
                 // (and this could even lead to new problems) -- so better fix edge-path insertion and edge-removal
-                // in DrawingPreparation
+                // in EdgeRouting and DrawingPreparation
                 originalEdge.removeAllPaths();
             }
         }
