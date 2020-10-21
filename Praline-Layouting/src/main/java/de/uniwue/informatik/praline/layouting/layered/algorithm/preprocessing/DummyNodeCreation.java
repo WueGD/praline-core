@@ -5,6 +5,8 @@ import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
 
 import java.util.*;
 
@@ -13,17 +15,20 @@ public class DummyNodeCreation {
     private SugiyamaLayouter sugy;
     private Map<Vertex, Integer> newRanks;
     private Map<Vertex, Edge> dummyNodesLongEdges;
+    private Map<Vertex, Edge> dummyNodesSelfLoops;
     private Map<Vertex, Vertex> dummyTurningNodes;
     private Map<Vertex, Vertex> nodeToLowerDummyTurningPoint;
     private Map<Vertex, Vertex> nodeToUpperDummyTurningPoint;
     private Map<Port, Port> correspondingPortsAtDummy;
     private Map<Edge, Edge> dummyEdge2RealEdge;
     private boolean[] usedRanks;
+    private SortingOrder orders;
 
     public DummyNodeCreation (SugiyamaLayouter sugy) {
         this.sugy = sugy;
         this.newRanks = new LinkedHashMap<>();
         this.dummyNodesLongEdges = new LinkedHashMap<>();
+        this.dummyNodesSelfLoops = new LinkedHashMap<>();
         this.dummyTurningNodes = new LinkedHashMap<>();
         this.nodeToLowerDummyTurningPoint = new LinkedHashMap<>();
         this.nodeToUpperDummyTurningPoint = new LinkedHashMap<>();
@@ -38,15 +43,20 @@ public class DummyNodeCreation {
      * @return
      *      Mapping of dummy vertices to edges
      */
-    public DummyCreationResult createDummyNodes () {
-        // create new ranks to have place for dummyNodesLongEdges by doubling all ranks
-        // dummyNodesLongEdges can then be placed in even ranks with rank 0 and rank maxRank = empty
+    public DummyCreationResult createDummyNodes (SortingOrder orders) {
+        this.orders = orders;
+
+        // assign ports to vertex sides for regular vertices
+        assignPortsToVertexSides(sugy.getGraph().getVertices());
+
+        // create new ranks to have place for dummyTurningNodes and dummyNodesSelfLoops by doubling all ranks
+        // they can then be placed in even ranks with rank 0 and rank maxRank = empty
         for (Vertex node : sugy.getGraph().getVertices()) {
             newRanks.put(node, ((sugy.getRank(node)*2)+1));
         }
         sugy.changeRanks(newRanks);
 
-        // initalise usedRanks
+        // initialize usedRanks
         int maxRank = sugy.getMaxRank();
         // usedRanks[r] is true if there is any node with rank r
         usedRanks = new boolean[maxRank + 2];
@@ -56,132 +66,11 @@ public class DummyNodeCreation {
             value = !value;
         }
 
-        // dummynodes for portGroups
-        for (Vertex node : new ArrayList<>(sugy.getGraph().getVertices())) {
-            if (sugy.isPlug(node)) {
-                LinkedList<Port> ports1 = new LinkedList();
-                LinkedList<Port> ports2 = new LinkedList();
-                for (PortComposition pc : node.getPortCompositions()) {
-                    if (pc instanceof PortGroup && ports1.isEmpty()) {
-                        PortUtils.getPortsRecursively(pc, ports1);
-                    } else if (pc instanceof PortGroup && ports2.isEmpty()) {
-                        PortUtils.getPortsRecursively(pc, ports2);
-                    } else {
-                        // something went wrong during SugiyamaLayouter.construct().handleVertexGroup()
-                    }
-                }
+        // dummy nodes for portGroups
+        createTurningDummyNodes();
 
-                // check whether they are connected up or down
-                LinkedHashSet<Edge> upEdges1 = new LinkedHashSet<>();
-                LinkedHashSet<Edge> downEdges1 = new LinkedHashSet<>();
-                LinkedHashSet<Edge> upEdges2 = new LinkedHashSet<>();
-                LinkedHashSet<Edge> downEdges2 = new LinkedHashSet<>();
-
-                for (Port port : ports1) {
-                    for (Edge edge : port.getEdges()) {
-                        if (sugy.getStartNode(edge).equals(node)) {
-                            // edge is directed upwards
-                            upEdges1.add(edge);
-                        } else {
-                            // edge is directed downwards
-                            downEdges1.add(edge);
-                        }
-                    }
-                }
-                for (Port port : ports2) {
-                    for (Edge edge : port.getEdges()) {
-                        if (sugy.getStartNode(edge).equals(node)) {
-                            // edge is directed upwards
-                            upEdges2.add(edge);
-                        } else {
-                            // edge is directed downwards
-                            downEdges2.add(edge);
-                        }
-                    }
-                }
-                // place portGroups so that more ports are on the right side
-                // create dummynodes for edges on wrong side
-                if ((upEdges1.size() - downEdges1.size()) > (upEdges2.size() - downEdges2.size())) {
-                    // portGroup1 will be placed on the upper side of the node due to more connections upwards
-                    // add dummynodes into an additional rank above the nodes rank
-                    for (Edge downEdge : downEdges1) {
-                        Vertex upperDummyTurningNode =
-                                getDummyTurningNodeForVertex(node, false, (newRanks.get(node) + 1));
-                        splitEdgeByTurningDummyNode(downEdge, upperDummyTurningNode);
-                        usedRanks[(newRanks.get(node) + 1)] = true;
-                    }
-                    // add dummynodes into an additional below the nodes rank
-                    for (Edge upEdge : upEdges2) {
-                        Vertex lowerDummyTurningNode =
-                                getDummyTurningNodeForVertex(node, true, (newRanks.get(node) - 1));
-                        splitEdgeByTurningDummyNode(upEdge, lowerDummyTurningNode);
-                        usedRanks[(newRanks.get(node) - 1)] = true;
-                    }
-                } else {
-                    // portGroup2 will be placed on the upper side of the node
-                    // add dummynodes into an additional below the nodes rank
-                    for (Edge upEdge : upEdges1) {
-                        Vertex lowerDummyTurningNode =
-                                getDummyTurningNodeForVertex(node, true, (newRanks.get(node) - 1));
-                        splitEdgeByTurningDummyNode(upEdge, lowerDummyTurningNode);
-                        usedRanks[(newRanks.get(node) - 1)] = true;
-                    }
-                    // add dummynodes into an additional rank above the nodes rank
-                    for (Edge downEdge : downEdges2) {
-                        Vertex upperDummyTurningNode =
-                                getDummyTurningNodeForVertex(node, false, (newRanks.get(node) + 1));
-                        splitEdgeByTurningDummyNode(downEdge, upperDummyTurningNode);
-                        usedRanks[(newRanks.get(node) + 1)] = true;
-                    }
-                }
-            } else {
-                // for each portGroup
-                for (PortComposition pc : node.getPortCompositions()) {
-                    if (pc instanceof PortGroup) {
-                        // find all ports
-                        LinkedList<Port> ports = new LinkedList();
-                        for (PortComposition lowerPc : ((PortGroup) pc).getPortCompositions()) {
-                            PortUtils.getPortsRecursively(lowerPc, ports);
-                        }
-                        // check whether they are connected up or down
-                        LinkedHashSet<Edge> upEdges = new LinkedHashSet<>();
-                        LinkedHashSet<Edge> downEdges = new LinkedHashSet<>();
-                        for (Port port : ports) {
-                            for (Edge edge : port.getEdges()) {
-                                if (sugy.getStartNode(edge).equals(node)) {
-                                    // edge is directed upwards
-                                    upEdges.add(edge);
-                                } else {
-                                    // edge is directed downwards
-                                    downEdges.add(edge);
-                                }
-                            }
-                        }
-                        // place portGroup so that more ports are on the right side
-                        // create dummynodes for edges on wrong side
-                        if (downEdges.size() < upEdges.size()) {
-                            // portGroup will be placed on the upper side of the node due to more connections upwards
-                            // add dummynodes into an additional rank above the nodes rank
-                            for (Edge downEdge : downEdges) {
-                                Vertex upperDummyTurningNode =
-                                        getDummyTurningNodeForVertex(node, false, (newRanks.get(node) + 1));
-                                splitEdgeByTurningDummyNode(downEdge, upperDummyTurningNode);
-                                usedRanks[(newRanks.get(node) + 1)] = true;
-                            }
-                        } else {
-                            // portGroup will be placed on the lower side of the node due to more connections downwards
-                            // add dummynodes into an additional layer below the nodes rank
-                            for (Edge upEdge : upEdges) {
-                                Vertex lowerDummyTurningNode =
-                                        getDummyTurningNodeForVertex(node, true, (newRanks.get(node) - 1));
-                                splitEdgeByTurningDummyNode(upEdge, lowerDummyTurningNode);
-                                usedRanks[(newRanks.get(node) - 1)] = true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // dummy nodes as turning points for self loops
+        createSelfLoopDummyNodes();
 
         // delete empty ranks
         sugy.changeRanks(newRanks);
@@ -196,17 +85,199 @@ public class DummyNodeCreation {
             }
         }
 
-        // create dummynodes for each edge passing a layer
+        // create dummy nodes for each edge passing a layer
+        createDummyNodesForEdges();
+
+
+        // assign ports to vertex sides for dummy vertices
+        assignPortsToVertexSides(dummyTurningNodes.keySet());
+        assignPortsToVertexSides(dummyNodesSelfLoops.keySet());
+        assignPortsToVertexSides(dummyNodesLongEdges.keySet());
+
+        sugy.changeRanks(newRanks);
+
+        return new DummyCreationResult(dummyNodesLongEdges, dummyNodesSelfLoops, dummyTurningNodes,
+                nodeToLowerDummyTurningPoint, nodeToUpperDummyTurningPoint, correspondingPortsAtDummy,
+                dummyEdge2RealEdge);
+    }
+
+    private void assignPortsToVertexSides(Collection<Vertex> vertices) {
+        for (Vertex node : vertices) {
+            List<PortComposition> portCompositionsTop = new ArrayList<>();
+            List<PortComposition> portCompositionsBottom = new ArrayList<>();
+            Set<PortComposition> freePortCompositions = new LinkedHashSet<>();
+            for (PortComposition portComposition : node.getPortCompositions()) {
+                //for each port composition (usually a port group), compute a score that equals the number of edges
+                // going upwards minus the number of edges going downwards. Depending on the sign of the score, we
+                // will assign the port composition
+                int score = countEdgesUpwardsMinusEdgesDownwards(portComposition);
+                if (score < 0) {
+                    portCompositionsBottom.add(portComposition);
+                }
+                else if (score > 0) {
+                    portCompositionsTop.add(portComposition);
+                } else {
+                    freePortCompositions.add(portComposition);
+                }
+            }
+            // handle PortCompositions with no edges by adding them to the side with fewer ports
+            for (PortComposition portComposition : freePortCompositions) {
+                int portsTop = PortUtils.countPorts(portCompositionsTop);
+                int portsBottom = PortUtils.countPorts(portCompositionsBottom);
+                if (portsTop < portsBottom || (portsTop == portsBottom && Constants.random.nextDouble() < 0.5)) {
+                    portCompositionsTop.add(portComposition);
+                } else {
+                    portCompositionsBottom.add(portComposition);
+                }
+            }
+            // special case: if we have a plug, there cannot be both port groups on the same side
+            if (sugy.isPlug(node)) {
+                repairPortSidesOfPlug(portCompositionsTop, portCompositionsBottom);
+            }
+
+            orders.getTopPortOrder().put(node, PortUtils.getPortsRecursively(portCompositionsTop));
+            orders.getBottomPortOrder().put(node, PortUtils.getPortsRecursively(portCompositionsBottom));
+        }
+    }
+
+    private void repairPortSidesOfPlug(List<PortComposition> portCompositionsTop,
+                                       List<PortComposition> portCompositionsBottom) {
+        if (portCompositionsBottom.isEmpty()) {
+            int lowestScore = Integer.MAX_VALUE;
+            PortComposition pcLowestScore = null;
+            for (PortComposition portComposition : portCompositionsTop) {
+                int score = countEdgesUpwardsMinusEdgesDownwards(portComposition);
+                if (score < lowestScore) {
+                    lowestScore = score;
+                    pcLowestScore = portComposition;
+                }
+            }
+            portCompositionsTop.remove(pcLowestScore);
+            portCompositionsBottom.add(pcLowestScore);
+        }
+        if (portCompositionsTop.isEmpty()) {
+            int highestScore = Integer.MIN_VALUE;
+            PortComposition pcHighestScore = null;
+            for (PortComposition portComposition : portCompositionsBottom) {
+                int score = countEdgesUpwardsMinusEdgesDownwards(portComposition);
+                if (score > highestScore) {
+                    highestScore = score;
+                    pcHighestScore = portComposition;
+                }
+            }
+            portCompositionsBottom.remove(pcHighestScore);
+            portCompositionsTop.add(pcHighestScore);
+        }
+    }
+
+    private int countEdgesUpwardsMinusEdgesDownwards(PortComposition portComposition) {
+        Vertex node = portComposition.getVertex();
+        int score = 0;
+        if (portComposition instanceof Port) {
+            for (Edge edge : ((Port) portComposition).getEdges()) {
+                score += sugy.getStartNode(edge).equals(node) ? 1 : -1;
+            }
+        }
+        else if (portComposition instanceof PortGroup) {
+            for (PortComposition subPortComposition : ((PortGroup) portComposition).getPortCompositions()) {
+                score += countEdgesUpwardsMinusEdgesDownwards(subPortComposition);
+            }
+        }
+        return score;
+    }
+
+    private void createSelfLoopDummyNodes() {
+        for (Edge loopEdge : sugy.getLoopEdges()) {
+            //we have split the hyperedges -> there are precisely 2 ports per edge
+            List<Port> ports = sugy.getPortsOfLoopEdge(loopEdge);
+            Vertex vertex = ports.get(0).getVertex();
+            int vertexRank = sugy.getRank(vertex);
+            boolean port0TopSide = orders.getTopPortOrder().get(vertex).contains(ports.get(0));
+            boolean port1TopSide = orders.getTopPortOrder().get(vertex).contains(ports.get(1));
+
+            Port dummyPort0 = new Port();
+            Port dummyPort1 = new Port();
+            Vertex dummy = new Vertex(Arrays.asList(dummyPort0, dummyPort1), Collections.singleton(new TextLabel(
+                            "selfLoopDummyFor_" + loopEdge.getLabelManager().getMainLabel().toString())));
+
+            // add everything to graph and rank dummy
+            sugy.getGraph().addVertex(dummy);
+            newRanks.put(dummy, port0TopSide ? vertexRank + 1 : vertexRank - 1);
+            dummyNodesSelfLoops.put(dummy, loopEdge);
+
+            //add new connections
+            int counter = 0;
+            Edge dummyEdge0 = new Edge(Arrays.asList(ports.get(0), dummyPort0), Collections.singleton(new TextLabel(
+                    "selfLoopEdge_" + loopEdge.getLabelManager().getMainLabel().toString() + "_#" + counter++)));
+            Edge dummyEdge1 = new Edge(Arrays.asList(ports.get(1), dummyPort1), Collections.singleton(new TextLabel(
+                    "selfLoopEdge_" + loopEdge.getLabelManager().getMainLabel().toString() + "_#" + counter++)));
+            sugy.getGraph().addEdge(dummyEdge0);
+            sugy.getGraph().addEdge(dummyEdge1);
+            sugy.assignDirection(dummyEdge0);
+            sugy.assignDirection(dummyEdge1);
+            sugy.getDummyEdge2RealEdge().put(dummyEdge0, loopEdge);
+            sugy.getDummyEdge2RealEdge().put(dummyEdge1, loopEdge);
+
+            //if the ports are on different sides, we need more than one dummy node to route the self loop
+            if (port0TopSide != port1TopSide) {
+                Port dummyPort2 = new Port();
+                Port dummyPort3 = new Port();
+                Vertex additionalDummy = new Vertex(Arrays.asList(dummyPort2, dummyPort3),
+                        Collections.singleton(new TextLabel(
+                                "additionalSelfLoopDummyFor_" + loopEdge.getLabelManager().getMainLabel().toString())));
+
+                // add everything to graph and rank dummy
+                sugy.getGraph().addVertex(additionalDummy);
+                newRanks.put(additionalDummy, port1TopSide ? vertexRank + 1 : vertexRank - 1);
+                dummyNodesSelfLoops.put(additionalDummy, loopEdge);
+
+                //change and add connections
+                dummyEdge1.removePort(ports.get(1));
+                dummyEdge1.addPort(dummyPort2);
+                Edge dummyEdge2 = new Edge(Arrays.asList(ports.get(1), dummyPort3), Collections.singleton(new TextLabel(
+                        "selfLoopEdge_" + loopEdge.getLabelManager().getMainLabel().toString() + "_#" + counter++)));
+                sugy.getGraph().addEdge(dummyEdge2);
+                sugy.assignDirection(dummyEdge2);
+                sugy.getDummyEdge2RealEdge().put(dummyEdge2, loopEdge);
+            }
+        }
+    }
+
+    private void createDummyNodesForEdges() {
         for (Edge edge : new ArrayList<>(sugy.getGraph().getEdges())) {
-            int dist = (newRanks.get(sugy.getEndNode(edge))) - (newRanks.get(sugy.getStartNode(edge)));
+            int dist = 0;
+            dist = (newRanks.get(sugy.getEndNode(edge))) - (newRanks.get(sugy.getStartNode(edge)));
             if (dist > 1) {
                 createAllDummyNodesForEdge(edge);
             }
         }
+    }
 
-        sugy.changeRanks(newRanks);
-        return new DummyCreationResult(dummyNodesLongEdges, dummyTurningNodes, nodeToLowerDummyTurningPoint,
-                nodeToUpperDummyTurningPoint, correspondingPortsAtDummy, dummyEdge2RealEdge);
+    private void createTurningDummyNodes() {
+        for (Vertex node : new ArrayList<>(sugy.getGraph().getVertices())) {
+            for (Port bottomPort : orders.getBottomPortOrder().get(node)) {
+                for (Edge edge : bottomPort.getEdges()) {
+                    //check if edge points upwards -> if yes insert turning dummy
+                    if (sugy.getStartNode(edge).equals(node)) {
+                        Vertex lowerDummyTurningNode =
+                                getDummyTurningNodeForVertex(node, true, (newRanks.get(node) - 1));
+                        splitEdgeByTurningDummyNode(edge, lowerDummyTurningNode);
+                        usedRanks[(newRanks.get(node) - 1)] = true;
+                    }
+                }
+            }
+            for (Port topPort : orders.getTopPortOrder().get(node)) {
+                for (Edge edge : topPort.getEdges()) {
+                    //check if edge points downwards -> if yes insert turning dummy
+                    if (!sugy.getStartNode(edge).equals(node)) {
+                        Vertex upperDummyTurningNode =
+                                getDummyTurningNodeForVertex(node, false, (newRanks.get(node) + 1));
+                        splitEdgeByTurningDummyNode(edge, upperDummyTurningNode);
+                        usedRanks[(newRanks.get(node) + 1)] = true;
+                    }
+                }
+            }
+        }
     }
 
     private Vertex getDummyTurningNodeForVertex(Vertex vertex, boolean lowerTurningPoint, int rank) {
@@ -275,64 +346,6 @@ public class DummyNodeCreation {
         sugy.getGraph().addEdge(e2);
 
         // delete replaced edge
-        edge.removePort(edge.getPorts().get(1));
-        edge.removePort(edge.getPorts().get(0));
-        sugy.getGraph().removeEdge(edge);
-        sugy.removeDirection(edge);
-
-        // assign directions to dummyedges
-        if (newRanks.get(dummy) > newRanks.get(portsFor1.get(1).getVertex())) {
-            sugy.assignDirection(e1, portsFor1.get(1).getVertex(), dummy);
-            sugy.assignDirection(e2, portsFor2.get(1).getVertex(), dummy);
-        } else {
-            sugy.assignDirection(e1, dummy, portsFor1.get(1).getVertex());
-            sugy.assignDirection(e2, dummy, portsFor2.get(1).getVertex());
-        }
-    }
-
-    private void createDummyNodeForEdgeInLayer (Edge edge, int rank) {
-        // create dummyNode and ID
-        Vertex dummy = new Vertex();
-        Label idDummy = new TextLabel("Dummy_for_" + edge.getLabelManager().getMainLabel().toString());
-        dummy.getLabelManager().addLabel(idDummy);
-        dummy.getLabelManager().setMainLabel(idDummy);
-
-        // create new Ports and Edges to replace edge
-        LinkedList<Port> portsFor1 = new LinkedList<>();
-        LinkedList<Port> portsFor2 = new LinkedList<>();
-        Port p1 = new Port();
-        Port p2 = new Port();
-        Label idp1 = new TextLabel("DummyPort_to_" + edge.getPorts().get(0).getLabelManager().getMainLabel().toString());
-        Label idp2 = new TextLabel("DummyPort_to_" + edge.getPorts().get(1).getLabelManager().getMainLabel().toString());
-        p1.getLabelManager().addLabel(idp1);
-        p2.getLabelManager().addLabel(idp2);
-        p1.getLabelManager().setMainLabel(idp1);
-        p2.getLabelManager().setMainLabel(idp2);
-        dummy.addPortComposition(p1);
-        dummy.addPortComposition(p2);
-        portsFor1.add(p1);
-        portsFor2.add(p2);
-        portsFor1.add(edge.getPorts().get(0));
-        portsFor2.add(edge.getPorts().get(1));
-        Edge e1 = new Edge(portsFor1);
-        Edge e2 = new Edge(portsFor2);
-        Label ide1 = new TextLabel("DummyEdge_to_" + edge.getPorts().get(0).getLabelManager().getMainLabel().toString());
-        Label ide2 = new TextLabel("DummyEdge_to_" + edge.getPorts().get(1).getLabelManager().getMainLabel().toString());
-        e1.getLabelManager().addLabel(ide1);
-        e2.getLabelManager().addLabel(ide2);
-        e1.getLabelManager().setMainLabel(ide1);
-        e2.getLabelManager().setMainLabel(ide2);
-        dummyEdge2RealEdge.put(e1, edge);
-        dummyEdge2RealEdge.put(e2, edge);
-
-        // add everything to graph and rank dummy
-        sugy.getGraph().addVertex(dummy);
-        sugy.getGraph().addEdge(e1);
-        sugy.getGraph().addEdge(e2);
-        newRanks.put(dummy,rank);
-
-        // delete replaced edge
-        dummyNodesLongEdges.put(dummy,edge);
         edge.removePort(edge.getPorts().get(1));
         edge.removePort(edge.getPorts().get(0));
         sugy.getGraph().removeEdge(edge);

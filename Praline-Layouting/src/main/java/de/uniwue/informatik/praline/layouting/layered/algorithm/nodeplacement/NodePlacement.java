@@ -9,7 +9,7 @@ import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CMResult;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 
 import java.util.*;
@@ -19,7 +19,7 @@ public class NodePlacement {
     private SugiyamaLayouter sugy;
     private DrawingInformation drawInfo;
     private List<List<Port>> structure;
-    private CMResult cmResult;
+    private SortingOrder sortingOrder;
     private List<Double> heightOfLayers;
     private Vertex dummyVertex;
     private double layerHeight;
@@ -31,9 +31,9 @@ public class NodePlacement {
     private Map<Port, PortValues> portValues;
     private double delta;
 
-    public NodePlacement (SugiyamaLayouter sugy, CMResult cmResult, DrawingInformation drawingInformation) {
+    public NodePlacement (SugiyamaLayouter sugy, SortingOrder sortingOrder, DrawingInformation drawingInformation) {
         this.sugy = sugy;
-        this.cmResult = cmResult;
+        this.sortingOrder = sortingOrder;
         this.drawInfo = drawingInformation;
     }
 
@@ -126,14 +126,13 @@ public class NodePlacement {
 
     private void initialiseStructure() {
         int layer = -1;
-        for (List<Vertex> rankNodes : cmResult.getNodeOrder()) {
+        for (List<Vertex> rankNodes : sortingOrder.getNodeOrder()) {
             ++layer;
             heightOfLayers.add(0.0);
             for (Vertex node : rankNodes) {
                 heightOfLayers.set(layer, Math.max(heightOfLayers.get(layer),
                         sugy.isDummy(node) ? 0.0 : sugy.getNodeName(node).length));
             }
-
             List<Port> rankBottomPorts = new ArrayList<>();
             List<Port> rankTopPorts = new ArrayList<>();
             // Map<Port, Integer> rankBottomPortsMap = new LinkedHashMap<>();
@@ -141,7 +140,7 @@ public class NodePlacement {
             addDividingNodePair(rankBottomPorts, rankTopPorts);
             // crate a List with all bottomPorts and one with all topPorts
             for (Vertex node : rankNodes) {
-                for (Port port : cmResult.getBottomPortOrder().get(node)) {
+                for (Port port : sortingOrder.getBottomPortOrder().get(node)) {
                     // rankBottomPortsMap.put(port, rankBottomPorts.size());
                     rankBottomPorts.add(port);
 
@@ -153,16 +152,16 @@ public class NodePlacement {
                         dummyEdges.add(new Edge(ports));
                     }
 
-                    // add new Edge if DummyNode
-                    if (sugy.isDummyNodeOfLongEdge(node) && cmResult.getBottomPortOrder().get(node).size() == 1) {
+                    // add new Edge if dummy node of a long edge
+                    if (sugy.isDummyNodeOfLongEdge(node) && sortingOrder.getBottomPortOrder().get(node).size() == 1) {
                         List<Port> ports = new ArrayList<>();
                         ports.add(port);
-                        ports.add(cmResult.getTopPortOrder().get(node).get(0));
+                        ports.add(sortingOrder.getTopPortOrder().get(node).get(0));
                         dummyEdges.add(new Edge(ports));
                     }
 
                 }
-                for (Port port : cmResult.getTopPortOrder().get(node)) {
+                for (Port port : sortingOrder.getTopPortOrder().get(node)) {
                     // rankTopPortsMap.put(port, rankTopPorts.size());
                     rankTopPorts.add(port);
                 }
@@ -500,7 +499,7 @@ public class NodePlacement {
                 Port port = structure.get(layer).get(pos);
                 if (port.getVertex().equals(dummyVertex)) {
                     // one node done - create Rectangle
-                    Vertex nodeInTheGraph = cmResult.getNodeOrder().get(layer / 2).get(nodePosition++);
+                    Vertex nodeInTheGraph = sortingOrder.getNodeOrder().get(layer / 2).get(nodePosition++);
                     double width = (portValues.get(port).getX() - (delta / 2.0)) - xPos;
                     double height = layerHeight * heightOfLayers.get(layer / 2) + 2.0 * drawInfo.getBorderWidth();
                     Rectangle nodeShape = new Rectangle(xPos, yPos, width, height, null);

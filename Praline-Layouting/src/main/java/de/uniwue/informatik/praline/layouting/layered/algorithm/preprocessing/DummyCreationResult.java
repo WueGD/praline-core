@@ -8,17 +8,19 @@ import java.util.Map;
 
 public class DummyCreationResult {
     private Map<Vertex, Edge> dummyNodesLongEdges;
+    private Map<Vertex, Edge> dummyNodesSelfLoops;
     private Map<Vertex, Vertex> dummyTurningNodes;
     private Map<Vertex, Vertex> nodeToLowerDummyTurningPoint;
     private Map<Vertex, Vertex> nodeToUpperDummyTurningPoint;
     private Map<Port, Port> correspondingPortsAtDummy;
     private Map<Edge, Edge> dummyEdge2RealEdge;
 
-    public DummyCreationResult(Map<Vertex, Edge> dummyNodesLongEdges, Map<Vertex, Vertex> dummyTurningNodes,
-                               Map<Vertex, Vertex> nodeToLowerDummyTurningPoint,
+    public DummyCreationResult(Map<Vertex, Edge> dummyNodesLongEdges, Map<Vertex, Edge> dummyNodesSelfLoops,
+                               Map<Vertex, Vertex> dummyTurningNodes, Map<Vertex, Vertex> nodeToLowerDummyTurningPoint,
                                Map<Vertex, Vertex> nodeToUpperDummyTurningPoint,
                                Map<Port, Port> correspondingPortsAtDummy, Map<Edge, Edge> dummyEdge2RealEdge) {
         this.dummyNodesLongEdges = dummyNodesLongEdges;
+        this.dummyNodesSelfLoops = dummyNodesSelfLoops;
         this.dummyTurningNodes = dummyTurningNodes;
         this.nodeToLowerDummyTurningPoint = nodeToLowerDummyTurningPoint;
         this.nodeToUpperDummyTurningPoint = nodeToUpperDummyTurningPoint;
@@ -28,6 +30,10 @@ public class DummyCreationResult {
 
     public Map<Vertex, Edge> getDummyNodesLongEdges() {
         return dummyNodesLongEdges;
+    }
+
+    public Map<Vertex, Edge> getDummyNodesSelfLoops() {
+        return dummyNodesSelfLoops;
     }
 
     public Map<Vertex, Vertex> getDummyTurningNodes() {

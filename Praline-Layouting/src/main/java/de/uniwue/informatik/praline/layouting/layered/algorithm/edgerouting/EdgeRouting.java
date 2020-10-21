@@ -4,7 +4,7 @@ import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CMResult;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 
 import java.awt.geom.Point2D;
@@ -14,24 +14,24 @@ public class EdgeRouting {
 
     private SugiyamaLayouter sugy;
     private DrawingInformation drawInfo;
-    private CMResult cmResult;
+    private SortingOrder sortingOrder;
 
-    public EdgeRouting (SugiyamaLayouter sugy, CMResult cmResult, DrawingInformation drawingInformation) {
+    public EdgeRouting (SugiyamaLayouter sugy, SortingOrder sortingOrder, DrawingInformation drawingInformation) {
         this.sugy = sugy;
         this.drawInfo = drawingInformation;
-        this.cmResult = cmResult;
+        this.sortingOrder = sortingOrder;
     }
 
     public void routeEdges () {
-        initialise(cmResult);
+        initialise(sortingOrder);
         double shiftUpValue = 0;
         // for all ranks
-        for (int rank = 0; rank < (cmResult.getNodeOrder().size() - 1); rank++) {
+        for (int rank = 0; rank < (sortingOrder.getNodeOrder().size() - 1); rank++) {
 
             double level0 = -1; // reference value for calculating the positions of the horizontal edge parts
-            for (Vertex node : cmResult.getNodeOrder().get(rank)) {
-                if (!cmResult.getTopPortOrder().get(node).isEmpty()) {
-                    level0 = cmResult.getTopPortOrder().get(node).get(0).getShape().getYPosition()
+            for (Vertex node : sortingOrder.getNodeOrder().get(rank)) {
+                if (!sortingOrder.getTopPortOrder().get(node).isEmpty()) {
+                    level0 = sortingOrder.getTopPortOrder().get(node).get(0).getShape().getYPosition()
                             + drawInfo.getPortHeight() + (drawInfo.getDistanceBetweenLayers() / 2);
                     break;
                 }
@@ -43,11 +43,11 @@ public class EdgeRouting {
             Map<Edge, Integer> edgeToLayerTop = new LinkedHashMap<>();
 
             // handle TurningDummys
-            handleDummyLayer(cmResult.getNodeOrder().get(rank + 1), false, edgeToLayer, outlineContourBB);
-            handleDummyLayer(cmResult.getNodeOrder().get(rank), true, edgeToLayerTop, outlineContourTT);
+            handleDummyLayer(sortingOrder.getNodeOrder().get(rank + 1), false, edgeToLayer, outlineContourBB);
+            handleDummyLayer(sortingOrder.getNodeOrder().get(rank), true, edgeToLayerTop, outlineContourTT);
 
             // remove dummy turning points of this layer
-            for (Vertex node : cmResult.getNodeOrder().get(rank)) {
+            for (Vertex node : sortingOrder.getNodeOrder().get(rank)) {
                 if (sugy.isTurningPointDummy(node)) {
                     sugy.getGraph().removeVertex(node);
                 }
@@ -87,10 +87,10 @@ public class EdgeRouting {
         List<Double> activeCandidates = new ArrayList<>();
         for (Vertex node : vertices) {
             if (sugy.isTurningPointDummy(node)) {
-                List<Port> ports = (top) ? cmResult.getTopPortOrder().get(node) : cmResult.getBottomPortOrder().get(node);
+                List<Port> ports = (top) ? sortingOrder.getTopPortOrder().get(node) : sortingOrder.getBottomPortOrder().get(node);
                 if (!ports.isEmpty()) {
                     Vertex v = sugy.getVertexOfTurningDummy(node);
-                    List<Port> portOrder = (top) ? cmResult.getBottomPortOrder().get(v) : cmResult.getTopPortOrder().get(v);
+                    List<Port> portOrder = (top) ? sortingOrder.getBottomPortOrder().get(v) : sortingOrder.getTopPortOrder().get(v);
                     handleTurningDummy(node, portOrder, edgeToLayer, outlineContour, activeCandidates, lastPositions);
                 }
             }
@@ -247,14 +247,14 @@ public class EdgeRouting {
         int[] position = {0};
 
         // for all nodes
-        for (Vertex node : cmResult.getNodeOrder().get(rank)) {
+        for (Vertex node : sortingOrder.getNodeOrder().get(rank)) {
             // if it is no TurningDummy
             if (!(sugy.isTurningPointDummy(node))) {
                 // for all ports
-                for (Port bottomPort : cmResult.getTopPortOrder().get(node)) {
+                for (Port bottomPort : sortingOrder.getTopPortOrder().get(node)) {
                     //if it has an edge
                     if (!bottomPort.getEdges().isEmpty()) {
-                        // cmResult is build with respect to nodes so the topPortOrder are Ports located on the top of the node
+                        // sortingOrder is build with respect to nodes so the topPortOrder are Ports located on the top of the node
                         // here we work with respect to Edges so a Port on top of a node is a bottomPort for an edge
                         Edge edge = bottomPort.getEdges().get(0);
                         Port topPort = edge.getPorts().get(0);
@@ -386,11 +386,11 @@ public class EdgeRouting {
 
         int[] position = {0};
         // for all nodes
-        for (Vertex node : cmResult.getNodeOrder().get(rank + 1)) {
+        for (Vertex node : sortingOrder.getNodeOrder().get(rank + 1)) {
             // if it is no TurningDummy
             if (!(sugy.isTurningPointDummy(node))) {
                 // for all ports
-                for (Port topPort : cmResult.getBottomPortOrder().get(node)) {
+                for (Port topPort : sortingOrder.getBottomPortOrder().get(node)) {
                     //if it has an edge
                     if (!topPort.getEdges().isEmpty()) {
                         Edge edge = topPort.getEdges().get(0);
@@ -519,13 +519,13 @@ public class EdgeRouting {
         }
     }
 
-    private void initialise (CMResult cmResult) {
-        this.cmResult = cmResult;
+    private void initialise (SortingOrder sortingOrder) {
+        this.sortingOrder = sortingOrder;
     }
 
     // shift up all nodes of rank rank with their ports
     private void shiftUp (double shiftUpValue, int rank) {
-        for (Vertex node : cmResult.getNodeOrder().get(rank)) {
+        for (Vertex node : sortingOrder.getNodeOrder().get(rank)) {
             Rectangle currentShape = (Rectangle) node.getShape();
             Rectangle newShape = new Rectangle(currentShape.getX(), (currentShape.getY() + shiftUpValue), currentShape.getWidth(), currentShape.getHeight(), currentShape.getColor());
             node.setShape(newShape);

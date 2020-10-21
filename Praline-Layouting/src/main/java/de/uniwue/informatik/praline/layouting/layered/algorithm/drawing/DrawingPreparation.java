@@ -7,7 +7,7 @@ import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CMResult;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.ImplicitCharacteristics;
 
@@ -19,7 +19,7 @@ public class DrawingPreparation {
 
     private SugiyamaLayouter sugy;
     private DrawingInformation drawInfo;
-    private CMResult cmResult;
+    private SortingOrder sortingOrder;
     private Map<Vertex, Set<Port>> dummyPortsForLabelPadding;
     private double delta;
     private Map<Integer, Double> layer2shiftForUnionNodes;
@@ -28,18 +28,18 @@ public class DrawingPreparation {
         this.sugy = sugy;
     }
 
-    private void initialise(DrawingInformation drawInfo, CMResult cmResult,
+    private void initialise(DrawingInformation drawInfo, SortingOrder sortingOrder,
                             Map<Vertex, Set<Port>> dummyPortsForLabelPadding) {
         this.drawInfo = drawInfo;
         this.delta = Math.max(drawInfo.getEdgeDistanceHorizontal(), drawInfo.getPortWidth() + drawInfo.getPortSpacing());
-        this.cmResult = cmResult;
+        this.sortingOrder = sortingOrder;
         this.dummyPortsForLabelPadding = dummyPortsForLabelPadding;
         this.layer2shiftForUnionNodes = new LinkedHashMap<>();
     }
 
-    public void prepareDrawing(DrawingInformation drawInfo, CMResult cmResult,
+    public void prepareDrawing(DrawingInformation drawInfo, SortingOrder sortingOrder,
                                Map<Vertex, Set<Port>> dummyPortsForLabelPadding) {
-        initialise(drawInfo, cmResult, dummyPortsForLabelPadding);
+        initialise(drawInfo, sortingOrder, dummyPortsForLabelPadding);
         // do path for edges
         doPathForEdges();
         // adjust port shapes
@@ -350,20 +350,20 @@ public class DrawingPreparation {
 
     // shift all nodes of rank rank with their ports and all edgePaths to nodes below
     private void shift (double shiftValue, int rank, double shiftValueEdges, Set<Path> pathsAlreadyShifted) {
-        for (Vertex node : cmResult.getNodeOrder().get(rank)) {
+        for (Vertex node : sortingOrder.getNodeOrder().get(rank)) {
             Rectangle currentShape = (Rectangle) node.getShape();
             currentShape.y = currentShape.getY() + shiftValue;
             //shift top or bottom side first, such that no new overlaps occur
             List<List<Port>> portsToBeShifted = shiftValue > 0 ?
-                    Arrays.asList(cmResult.getTopPortOrder().get(node), cmResult.getBottomPortOrder().get(node)) :
-                    Arrays.asList(cmResult.getBottomPortOrder().get(node), cmResult.getTopPortOrder().get(node));
+                    Arrays.asList(sortingOrder.getTopPortOrder().get(node), sortingOrder.getBottomPortOrder().get(node)) :
+                    Arrays.asList(sortingOrder.getBottomPortOrder().get(node), sortingOrder.getTopPortOrder().get(node));
             for (List<Port> ports : portsToBeShifted) {
                 for (Port port : ports) {
                     shiftPort(shiftValue, port);
                 }
             }
             // shift edgePaths on the top side ports
-            for (Port topPort : cmResult.getTopPortOrder().get(node)) {
+            for (Port topPort : sortingOrder.getTopPortOrder().get(node)) {
                 for (Edge edge : topPort.getEdges()) {
                     shiftInnerPartOfEdge(shiftValueEdges, edge, pathsAlreadyShifted);
                 }
@@ -371,8 +371,8 @@ public class DrawingPreparation {
         }
         // shift also edgePaths on the bottom sides one layer above if it has not been shifted
         if (rank < sugy.getMaxRank()) {
-            for (Vertex node : cmResult.getNodeOrder().get(rank + 1)) {
-                for (Port bottomPort : cmResult.getBottomPortOrder().get(node)) {
+            for (Vertex node : sortingOrder.getNodeOrder().get(rank + 1)) {
+                for (Port bottomPort : sortingOrder.getBottomPortOrder().get(node)) {
                     for (Edge edge : bottomPort.getEdges()) {
                         shiftInnerPartOfEdge(shiftValueEdges, edge, pathsAlreadyShifted);
                     }
@@ -678,23 +678,23 @@ public class DrawingPreparation {
                             (maxX.get(originalVertex) + minX.get(originalVertices.get(j + 1))) / 2.0;
                     originalVertexShape.width = endXPos - xPos;
                     xPos = endXPos;
-                    int indexUnionVertex = cmResult.getNodeOrder().get(layer).indexOf(dummyUnificationVertex);
+                    int indexUnionVertex = sortingOrder.getNodeOrder().get(layer).indexOf(dummyUnificationVertex);
                     if (originalVertex != dummyDeviceRepresenter) {
                         sugy.getGraph().addVertex(originalVertex);
-                        cmResult.getNodeOrder().get(layer).add(indexUnionVertex, originalVertex);
-                        cmResult.getBottomPortOrder().put(originalVertex, new ArrayList<>());
-                        cmResult.getTopPortOrder().put(originalVertex, new ArrayList<>());
+                        sortingOrder.getNodeOrder().get(layer).add(indexUnionVertex, originalVertex);
+                        sortingOrder.getBottomPortOrder().put(originalVertex, new ArrayList<>());
+                        sortingOrder.getTopPortOrder().put(originalVertex, new ArrayList<>());
                     }
                 }
                 ++yShiftMultiplier;
             }
         }
         //transfer shape of the replace ports to the original ports
-        Map<Vertex, List<Port>> bottomPortOrder = cmResult.getBottomPortOrder();
+        Map<Vertex, List<Port>> bottomPortOrder = sortingOrder.getBottomPortOrder();
         for (Port replacePort : bottomPortOrder.get(dummyUnificationVertex)) {
             transferPortProperties(deviceVertex, bottomPortOrder, replacePort);
         }
-        Map<Vertex, List<Port>> topPortOrder = cmResult.getTopPortOrder();
+        Map<Vertex, List<Port>> topPortOrder = sortingOrder.getTopPortOrder();
         for (Port replacePort : topPortOrder.get(dummyUnificationVertex)) {
             transferPortProperties(deviceVertex, topPortOrder, replacePort);
         }

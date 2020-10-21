@@ -3,6 +3,7 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreducti
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.ConnectedComponentClusterer;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 import edu.uci.ics.jung.graph.util.Pair;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
@@ -25,9 +26,7 @@ public class CrossingMinimization2 {
     public static final boolean DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX = true;
 
     private SugiyamaLayouter sugy;
-    private List<List<Vertex>> currentNodeOrder;
-    private Map<Vertex, List<Port>> currentTopPortOrder;
-    private Map<Vertex, List<Port>> currentBottomPortOrder;
+    private SortingOrder orders;
     private LinkedHashSet<Vertex> adjacentToDummyTurningPoints;
     private LinkedHashMap<Vertex, SortingNode> vertex2sortingNode;
     private LinkedHashMap<Port, SortingNode> port2SortingNode;
@@ -42,22 +41,26 @@ public class CrossingMinimization2 {
         this.sugy = sugy;
     }
 
-    public CMResult layerSweepWithBarycenterHeuristic (CrossingMinimizationMethod method) {
-        return layerSweepWithBarycenterHeuristic(null, method,
+    public SortingOrder layerSweepWithBarycenterHeuristic (CrossingMinimizationMethod method, SortingOrder orders) {
+        return layerSweepWithBarycenterHeuristic(null, method, orders,
                 DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE,
                 DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX);
     }
 
-    public CMResult layerSweepWithBarycenterHeuristic (List<List<Vertex>> currentNodeOrderInput,
-                                                       CrossingMinimizationMethod method) {
-        return layerSweepWithBarycenterHeuristic(currentNodeOrderInput, method,
+    public SortingOrder layerSweepWithBarycenterHeuristic (List<List<Vertex>> currentNodeOrderInput,
+                                                           CrossingMinimizationMethod method, SortingOrder orders) {
+        return layerSweepWithBarycenterHeuristic(currentNodeOrderInput, method, orders,
                 DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE,
                 DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX);
     }
-    public CMResult layerSweepWithBarycenterHeuristic (List<List<Vertex>> currentNodeOrderInput,
-                                                       CrossingMinimizationMethod method,
-                                                       boolean movePortsAdjToTurningDummiesToTheOutside,
-                                                       boolean placeTurningDummiesNextToTheirVertex) {
+
+    public SortingOrder layerSweepWithBarycenterHeuristic (List<List<Vertex>> currentNodeOrderInput,
+                                                           CrossingMinimizationMethod method,
+                                                           SortingOrder inputOrders,
+                                                           boolean movePortsAdjToTurningDummiesToTheOutside,
+                                                           boolean placeTurningDummiesNextToTheirVertex) {
+        //init
+        this.orders = new SortingOrder(inputOrders);
         initialize(currentNodeOrderInput, method, movePortsAdjToTurningDummiesToTheOutside,
                 placeTurningDummiesNextToTheirVertex);
 
@@ -77,11 +80,11 @@ public class CrossingMinimization2 {
             lastStepTopPortOrder = new LinkedHashMap<>();
             lastStepBottomPortOrder = new LinkedHashMap<>();
             for (int rank = 0; rank <= maxRank; rank++) {
-                lastStepNodeOrder.add(new ArrayList<>(currentNodeOrder.get(rank)));
-                for (Vertex node : currentNodeOrder.get(rank)) {
+                lastStepNodeOrder.add(new ArrayList<>(orders.getNodeOrder().get(rank)));
+                for (Vertex node : orders.getNodeOrder().get(rank)) {
                     if (considerPortsOfNode(node)) {
-                        lastStepTopPortOrder.put(node, new ArrayList<>(currentTopPortOrder.get(node)));
-                        lastStepBottomPortOrder.put(node, new ArrayList<>(currentBottomPortOrder.get(node)));
+                        lastStepTopPortOrder.put(node, new ArrayList<>(orders.getTopPortOrder().get(node)));
+                        lastStepBottomPortOrder.put(node, new ArrayList<>(orders.getBottomPortOrder().get(node)));
                     }
                 }
             }
@@ -125,11 +128,10 @@ public class CrossingMinimization2 {
         }
 //        handleTurningVerticesFinally(true);
 
-
-        return new CMResult(currentNodeOrder, currentTopPortOrder, currentBottomPortOrder);
+        return orders;
     }
 
-    private List<List<Vertex>> copyCurrentNodeOrder (List<List<Vertex>> currentNodeOrder) {
+    private static List<List<Vertex>> copyCurrentNodeOrder (List<List<Vertex>> currentNodeOrder) {
         List<List<Vertex>> currentNodeOrderCopy = new ArrayList<>();
         for (List<Vertex> list : currentNodeOrder) {
             currentNodeOrderCopy.add(new ArrayList<>(list));
@@ -150,14 +152,12 @@ public class CrossingMinimization2 {
         this.currentValues = new LinkedHashMap<>();
         this.vertex2sortingNode = new LinkedHashMap<>();
         this.port2SortingNode = new LinkedHashMap<>();
-        this.currentNodeOrder = new ArrayList<>();
-        this.currentTopPortOrder = new LinkedHashMap<>();
-        this.currentBottomPortOrder = new LinkedHashMap<>();
         this.adjacentToDummyTurningPoints = new LinkedHashSet<>();
         maxRank = sugy.getMaxRank();
         if (currentNodeOrder == null) {
             // generate random order for each rank if nothing is given
             // do that for one component after the other
+            this.orders.getNodeOrder().clear();
             ConnectedComponentClusterer connectedComponentClusterer = new ConnectedComponentClusterer(sugy.getGraph());
             List<Set<Vertex>> components = new ArrayList<>(connectedComponentClusterer.getConnectedComponents());
             Collections.shuffle(components, Constants.random);
@@ -170,7 +170,7 @@ public class CrossingMinimization2 {
                     Collections.shuffle(compVtcsOnR, Constants.random);
                     order.addAll(compVtcsOnR);
                 }
-                this.currentNodeOrder.add(order);
+                this.orders.getNodeOrder().add(order);
             }
 
             //TODO: maybe forbid swaps between nodes/ports of different components to have all components
@@ -185,9 +185,8 @@ public class CrossingMinimization2 {
         if (this.placeTurningDummiesNextToTheirVertex) {
             placeTurningDummiesNextToTheirVertices();
         }
-        // generate random order for all ports adhering to PortGroups
-        for (int rank = 0; rank < this.currentNodeOrder.size(); rank++) {
-            List<Vertex> layer = this.currentNodeOrder.get(rank);
+        for (int rank = 0; rank < this.orders.getNodeOrder().size(); rank++) {
+            List<Vertex> layer = this.orders.getNodeOrder().get(rank);
             for (int i = 0; i < layer.size(); i++) {
                 Vertex node = layer.get(i);
                 //check if adjacent to dummy turning points
@@ -201,41 +200,6 @@ public class CrossingMinimization2 {
                     }
                 }
 
-                List<PortComposition> portCompositionsTop = new ArrayList<>();
-                List<PortComposition> portCompositionsBottom = new ArrayList<>();
-                Set<PortComposition> freePortCompositions = new LinkedHashSet<>();
-                for (PortComposition portComposition : node.getPortCompositions()) {
-                    // check whether portComposition is located on the top or bottom of the node
-                    Port port = findPortWithEdgesIfExistent(portComposition);
-                    if (port.getEdges().isEmpty()) {
-                        freePortCompositions.add(portComposition);
-                    } else {
-                        if (sugy.getStartNode(port.getEdges().get(0)).equals(node)) {
-                            portCompositionsTop.add(portComposition);
-                        } else {
-                            portCompositionsBottom.add(portComposition);
-                        }
-                    }
-                }
-                // handle PortCompositions with no edges by adding them to the side with fewer ports
-                for (PortComposition portComposition : freePortCompositions) {
-                    int portsTop = countPorts(portCompositionsTop);
-                    int portsBottom = countPorts(portCompositionsBottom);
-                    if (portsTop < portsBottom || (portsTop == portsBottom && Constants.random.nextDouble() < 0.5)) {
-                        portCompositionsTop.add(portComposition);
-                    } else {
-                        portCompositionsBottom.add(portComposition);
-                    }
-                }
-
-                List<Port> topOrder = new ArrayList<>();
-                List<Port> bottomOrder = new ArrayList<>();
-                shufflePortCompositions(portCompositionsTop, topOrder);
-                shufflePortCompositions(portCompositionsBottom, bottomOrder);
-                currentTopPortOrder.put(node, topOrder);
-                currentBottomPortOrder.put(node, bottomOrder);
-
-
                 // initialize SortingNodes and currentValues
                 if (considerPortsOfNode(node)) {
                     for (Port port : node.getPorts()) {
@@ -243,7 +207,7 @@ public class CrossingMinimization2 {
                         port2SortingNode.put(port, sortingNode);
                     }
                     //special case: a side of a vertex does not have ports -> also create a sorting node for the vertex
-                    if (currentTopPortOrder.get(node).isEmpty() || currentBottomPortOrder.get(node).isEmpty()) {
+                    if (orders.getTopPortOrder().get(node).isEmpty() || orders.getBottomPortOrder().get(node).isEmpty()) {
                         SortingNode sortingNode = new SortingNode(node);
                         vertex2sortingNode.put(node, sortingNode);
                     }
@@ -254,6 +218,9 @@ public class CrossingMinimization2 {
                 }
             }
         }
+
+        //shuffle ports
+        orders.shufflePorts();
 
         //update current values acc to type
         updateCurrentValues();
@@ -269,17 +236,9 @@ public class CrossingMinimization2 {
         return intersectionList;
     }
 
-    private static int countPorts(Collection<PortComposition> portCompositionsTop) {
-        int sum = 0;
-        for (PortComposition portComposition : portCompositionsTop) {
-            sum += PortUtils.getPortsRecursively(portComposition).size();
-        }
-        return sum;
-    }
-
     private void placeTurningDummiesNextToTheirVertices() {
-        for (int rank = 0; rank < currentNodeOrder.size(); rank++) {
-            List<Vertex> currentLayer = currentNodeOrder.get(rank);
+        for (int rank = 0; rank < orders.getNodeOrder().size(); rank++) {
+            List<Vertex> currentLayer = orders.getNodeOrder().get(rank);
             //extract all turning dummies
             ArrayList<Vertex> turningDummiesOnLayer = new ArrayList<>();
             for (Vertex vertex : new ArrayList<>(currentLayer)) {
@@ -292,7 +251,7 @@ public class CrossingMinimization2 {
             Collections.shuffle(turningDummiesOnLayer, Constants.random);
             for (Vertex turningDummy : turningDummiesOnLayer) {
                 Vertex vertex = sugy.getVertexOfTurningDummy(turningDummy);
-                List<Vertex> adjacentLayer = currentNodeOrder.get(sugy.getRank(vertex));
+                List<Vertex> adjacentLayer = orders.getNodeOrder().get(sugy.getRank(vertex));
                 double relativePositionVertex =
                         (double) adjacentLayer.indexOf(vertex) / ((double) adjacentLayer.size() - 1.0);
                 int targetIndexDummy = (int) Math.round((double) currentLayer.size() * relativePositionVertex);
@@ -348,7 +307,7 @@ public class CrossingMinimization2 {
 
     private void updateCurrentValues() {
         if (method.equals(CrossingMinimizationMethod.VERTICES)) {
-            for (List<Vertex> layer : this.currentNodeOrder) {
+            for (List<Vertex> layer : this.orders.getNodeOrder()) {
                 for (int i = 0; i < layer.size(); i++) {
                     Vertex vertex = layer.get(i);
                     currentValues.put(vertex2sortingNode.get(vertex), (double) i);
@@ -356,12 +315,12 @@ public class CrossingMinimization2 {
             }
         }
         else if (method.equals(CrossingMinimizationMethod.MIXED)) {
-            for (List<Vertex> layer : this.currentNodeOrder) {
+            for (List<Vertex> layer : this.orders.getNodeOrder()) {
                 updateFractionalPortOrderPositions(layer);
             }
         }
         else if (method.equals(CrossingMinimizationMethod.PORTS)) {
-            for (List<Vertex> layer : this.currentNodeOrder) {
+            for (List<Vertex> layer : this.orders.getNodeOrder()) {
                 updatePortOrderPositions(layer);
             }
         }
@@ -371,10 +330,10 @@ public class CrossingMinimization2 {
         double valueBottom = 0.0;
         double valueTop = 0.0;
         for (Vertex node : layer) {
-            for (Port port : currentTopPortOrder.get(node)) {
+            for (Port port : orders.getTopPortOrder().get(node)) {
                 currentValues.put(port2SortingNode.get(port), valueTop++);
             }
-            for (Port port : currentBottomPortOrder.get(node)) {
+            for (Port port : orders.getBottomPortOrder().get(node)) {
                 currentValues.put(port2SortingNode.get(port), valueBottom++);
             }
         }
@@ -393,14 +352,14 @@ public class CrossingMinimization2 {
     }
 
     private void updateFractionalPortOrderPositions(int nodePosition, Vertex node) {
-        double dividerTop = (double) currentTopPortOrder.get(node).size() + 1.0;
-        double dividerBottom = (double) currentBottomPortOrder.get(node).size() + 1.0;
-        for (int portPosition = 0; portPosition < currentTopPortOrder.get(node).size(); portPosition++) {
-            currentValues.put(port2SortingNode.get(currentTopPortOrder.get(node).get(portPosition)),
+        double dividerTop = (double) orders.getTopPortOrder().get(node).size() + 1.0;
+        double dividerBottom = (double) orders.getBottomPortOrder().get(node).size() + 1.0;
+        for (int portPosition = 0; portPosition < orders.getTopPortOrder().get(node).size(); portPosition++) {
+            currentValues.put(port2SortingNode.get(orders.getTopPortOrder().get(node).get(portPosition)),
                     (-0.5 + (double) nodePosition + (((double) portPosition + 1.0) / dividerTop)));
         }
-        for (int portPosition = 0; portPosition < currentBottomPortOrder.get(node).size(); portPosition++) {
-            currentValues.put(port2SortingNode.get(currentBottomPortOrder.get(node).get(portPosition)),
+        for (int portPosition = 0; portPosition < orders.getBottomPortOrder().get(node).size(); portPosition++) {
+            currentValues.put(port2SortingNode.get(orders.getBottomPortOrder().get(node).get(portPosition)),
                     (-0.5 + (double) nodePosition + (((double) portPosition + 1.0) / dividerBottom)));
         }
     }
@@ -412,37 +371,12 @@ public class CrossingMinimization2 {
                     || this.adjacentToDummyTurningPoints.contains(node)));
     }
 
-    private Port findPortWithEdgesIfExistent(PortComposition portComposition) {
-        Port port = null;
-        if (portComposition instanceof Port) {
-            port = (Port) portComposition;
-        } else if (portComposition instanceof PortGroup) {
-            for (PortComposition member : ((PortGroup)portComposition).getPortCompositions()) {
-                port = findPortWithEdgesIfExistent(member);
-                if (port != null && !port.getEdges().isEmpty()) break;
-            }
-        }
-        return port;
-    }
-
-    private void shufflePortCompositions (List<PortComposition> portCompositions, List<Port> order) {
-        List<PortComposition> toShuffle = new ArrayList<>(portCompositions);
-        Collections.shuffle(toShuffle, Constants.random);
-        for (PortComposition portComposition : toShuffle) {
-            if (portComposition instanceof Port) {
-                order.add((Port)portComposition);
-            } else if (portComposition instanceof PortGroup) {
-                shufflePortCompositions(((PortGroup)portComposition).getPortCompositions(), order);
-            }
-        }
-    }
-
     private List<SortingNode> getSortingNodeLayer(int rank, boolean bottomSidePorts) {
         List<SortingNode> layerList = new ArrayList<>();
-        for (Vertex vertex : currentNodeOrder.get(rank)) {
+        for (Vertex vertex : orders.getNodeOrder().get(rank)) {
             if (considerPortsOfNode(vertex)) {
                 List<Port> portsOnConsideredPortSide =
-                        bottomSidePorts ? currentBottomPortOrder.get(vertex) : currentTopPortOrder.get(vertex);
+                        bottomSidePorts ? orders.getBottomPortOrder().get(vertex) : orders.getTopPortOrder().get(vertex);
                 for (Port port : portsOnConsideredPortSide) {
                     layerList.add(port2SortingNode.get(port));
                 }
@@ -489,16 +423,16 @@ public class CrossingMinimization2 {
         //re-sort vertices
         Collections.sort(verticesOfLayer,
                 Comparator.comparingDouble(v -> barycenterSum.get(v) / (double) counter.get(v)));
-        currentNodeOrder.set(layerIndex, verticesOfLayer);
+        orders.getNodeOrder().set(layerIndex, verticesOfLayer);
 
         //re-sort ports
         for (Vertex vertex : verticesOfLayer) {
             if (considerPortsOfNode(vertex)) {
                 List<Port> portsOfVertex = orderPortsConstraintToPortGroups(portOrdering,vertex.getPortCompositions());
                 if (upwards) {
-                    currentBottomPortOrder.replace(vertex, portsOfVertex);
+                    orders.getBottomPortOrder().replace(vertex, portsOfVertex);
                 } else {
-                    currentTopPortOrder.replace(vertex, portsOfVertex);
+                    orders.getTopPortOrder().replace(vertex, portsOfVertex);
                 }
             }
         }
@@ -508,21 +442,21 @@ public class CrossingMinimization2 {
                                       Map<Vertex, List<Port>> lastStepTopPortOrder,
                                       Map<Vertex, List<Port>> lastStepBottomPortOrder, int currentIteration) {
         // todo: number of iterations is calculated arbitrarily - adapt if necessary - lower in case of runtime issues
-        int numberOfIterations = (currentNodeOrder.size());
+        int numberOfIterations = (orders.getNodeOrder().size());
         boolean hasChanged = false;
         if (currentIteration < numberOfIterations) {
             // check for changes in the structure
             for (int rank = 0; (rank <= maxRank) && !hasChanged; rank++) {
-                for (int i = 0; (i < currentNodeOrder.get(rank).size()) && !hasChanged; i++) {
-                    Vertex node = currentNodeOrder.get(rank).get(i);
+                for (int i = 0; (i < orders.getNodeOrder().get(rank).size()) && !hasChanged; i++) {
+                    Vertex node = orders.getNodeOrder().get(rank).get(i);
                     if (!lastStepNodeOrder.get(rank).get(i).equals(node)) hasChanged = true;
                     if (considerPortsOfNode(node)) {
-                        for (int j = 0; (j < currentBottomPortOrder.get(node).size()) && !hasChanged; j++) {
-                            Port bottomPort = currentBottomPortOrder.get(node).get(j);
+                        for (int j = 0; (j < orders.getBottomPortOrder().get(node).size()) && !hasChanged; j++) {
+                            Port bottomPort = orders.getBottomPortOrder().get(node).get(j);
                             if (!lastStepBottomPortOrder.get(node).get(j).equals(bottomPort)) hasChanged = true;
                         }
-                        for (int j = 0; (j < currentTopPortOrder.get(node).size()) && !hasChanged; j++) {
-                            Port topPort = currentTopPortOrder.get(node).get(j);
+                        for (int j = 0; (j < orders.getTopPortOrder().get(node).size()) && !hasChanged; j++) {
+                            Port topPort = orders.getTopPortOrder().get(node).get(j);
                             if (!lastStepTopPortOrder.get(node).get(j).equals(topPort)) hasChanged = true;
                         }
                     }
@@ -531,10 +465,10 @@ public class CrossingMinimization2 {
         } else {
             // check for changes in number of crossings due to possibility of an endless loop
             // todo: in case of runtime issues change to more intelligent counting method
-            Map<Vertex, List<Port>> currentTPortOrder = new LinkedHashMap<>(currentTopPortOrder);
-            Map<Vertex, List<Port>> currentBPortOrder = new LinkedHashMap<>(currentBottomPortOrder);
+            Map<Vertex, List<Port>> currentTPortOrder = new LinkedHashMap<>(orders.getTopPortOrder());
+            Map<Vertex, List<Port>> currentBPortOrder = new LinkedHashMap<>(orders.getBottomPortOrder());
             orderPortsFinally(currentTPortOrder, currentBPortOrder, false, true);
-            int newNumberOfCrossings = sugy.countCrossings(new CMResult(currentNodeOrder, currentTPortOrder, currentBPortOrder));
+            int newNumberOfCrossings = sugy.countCrossings(new SortingOrder(orders.getNodeOrder(), currentTPortOrder, currentBPortOrder));
             if (newNumberOfCrossings < numberOfCrossings) {
                 numberOfCrossings = newNumberOfCrossings;
                 hasChanged = true;
@@ -544,7 +478,7 @@ public class CrossingMinimization2 {
     }
 
     private void handleTurningVerticesFinally(boolean sortPortsAtCorrespondingRealNode) {
-        for (List<Vertex> layer : currentNodeOrder) {
+        for (List<Vertex> layer : orders.getNodeOrder()) {
             for (Vertex node : layer) {
                 if (sugy.isTurningPointDummy(node)) {
                     sortPortsAtTurningDummy(node, sortPortsAtCorrespondingRealNode);
@@ -560,8 +494,8 @@ public class CrossingMinimization2 {
     }
 
     private void sortPortsAtTurningDummy(Vertex turningDummy, boolean sortPortsAtCorrespondingRealNode) {
-        List<Port> portsBottom = currentBottomPortOrder.get(turningDummy);
-        List<Port> portsTop = currentTopPortOrder.get(turningDummy);
+        List<Port> portsBottom = orders.getBottomPortOrder().get(turningDummy);
+        List<Port> portsTop = orders.getTopPortOrder().get(turningDummy);
         List<Port> ports = portsBottom != null && !portsBottom.isEmpty() ? portsBottom : portsTop;
         Map<Port, Double> port2adjacentNodePosition = new LinkedHashMap<>();
         for (Port port : ports) {
@@ -582,7 +516,7 @@ public class CrossingMinimization2 {
         Vertex correspondingVertex = sugy.getVertexOfTurningDummy(turningDummy);
         List<Port> portsAtItsVertex = new ArrayList<>();
         List<Port> allPortsAtItsVertex = ports == portsBottom ?
-                currentTopPortOrder.get(correspondingVertex) : currentBottomPortOrder.get(correspondingVertex);
+                orders.getTopPortOrder().get(correspondingVertex) : orders.getBottomPortOrder().get(correspondingVertex);
         boolean encounteredMiddlePart = false;
         for (Port port : ports) {
             Port otherPort = PortUtils.getAdjacentPort(port);
@@ -644,8 +578,8 @@ public class CrossingMinimization2 {
             }
         }
         else if (swapPairedPorts) {
-            List<Port> otherSidePorts = currentTopPortOrder.get(port0.getVertex()).equals(ports) ?
-                    currentBottomPortOrder.get(port0.getVertex()) : currentTopPortOrder.get(port0.getVertex());
+            List<Port> otherSidePorts = orders.getTopPortOrder().get(port0.getVertex()).equals(ports) ?
+                    orders.getBottomPortOrder().get(port0.getVertex()) : orders.getTopPortOrder().get(port0.getVertex());
             Port otherSidePort0 = sugy.isPaired(port0) ? sugy.getPairedPort(port0) : null;
             Port otherSidePort1 = sugy.isPaired(port1) ? sugy.getPairedPort(port1) : null;
 
@@ -720,7 +654,7 @@ public class CrossingMinimization2 {
     }
 
     private void orderPortsFinally (boolean upwards) {
-        orderPortsFinally(this.currentTopPortOrder, this.currentBottomPortOrder, true, upwards);
+        orderPortsFinally(this.orders.getTopPortOrder(), this.orders.getBottomPortOrder(), true, upwards);
     }
 
     private void orderPortsFinally (Map<Vertex, List<Port>> currentTPortOrder,
@@ -728,7 +662,7 @@ public class CrossingMinimization2 {
                                     boolean updateCurrentValues, boolean upwards) {
         List<Map<Vertex, List<Port>>> portOrdersToBeSorted = Arrays.asList(currentBPortOrder, currentTPortOrder);
 
-        List<List<Vertex>> nodeOrder = new ArrayList<>(currentNodeOrder);
+        List<List<Vertex>> nodeOrder = new ArrayList<>(orders.getNodeOrder());
         if (!upwards) {
             Collections.reverse(nodeOrder);
         }
@@ -1172,7 +1106,7 @@ public class CrossingMinimization2 {
             return; //do nothing here
         }
 
-        for (Vertex node : currentNodeOrder.get(rank)) {
+        for (Vertex node : orders.getNodeOrder().get(rank)) {
             if (considerPortsOfNode(node)) {
                 if (sugy.isTurningPointDummy(node)) {
                     sortPortsAtTurningDummy(node, false);
@@ -1180,16 +1114,16 @@ public class CrossingMinimization2 {
                 else {
                     //move dummy turning points to the outsides
                     if (movePortsAdjToTurningDummiesToTheOutside) {
-                        movePortsAdjacentToDummyTurningPoints(node, currentNodeOrder.get(rank), currentBottomPortOrder,
-                                currentTopPortOrder);
+                        movePortsAdjacentToDummyTurningPoints(node, orders.getNodeOrder().get(rank), orders.getBottomPortOrder(),
+                                orders.getTopPortOrder());
                     }
 
                     List<Port> lastReOrderedPorts =
-                            upwards ? currentBottomPortOrder.get(node) : currentTopPortOrder.get(node);
+                            upwards ? orders.getBottomPortOrder().get(node) : orders.getTopPortOrder().get(node);
                     //handle port pairings
                     if (sugy.isPlug(node)) {
-                        List<Port> otherSidePorts = upwards ? new LinkedList<>(currentTopPortOrder.get(node)) :
-                                new LinkedList<>(currentBottomPortOrder.get(node));
+                        List<Port> otherSidePorts = upwards ? new LinkedList<>(orders.getTopPortOrder().get(node)) :
+                                new LinkedList<>(orders.getBottomPortOrder().get(node));
                         List<Port> pairedPortsOtherSide = new ArrayList<>(otherSidePorts.size());
                         //find paired ports
                         for (Port port : lastReOrderedPorts) {
@@ -1210,9 +1144,9 @@ public class CrossingMinimization2 {
                         }
                         //save new order
                         if (upwards) {
-                            currentTopPortOrder.replace(node, otherSidePorts);
+                            orders.getTopPortOrder().replace(node, otherSidePorts);
                         } else {
-                            currentBottomPortOrder.replace(node, otherSidePorts);
+                            orders.getBottomPortOrder().replace(node, otherSidePorts);
                         }
                     }
                 }

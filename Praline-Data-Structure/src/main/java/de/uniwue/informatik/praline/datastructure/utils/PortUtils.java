@@ -4,13 +4,20 @@ import de.uniwue.informatik.praline.datastructure.graphs.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class PortUtils {
 
     public static List<Port> getPortsRecursively(PortComposition pc) {
+        return getPortsRecursively(Collections.singleton(pc));
+    }
+
+    public static List<Port> getPortsRecursively(Collection<PortComposition> pcs) {
         List<Port> appendTo = new ArrayList<>();
-        getPortsRecursively(pc, appendTo);
+        for (PortComposition pc : pcs) {
+            getPortsRecursively(pc, appendTo);
+        }
         return appendTo;
     }
 
@@ -52,6 +59,20 @@ public class PortUtils {
             leastCommonAncestor = getLeastCommonAncestor(port, leastCommonAncestor);
         }
         return leastCommonAncestor;
+    }
+
+    /**
+     * @param pc
+     * @return
+     *      A {@link PortComposition} directly contained in a vertex and no other port group.
+     *      If the input fulfills this property already, the input is returned.
+     */
+    public static PortComposition getTopMostAncestor(PortComposition pc) {
+        PortComposition topMostAncestor = pc;
+        while (topMostAncestor.getPortGroup() != null) {
+            topMostAncestor = topMostAncestor.getPortGroup();
+        }
+        return topMostAncestor;
     }
 
     public static void movePortCompositionsToPortGroup(Collection<? extends PortComposition> portCompositions,
@@ -201,5 +222,33 @@ public class PortUtils {
             }
         }
         return null;
+    }
+
+    public static int countPorts(Collection<PortComposition> portCompositionsTop) {
+        int sum = 0;
+        for (PortComposition portComposition : portCompositionsTop) {
+            sum += PortUtils.getPortsRecursively(portComposition).size();
+        }
+        return sum;
+    }
+
+    /**
+     *
+     * @param portComposition
+     * @return
+     *      if there is no port with an edge, it will return some port (without edges) and if also not existent, then
+     *      null.
+     */
+    public static Port findPortWithEdgesIfExistent(PortComposition portComposition) {
+        Port port = null;
+        if (portComposition instanceof Port) {
+            port = (Port) portComposition;
+        } else if (portComposition instanceof PortGroup) {
+            for (PortComposition member : ((PortGroup)portComposition).getPortCompositions()) {
+                port = findPortWithEdgesIfExistent(member);
+                if (port != null && !port.getEdges().isEmpty()) break;
+            }
+        }
+        return port;
     }
 }
