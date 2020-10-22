@@ -3,6 +3,7 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm.edgerouting;
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
+import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
@@ -46,9 +47,9 @@ public class EdgeRouting {
             handleDummyLayer(sortingOrder.getNodeOrder().get(rank + 1), false, edgeToLayer, outlineContourBB);
             handleDummyLayer(sortingOrder.getNodeOrder().get(rank), true, edgeToLayerTop, outlineContourTT);
 
-            // remove dummy turning points of this layer
+            // remove dummy turning points and self loop dummies of this layer
             for (Vertex node : sortingOrder.getNodeOrder().get(rank)) {
-                if (sugy.isTurningPointDummy(node)) {
+                if (sugy.isTurningPointDummy(node) || sugy.isDummyNodeOfSelfLoop(node)) {
                     sugy.getGraph().removeVertex(node);
                 }
             }
@@ -86,7 +87,7 @@ public class EdgeRouting {
         // search for turningDummys which are routed trough the active edge layer and handle them
         List<Double> activeCandidates = new ArrayList<>();
         for (Vertex node : vertices) {
-            if (sugy.isTurningPointDummy(node)) {
+            if (sugy.isTurningPointDummy(node) || sugy.isDummyNodeOfSelfLoop(node)) {
                 List<Port> ports = (top) ? sortingOrder.getTopPortOrder().get(node) : sortingOrder.getBottomPortOrder().get(node);
                 if (!ports.isEmpty()) {
                     Vertex v = sugy.getVertexOfTurningDummy(node);
@@ -115,13 +116,46 @@ public class EdgeRouting {
         handleTurningEdges(new double[]{interval[2], interval[3]}, edgesR, edgeToLayer, outlineContour, activeCandidates, lastPositions);
     }
 
+    /**
+     *
+     * @param node
+     * @param edgesL
+     * @param edgesR
+     * @param portOrder
+     * @return
+     *      a double-array of length 4, which consists of 2 intervals:
+     *      The 4 points are in order:
+     *      leftmost and rightmost port of all edges going to the left and then leftmost and rightmost port of all
+     *      edges going to the right
+     *
+     */
     private double[] sortPortsLeftRight(Vertex node, List<Edge> edgesL, List<Edge> edgesR, List<Port> portOrder) {
-        // interval contains leftmost and rightmost port of all edges going to the left
-        // and then leftmost and rightmost port of all edges going to the right
-        double[] interval = {portOrder.get(0).getShape().getXPosition(),
-                portOrder.get(0).getShape().getXPosition(),
-                portOrder.get(portOrder.size() - 1).getShape().getXPosition(),
-                portOrder.get(portOrder.size() - 1).getShape().getXPosition()};
+
+        double[] interval;
+
+        //special case: self loop dummy
+
+        if (sugy.isDummyNodeOfSelfLoop(node)) {
+            //in this case, node has exactly two ports with one edge each
+            List<Port> adjacentPorts = PortUtils.getAdjacentPorts(node);
+            Collections.sort(adjacentPorts, Comparator.comparingDouble(o -> o.getShape().getXPosition()));
+            portOrder = new ArrayList<>(Collections.singleton(adjacentPorts.get(0)));
+            double[] initInterval =
+                    {adjacentPorts.get(0).getShape().getXPosition(), adjacentPorts.get(0).getShape().getYPosition(),
+                    adjacentPorts.get(1).getShape().getXPosition(), adjacentPorts.get(1).getShape().getYPosition()};
+            interval = initInterval;
+        }
+
+        //base case: turning dummy
+        else {
+            double[] initInterval = {portOrder.get(0).getShape().getXPosition(),
+                    portOrder.get(0).getShape().getXPosition(),
+                    portOrder.get(portOrder.size() - 1).getShape().getXPosition(),
+                    portOrder.get(portOrder.size() - 1).getShape().getXPosition()};
+            interval = initInterval;
+
+        }
+
         // edge path is going along p1 - e1 - p2 - p3 - e2 - p4
         for (Port p1 : portOrder) {
             //if it has an edge
@@ -249,7 +283,7 @@ public class EdgeRouting {
         // for all nodes
         for (Vertex node : sortingOrder.getNodeOrder().get(rank)) {
             // if it is no TurningDummy
-            if (!(sugy.isTurningPointDummy(node))) {
+            if (!(sugy.isTurningPointDummy(node)) && !sugy.isDummyNodeOfSelfLoop(node)) {
                 // for all ports
                 for (Port bottomPort : sortingOrder.getTopPortOrder().get(node)) {
                     //if it has an edge
@@ -388,7 +422,7 @@ public class EdgeRouting {
         // for all nodes
         for (Vertex node : sortingOrder.getNodeOrder().get(rank + 1)) {
             // if it is no TurningDummy
-            if (!(sugy.isTurningPointDummy(node))) {
+            if (!(sugy.isTurningPointDummy(node)) && !sugy.isDummyNodeOfSelfLoop(node)) {
                 // for all ports
                 for (Port topPort : sortingOrder.getBottomPortOrder().get(node)) {
                     //if it has an edge

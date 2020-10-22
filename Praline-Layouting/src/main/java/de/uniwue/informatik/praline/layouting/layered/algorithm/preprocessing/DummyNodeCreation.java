@@ -204,6 +204,8 @@ public class DummyNodeCreation {
             sugy.getGraph().addVertex(dummy);
             newRanks.put(dummy, port0TopSide ? vertexRank + 1 : vertexRank - 1);
             dummyNodesSelfLoops.put(dummy, loopEdge);
+            correspondingPortsAtDummy.put(dummyPort0, dummyPort1);
+            correspondingPortsAtDummy.put(dummyPort1, dummyPort0);
 
             //add new connections
             int counter = 0;

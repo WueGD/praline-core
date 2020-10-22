@@ -2,12 +2,37 @@ package de.uniwue.informatik.praline.datastructure.utils;
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class PortUtils {
+
+    public static List<Edge> getEdges(Vertex vertex) {
+        List<Edge> edges = new ArrayList<>();
+        for (Port port : vertex.getPorts()) {
+            edges.addAll(port.getEdges());
+        }
+        return edges;
+    }
+
+    public static List<Port> getAdjacentPorts(Vertex vertex) {
+        List<Port> adjPorts = new ArrayList<>();
+        for (Edge edge : getEdges(vertex)) {
+            for (Port port : edge.getPorts()) {
+                if (!port.getVertex().equals(vertex)) {
+                    adjPorts.add(port);
+                }
+            }
+        }
+        return adjPorts;
+    }
+
+    public static Set<Vertex> getAdjacentVertices(Vertex vertex) {
+        Set<Vertex> adjVertices = new LinkedHashSet<>();
+        for (Port adjacentPort : getAdjacentPorts(vertex)) {
+            adjVertices.add(adjacentPort.getVertex());
+        }
+        return adjVertices;
+    }
 
     public static List<Port> getPortsRecursively(PortComposition pc) {
         return getPortsRecursively(Collections.singleton(pc));
