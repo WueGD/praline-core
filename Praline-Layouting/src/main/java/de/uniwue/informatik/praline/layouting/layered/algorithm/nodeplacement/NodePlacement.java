@@ -501,7 +501,8 @@ public class NodePlacement {
                     // one node done - create Rectangle
                     Vertex nodeInTheGraph = sortingOrder.getNodeOrder().get(layer / 2).get(nodePosition++);
                     double width = (portValues.get(port).getX() - (delta / 2.0)) - xPos;
-                    double height = layerHeight * heightOfLayers.get(layer / 2) + 2.0 * drawInfo.getBorderWidth();
+                    double height = heightOfLayers.get(layer / 2) * layerHeight
+                            + Math.min(1.0, heightOfLayers.get(layer / 2)) * 2.0 * drawInfo.getBorderWidth();
                     Rectangle nodeShape = new Rectangle(xPos, yPos, width, height, null);
                     nodeInTheGraph.setShape(nodeShape);
 
@@ -514,7 +515,8 @@ public class NodePlacement {
                 }
             }
 
-            currentY += ((layerHeight * heightOfLayers.get(layer / 2)) + (2.0 * drawInfo.getBorderWidth()));
+            currentY += heightOfLayers.get(layer / 2) * layerHeight
+                    + Math.min(1.0, heightOfLayers.get(layer / 2)) * 2.0 * drawInfo.getBorderWidth();
             layer++;
 
             for (int pos = 1; pos < structure.get(layer).size(); pos++) {
