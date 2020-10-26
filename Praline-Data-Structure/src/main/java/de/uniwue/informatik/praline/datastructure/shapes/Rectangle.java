@@ -112,6 +112,10 @@ public class Rectangle extends Rectangle2D.Double implements Shape {
         return false;
     }
 
+    public boolean containsInsideOrOnBoundary(Point2D.Double point) {
+        return liesOnBoundary(point) || contains(point);
+    }
+
     /*==========
      * Clone, equals, hashCode
      *==========*/

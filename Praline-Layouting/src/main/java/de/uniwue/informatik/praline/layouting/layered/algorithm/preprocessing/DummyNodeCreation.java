@@ -203,6 +203,7 @@ public class DummyNodeCreation {
             // add everything to graph and rank dummy
             sugy.getGraph().addVertex(dummy);
             newRanks.put(dummy, port0TopSide ? vertexRank + 1 : vertexRank - 1);
+            usedRanks[port0TopSide ? vertexRank + 1 : vertexRank - 1] = true;
             dummyNodesSelfLoops.put(dummy, loopEdge);
             correspondingPortsAtDummy.put(dummyPort0, dummyPort1);
             correspondingPortsAtDummy.put(dummyPort1, dummyPort0);
@@ -215,8 +216,8 @@ public class DummyNodeCreation {
                     "selfLoopEdge_" + loopEdge.getLabelManager().getMainLabel().toString() + "_#" + counter++)));
             sugy.getGraph().addEdge(dummyEdge0);
             sugy.getGraph().addEdge(dummyEdge1);
-            sugy.assignDirection(dummyEdge0);
-            sugy.assignDirection(dummyEdge1);
+            sugy.assignDirection(dummyEdge0, port0TopSide ? vertex : dummy, port0TopSide ? dummy : vertex);
+            sugy.assignDirection(dummyEdge1, port0TopSide ? vertex : dummy, port0TopSide ? dummy : vertex);
             sugy.getDummyEdge2RealEdge().put(dummyEdge0, loopEdge);
             sugy.getDummyEdge2RealEdge().put(dummyEdge1, loopEdge);
 
@@ -231,15 +232,22 @@ public class DummyNodeCreation {
                 // add everything to graph and rank dummy
                 sugy.getGraph().addVertex(additionalDummy);
                 newRanks.put(additionalDummy, port1TopSide ? vertexRank + 1 : vertexRank - 1);
+                usedRanks[port1TopSide ? vertexRank + 1 : vertexRank - 1] = true;
                 dummyNodesSelfLoops.put(additionalDummy, loopEdge);
+                correspondingPortsAtDummy.put(dummyPort2, dummyPort3);
+                correspondingPortsAtDummy.put(dummyPort3, dummyPort2);
 
                 //change and add connections
                 dummyEdge1.removePort(ports.get(1));
                 dummyEdge1.addPort(dummyPort2);
+                sugy.removeDirection(dummyEdge1);
+                sugy.assignDirection(dummyEdge1,
+                        port0TopSide ? additionalDummy : dummy, port0TopSide ? dummy : additionalDummy);
                 Edge dummyEdge2 = new Edge(Arrays.asList(ports.get(1), dummyPort3), Collections.singleton(new TextLabel(
                         "selfLoopEdge_" + loopEdge.getLabelManager().getMainLabel().toString() + "_#" + counter++)));
                 sugy.getGraph().addEdge(dummyEdge2);
-                sugy.assignDirection(dummyEdge2);
+                sugy.assignDirection(dummyEdge2,
+                        port1TopSide ? vertex : additionalDummy, port0TopSide ? additionalDummy : vertex);
                 sugy.getDummyEdge2RealEdge().put(dummyEdge2, loopEdge);
             }
         }

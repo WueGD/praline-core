@@ -472,7 +472,7 @@ public class DrawingPreparation {
                 }
             }
 
-            if (sugy.getDummyTurningNodes() != null && sugy.getDummyTurningNodes().containsKey(vertex)) {
+            if (sugy.isTurningPointDummy(vertex) || sugy.isDummyNodeOfSelfLoop(vertex)) {
                 sugy.getGraph().removeVertex(vertex);
             }
 
@@ -768,7 +768,7 @@ public class DrawingPreparation {
         for (Path path : hyperEdge.getPaths()) {
             Point2D.Double startPoint = ((PolygonalPath) path).getStartPoint();
             Point2D.Double endPoint = ((PolygonalPath) path).getEndPoint();
-            if (vertexShape.contains(startPoint)) {
+            if (vertexShape.containsInsideOrOnBoundary(startPoint)) {
                 if (startPoint.x < minX) {
                     minX = startPoint.x;
                     firstPath = path;
@@ -779,7 +779,7 @@ public class DrawingPreparation {
                 }
                 y = startPoint.y;
             }
-            if (vertexShape.contains(endPoint)) {
+            if (vertexShape.containsInsideOrOnBoundary(endPoint)) {
                 if (endPoint.x < minX) {
                     minX = endPoint.x;
                     firstPath = path;

@@ -787,15 +787,6 @@ public class SugiyamaLayouter implements PralineLayouter {
         return Collections.unmodifiableCollection(nodeToIncomingEdges.get(node));
     }
 
-    public boolean assignDirection (Edge edgeWithTwoIncidentPorts) {
-        Vertex vertex0 = edgeWithTwoIncidentPorts.getPorts().get(0).getVertex();
-        Vertex vertex1 = edgeWithTwoIncidentPorts.getPorts().get(1).getVertex();
-        if (getRank(vertex0) < getRank(vertex1)) {
-            return assignDirection(edgeWithTwoIncidentPorts, vertex0, vertex1);
-        }
-        return assignDirection(edgeWithTwoIncidentPorts, vertex1, vertex0);
-    }
-
     public boolean assignDirection (Edge edge, Vertex start, Vertex end) {
         if (edgeToStart.containsKey(edge)) return false;
         edgeToStart.put(edge, start);

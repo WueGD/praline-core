@@ -1,6 +1,7 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm.edgerouting;
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
+import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
@@ -46,13 +47,6 @@ public class EdgeRouting {
             // handle TurningDummys
             handleDummyLayer(sortingOrder.getNodeOrder().get(rank + 1), false, edgeToLayer, outlineContourBB);
             handleDummyLayer(sortingOrder.getNodeOrder().get(rank), true, edgeToLayerTop, outlineContourTT);
-
-            // remove dummy turning points and self loop dummies of this layer
-            for (Vertex node : sortingOrder.getNodeOrder().get(rank)) {
-                if (sugy.isTurningPointDummy(node) || sugy.isDummyNodeOfSelfLoop(node)) {
-                    sugy.getGraph().removeVertex(node);
-                }
-            }
 
             List<ContourPoint> outlineContourTop = new LinkedList<>();
             Map<Edge, Edge> conflicts = new LinkedHashMap<>();
@@ -174,6 +168,9 @@ public class EdgeRouting {
                     ports.add(p1); // add startPort at vertex with dummy
                     ports.add(p4); // add endPort of edge segment
                     Edge newEdge = new Edge(ports);
+                    newEdge.getLabelManager().addLabel(new TextLabel(
+                            "replEdgeFrom_" + p1.getVertex().getLabelManager().getMainLabel().toString()
+                                    + "_to_" + p4.getVertex().getLabelManager().getMainLabel().toString()));
                     sugy.getGraph().addEdge(newEdge);
                     sugy.assignDirection(newEdge, p1.getVertex(), p4.getVertex());
                     sugy.getDummyEdge2RealEdge().put(newEdge, sugy.getDummyEdge2RealEdge().get(e1));
@@ -199,7 +196,6 @@ public class EdgeRouting {
                         // update interval
                         if (interval[2] > p1.getShape().getXPosition()) interval[2] = p1.getShape().getXPosition();
                         if (interval[3] < p4.getShape().getXPosition()) interval[3] = p4.getShape().getXPosition();
-
                     }
                 }
             }
