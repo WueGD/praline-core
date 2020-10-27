@@ -21,6 +21,7 @@ public class DrawingPreparation {
     private DrawingInformation drawInfo;
     private SortingOrder sortingOrder;
     private Map<Vertex, Set<Port>> dummyPortsForLabelPadding;
+    private List<Port> dummyPortsForNodesWithoutPort;
     private double delta;
     private Map<Integer, Double> layer2shiftForUnionNodes;
 
@@ -29,17 +30,19 @@ public class DrawingPreparation {
     }
 
     private void initialise(DrawingInformation drawInfo, SortingOrder sortingOrder,
-                            Map<Vertex, Set<Port>> dummyPortsForLabelPadding) {
+                            Map<Vertex, Set<Port>> dummyPortsForLabelPadding, List<Port> dummyPortsForNodesWithoutPort) {
         this.drawInfo = drawInfo;
         this.delta = Math.max(drawInfo.getEdgeDistanceHorizontal(), drawInfo.getPortWidth() + drawInfo.getPortSpacing());
         this.sortingOrder = sortingOrder;
         this.dummyPortsForLabelPadding = dummyPortsForLabelPadding;
+        this.dummyPortsForNodesWithoutPort = dummyPortsForNodesWithoutPort;
         this.layer2shiftForUnionNodes = new LinkedHashMap<>();
     }
 
     public void prepareDrawing(DrawingInformation drawInfo, SortingOrder sortingOrder,
-                               Map<Vertex, Set<Port>> dummyPortsForLabelPadding) {
-        initialise(drawInfo, sortingOrder, dummyPortsForLabelPadding);
+                               Map<Vertex, Set<Port>> dummyPortsForLabelPadding,
+                               List<Port> dummyPortsForNodesWithoutPort) {
+        initialise(drawInfo, sortingOrder, dummyPortsForLabelPadding, dummyPortsForNodesWithoutPort);
         // do path for edges
         doPathForEdges();
         // adjust port shapes
@@ -460,6 +463,9 @@ public class DrawingPreparation {
         }
 
         //replace and remove dummy vertices and ports
+        for (Port dummyPort : dummyPortsForNodesWithoutPort) {
+            dummyPort.getVertex().removePortComposition(dummyPort);
+        }
         for (Vertex vertex : new ArrayList<>(sugy.getGraph().getVertices())) {
 
             if (sugy.getHyperEdges().containsKey(vertex)) {
@@ -486,7 +492,7 @@ public class DrawingPreparation {
         //TODO: check that #ports, #vertices, #edges is in the end the same as at the beginning
 
         //first we have already replaced in restoreVertexGroup (...) the ports that were created during vertex group
-        // handeling; these are the ports in replacedPorts where the original vertex is not in
+        // handling; these are the ports in replacedPorts where the original vertex is not in
         // multipleEdgePort2replacePorts
 
         //second we replace the ports that were created during the phase where ports with multiple edges were split to

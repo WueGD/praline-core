@@ -47,6 +47,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     private Map<Vertex, Set<Edge>> loopEdges;
     private Map<Edge, List<Port>> loopEdge2Ports;
     private Map<Vertex, Set<Port>> dummyPortsForLabelPadding;
+    private List<Port> dummyPortsForNodesWithoutPort;
 
     //additional structures
 
@@ -126,15 +127,17 @@ public class SugiyamaLayouter implements PralineLayouter {
         //handle edge bundles
 //        handleEdgeBundle(); //TODO uncomment and fix (+ re-inserting)
         // handle Port if it has no Vertex
-        handlePortWithoutNode();
+        handlePortsWithoutNode();
+        // vertices without ports
+        handleNodesWithoutPort();
         // handle Edge if connected to more than two Ports
         handleHyperEdges();
         // handle Port if it has more than one Edge
-        handlePort();
-        // handle VertexGroup
-        handleVertexGroup();
+        handlePortsWithMultipleEdges();
+        // handle VertexGroups
+        handleVertexGroups();
         // handle Edge if both Ports have same Vertex
-        handleLoopEdges(); //TODO: check
+        handleLoopEdges();
     }
     // todo: change method back to private when done with debugging and testing
 
@@ -253,7 +256,7 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public void prepareDrawing () {
         DrawingPreparation dp = new DrawingPreparation(this);
-        dp.prepareDrawing(drawInfo, orders, dummyPortsForLabelPadding);
+        dp.prepareDrawing(drawInfo, orders, dummyPortsForLabelPadding, dummyPortsForNodesWithoutPort);
     }
 
     /**
@@ -345,7 +348,7 @@ public class SugiyamaLayouter implements PralineLayouter {
         }
     }
 
-    private void handlePortWithoutNode () {
+    private void handlePortsWithoutNode() {
         for (Edge edge : getGraph().getEdges()) {
             for (Port port : edge.getPorts()) {
                 if (port.getVertex() == null) {
@@ -357,6 +360,18 @@ public class SugiyamaLayouter implements PralineLayouter {
             }
         }
     }
+
+    private void handleNodesWithoutPort() {
+        dummyPortsForNodesWithoutPort = new ArrayList<>();
+        for (Vertex vertex : getGraph().getVertices()) {
+            if (vertex.getPorts().isEmpty()) {
+                Port dummyPort = new Port(null, Collections.singleton(new TextLabel("dummyPortForVertexWithoutPort")));
+                vertex.addPortComposition(dummyPort);
+                dummyPortsForNodesWithoutPort.add(dummyPort);
+            }
+        }
+    }
+
     private void handleHyperEdges() {
         int index1 = 0;
         int index2 = 0;
@@ -397,7 +412,7 @@ public class SugiyamaLayouter implements PralineLayouter {
         }
     }
 
-    private void handleVertexGroup () {
+    private void handleVertexGroups() {
         int index1 = 0;
         int index2 = 0;
         deviceVertices = new LinkedHashSet<>();
@@ -610,7 +625,7 @@ public class SugiyamaLayouter implements PralineLayouter {
         }
     }
 
-    private void handlePort () {
+    private void handlePortsWithMultipleEdges() {
         int index1 = 0;
 
         Map<PortGroup, Port> replaceGroups = new LinkedHashMap<>();
