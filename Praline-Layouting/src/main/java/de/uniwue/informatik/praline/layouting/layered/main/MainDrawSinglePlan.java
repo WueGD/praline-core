@@ -45,36 +45,62 @@ public class MainDrawSinglePlan {
     private static final String TARGET_PATH =
             "Praline-Layouting/results/singleTest.svg";
 
-    public static void main(String[] args) {
+    private static final DirectionMethod DIRECTION_METHOD = DirectionMethod.FORCE;
 
-        File file = new File(SOURCE_PATH);
-        Graph graph = null;
-        try {
-            graph = Serialization.read(file, Graph.class);
-        } catch (IOException e) {
-            e.printStackTrace();
+    private static final CrossingMinimizationMethod CROSSING_MINIMIZATION_METHOD = CrossingMinimizationMethod.PORTS;
+
+    private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 1; //5;
+
+    private static final int NUMBER_OF_FORCE_DIRECTED_ITERATIONS = 1; //10;
+
+    private static final int NUMBER_OF_CROSSING_REDUCTION_ITERATIONS = 1; //3;
+
+    public static void main(String[] args) {
+        SugiyamaLayouter bestRun = null;
+        int fewestCrossings = Integer.MAX_VALUE;
+
+        for (int i = 0; i < NUMBER_OF_REPETITIONS_PER_GRAPH; i++) {
+            File file = new File(SOURCE_PATH);
+            Graph graph = null;
+            try {
+                graph = Serialization.read(file, Graph.class);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            System.out.println("Read graph " + SOURCE_PATH);
+            System.out.println();
+
+            SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
+
+            sugy.construct();
+            sugy.assignDirections(DIRECTION_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS);
+            sugy.assignLayers();
+            sugy.createDummyNodes();
+            sugy.crossingMinimization(CROSSING_MINIMIZATION_METHOD, NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
+            sugy.nodePositioning();
+            sugy.edgeRouting();
+            sugy.prepareDrawing();
+
+            int crossings = CrossingsCounting.countNumberOfCrossings(graph);
+            System.out.println("Computed drawing with " + crossings + " crossings " +
+                    "and " + BendsCounting.countNumberOfBends(graph) + " bends.");
+            System.out.println();
+
+            if (crossings < fewestCrossings) {
+                bestRun = sugy;
+                fewestCrossings = crossings;
+            }
+
+            if (i == NUMBER_OF_REPETITIONS_PER_GRAPH - 1) {
+                bestRun.drawResult(TARGET_PATH);
+
+                if (i > 1) {
+                    System.out.println("Best run had " + fewestCrossings + " crossings -> to be saved as svg");
+                }
+                System.out.println("Created svg " + TARGET_PATH);
+            }
         }
 
-        System.out.println("Read graph " + SOURCE_PATH);
-        System.out.println();
-
-        SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
-
-        sugy.construct();
-        sugy.assignDirections(DirectionMethod.FORCE, 1);
-        sugy.assignLayers();
-        sugy.createDummyNodes();
-        sugy.crossingMinimization(CrossingMinimizationMethod.PORTS, 1);
-        sugy.nodePositioning();
-        sugy.edgeRouting();
-        sugy.prepareDrawing();
-
-        System.out.println("Computed drawing with " + CrossingsCounting.countNumberOfCrossings(graph) + " crossings " +
-                "and " + BendsCounting.countNumberOfBends(graph) + " bends.");
-        System.out.println();
-
-        sugy.drawResult(TARGET_PATH);
-
-        System.out.println("Created svg " + TARGET_PATH);
     }
 }
