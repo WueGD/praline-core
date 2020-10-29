@@ -746,7 +746,7 @@ public class DrawingPreparation {
                     shiftPort(deviceShape.y - portShape.height - portShape.y, origPort);
                 }
                 else if (deviceShape.y + deviceShape.height < portShape.y) {
-                    shiftPort(deviceShape.y + portShape.height - portShape.y, origPort);
+                    shiftPort(deviceShape.y + deviceShape.height - portShape.y, origPort);
                 }
             }
         }
