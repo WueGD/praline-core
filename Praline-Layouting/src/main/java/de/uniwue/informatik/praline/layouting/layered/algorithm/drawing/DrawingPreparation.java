@@ -487,8 +487,19 @@ public class DrawingPreparation {
             }
         }
 
-        //TODO: add ports without edges, loop-edges, ports with loop-edges, ports of vertexGroup that are paired
-        // within the vertex group but do not have outgoing edges
+        //remove port groups introduced for edge bundles
+        for (PortGroup dummyPortGroupForEdgeBundle : sugy.getDummyPortGroupsForEdgeBundles()) {
+            //transfer current children to parent of this dummy port group (may be null then its directly the vertex)
+            PortGroup parent = dummyPortGroupForEdgeBundle.getPortGroup();
+            PortUtils.movePortCompositionsToPortGroup(dummyPortGroupForEdgeBundle.getPortCompositions(), parent);
+            //remove dummy port group
+            Vertex vertex = dummyPortGroupForEdgeBundle.getVertex();
+            if (vertex != null) {
+                vertex.removePortComposition(dummyPortGroupForEdgeBundle);
+            }
+        }
+
+        //TODO: add ports of vertexGroup that are paired within the vertex group but do not have outgoing edges
         //TODO: check that #ports, #vertices, #edges is in the end the same as at the beginning
 
         //first we have already replaced in restoreVertexGroup (...) the ports that were created during vertex group

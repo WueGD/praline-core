@@ -24,6 +24,7 @@ public class MainDrawPackage {
 //            "Praline-Layouting/data/generated_2020-08-20_04-42-39";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18";
             "Praline-Layouting/data/praline-package-2020-05-18";
+//            "Praline-Layouting/data/praline-readable-2020-09-04";
 //            "Praline-Layouting/data/5plansOriginalPseudo";
 
 
@@ -58,7 +59,8 @@ public class MainDrawPackage {
         File[] directoryListing = dir.listFiles();
         if (directoryListing != null) {
             for (File child : directoryListing) {
-                if (child.getName().endsWith(".json")) {
+                if (child.getName().endsWith(".json") &&
+                        (!PATH_DATA_SET.endsWith("readable-2020-09-04") || child.getName().endsWith("-praline.json"))) {
                     files.add(child);
                 }
             }

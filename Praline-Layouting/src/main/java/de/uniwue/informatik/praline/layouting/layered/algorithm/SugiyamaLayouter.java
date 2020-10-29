@@ -48,6 +48,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     private Map<Edge, List<Port>> loopEdge2Ports;
     private Map<Vertex, Set<Port>> dummyPortsForLabelPadding;
     private List<Port> dummyPortsForNodesWithoutPort;
+    private List<PortGroup> dummyPortGroupsForEdgeBundles;
 
     //additional structures
 
@@ -65,7 +66,6 @@ public class SugiyamaLayouter implements PralineLayouter {
     private Set<Object> deviceVertices;
 
     //TODO: take into account pre-set values like port.getOrientationAtVertex(), fixed order port groups
-    //TODO: edge bundles
 
     public SugiyamaLayouter(Graph graph) {
         this(graph, new DrawingInformation());
@@ -125,7 +125,7 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public void construct() {
         //handle edge bundles
-//        handleEdgeBundle(); //TODO uncomment and fix (+ re-inserting)
+        handleEdgeBundles();
         // handle Port if it has no Vertex
         handlePortsWithoutNode();
         // vertices without ports
@@ -292,6 +292,7 @@ public class SugiyamaLayouter implements PralineLayouter {
         loopEdges = new LinkedHashMap<>();
         loopEdge2Ports = new LinkedHashMap<>();
         dummyEdge2RealEdge = new LinkedHashMap<>();
+        dummyPortGroupsForEdgeBundles = new ArrayList<>(graph.getEdgeBundles().size());
 
         edgeToStart = new LinkedHashMap<>();
         edgeToEnd = new LinkedHashMap<>();
@@ -301,7 +302,7 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     // construct //
 
-    private void handleEdgeBundle () {
+    private void handleEdgeBundles() {
         for (EdgeBundle edgeBundle : getGraph().getEdgeBundles()) {
             handleEdgeBundle(edgeBundle);
         }
@@ -326,7 +327,7 @@ public class SugiyamaLayouter implements PralineLayouter {
             //for this first find the containing port groups
             for (Port port : ports) {
                 PortGroup portGroup = port.getPortGroup() == null ? nullGroup : port.getPortGroup();
-                group2bundlePorts.put(portGroup, new ArrayList<>());
+                group2bundlePorts.putIfAbsent(portGroup, new ArrayList<>());
                 group2bundlePorts.get(portGroup).add(port);
             }
             //and now create these port groups
@@ -334,12 +335,13 @@ public class SugiyamaLayouter implements PralineLayouter {
                 PortGroup portGroupForEdgeBundle = new PortGroup(null, false);
                 if (portGroup == nullGroup) {
                     //if not port group add it directly to the vertex
-                    vertex.addPortComposition(new PortGroup(Arrays.asList(new PortGroup(Arrays.asList(new PortGroup(Arrays.asList(portGroupForEdgeBundle)))))));
+                    vertex.addPortComposition(portGroupForEdgeBundle);
                 }
                 else {
-                    portGroup.addPortComposition(new PortGroup(Arrays.asList(new PortGroup(Arrays.asList(new PortGroup(Arrays.asList(portGroupForEdgeBundle)))))));
+                    portGroup.addPortComposition(portGroupForEdgeBundle);
                 }
                 PortUtils.movePortCompositionsToPortGroup(group2bundlePorts.get(portGroup), portGroupForEdgeBundle);
+                dummyPortGroupsForEdgeBundles.add(portGroupForEdgeBundle);
             }
         }
         //do this recursively for contained edge bundles
@@ -1038,6 +1040,10 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public Set<Object> getDeviceVertices() {
         return deviceVertices;
+    }
+
+    public List<PortGroup> getDummyPortGroupsForEdgeBundles() {
+        return dummyPortGroupsForEdgeBundles;
     }
 
     /////////////////

@@ -100,22 +100,40 @@ public class PortUtils {
         return topMostAncestor;
     }
 
+    /**
+     *
+     * @param portCompositions
+     * @param portGroup
+     *      if null then the port compositions are set as direct children of its vertex
+     */
     public static void movePortCompositionsToPortGroup(Collection<? extends PortComposition> portCompositions,
                                                        PortGroup portGroup) {
-        for (PortComposition portComposition : portCompositions) {
+        for (PortComposition portComposition : new ArrayList<>(portCompositions)) {
             movePortCompositionToPortGroup(portComposition, portGroup);
         }
     }
 
+    /**
+     *
+     * @param portComposition
+     * @param portGroup
+     *      if null then the port composition is set as direct child of its vertex
+     */
     public static void movePortCompositionToPortGroup(PortComposition portComposition, PortGroup portGroup) {
+        Vertex vertex = portComposition.getVertex();
         if (portComposition.getPortGroup() != null) {
             portComposition.getPortGroup().removePortComposition(portComposition);
         }
         else if (portComposition.getVertex() != null) {
-            portComposition.getVertex().removePortComposition(portComposition);
+            vertex.removePortComposition(portComposition);
         }
 
-        portGroup.addPortComposition(portComposition);
+        if (portGroup == null && vertex != null) {
+            vertex.addPortComposition(portComposition);
+        }
+        else if (portGroup != null) {
+            portGroup.addPortComposition(portComposition);
+        }
     }
 
     public static boolean areInTheSamePortGroup(Port port0, Port port1) {
@@ -275,5 +293,39 @@ public class PortUtils {
             }
         }
         return port;
+    }
+
+    /**
+     *
+     * @param ports
+     * @param portGroups
+     *      may be nested (also all contained port groups are checked
+     * @return
+     */
+    public static boolean arrangmentOfPortsIsValidAccordingToPortGroups(List<Port> ports,
+                                                                        Collection<PortComposition> portGroups) {
+        for (PortComposition portComposition : portGroups) {
+            if (portComposition instanceof PortGroup) {
+                List<Integer> indicesOfPorts = new ArrayList<>();
+                for (Port port : getPortsRecursively(portComposition)) {
+                    indicesOfPorts.add(ports.indexOf(port));
+                }
+                Collections.sort(indicesOfPorts);
+                //check if the indices form an contiguous block
+                int expectedIndex = indicesOfPorts.get(0);
+                for (Integer index : indicesOfPorts) {
+                    if (index != expectedIndex) {
+                        return false;
+                    }
+                    ++expectedIndex;
+                }
+                //recursively check for all children
+                if (!arrangmentOfPortsIsValidAccordingToPortGroups(
+                        ports, ((PortGroup) portComposition).getPortCompositions())) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

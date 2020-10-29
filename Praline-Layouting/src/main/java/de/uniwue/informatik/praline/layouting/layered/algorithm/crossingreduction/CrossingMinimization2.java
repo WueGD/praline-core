@@ -121,9 +121,10 @@ public class CrossingMinimization2 {
         }
 
         //do several iterations because these 2 steps influence each other
-        for (int i = 0; i < 4; i++) {
+        int iterations = 2;
+        for (int i = 0; i < iterations; i++) {
             handleTurningVerticesFinally(true);
-            orderPortsFinally(i % 2 == 0);
+            orderPortsFinally(i % 2 == 0, i == iterations - 1);
 //            orderPortsFinally(i % 2 != 0);
         }
 //        handleTurningVerticesFinally(true);
@@ -467,7 +468,7 @@ public class CrossingMinimization2 {
             // todo: in case of runtime issues change to more intelligent counting method
             Map<Vertex, List<Port>> currentTPortOrder = new LinkedHashMap<>(orders.getTopPortOrder());
             Map<Vertex, List<Port>> currentBPortOrder = new LinkedHashMap<>(orders.getBottomPortOrder());
-            orderPortsFinally(currentTPortOrder, currentBPortOrder, false, true);
+            orderPortsFinally(currentTPortOrder, currentBPortOrder, false, true, false);
             int newNumberOfCrossings = sugy.countCrossings(new SortingOrder(orders.getNodeOrder(), currentTPortOrder, currentBPortOrder));
             if (newNumberOfCrossings < numberOfCrossings) {
                 numberOfCrossings = newNumberOfCrossings;
@@ -653,13 +654,13 @@ public class CrossingMinimization2 {
         return false;
     }
 
-    private void orderPortsFinally (boolean upwards) {
-        orderPortsFinally(this.orders.getTopPortOrder(), this.orders.getBottomPortOrder(), true, upwards);
+    private void orderPortsFinally (boolean upwards, boolean isFinalSorting) {
+        orderPortsFinally(this.orders.getTopPortOrder(), this.orders.getBottomPortOrder(), true, upwards, isFinalSorting);
     }
 
     private void orderPortsFinally (Map<Vertex, List<Port>> currentTPortOrder,
                                     Map<Vertex, List<Port>> currentBPortOrder,
-                                    boolean updateCurrentValues, boolean upwards) {
+                                    boolean updateCurrentValues, boolean upwards, boolean isFinalSorting) {
         List<Map<Vertex, List<Port>>> portOrdersToBeSorted = Arrays.asList(currentBPortOrder, currentTPortOrder);
 
         List<List<Vertex>> nodeOrder = new ArrayList<>(orders.getNodeOrder());
@@ -678,7 +679,11 @@ public class CrossingMinimization2 {
                     portsOfThisNodeSide = orderPortsConstraintToPortGroups(portsOfThisNodeSide, node.getPortCompositions());
                     currentPortOrderMap.replace(node, portsOfThisNodeSide);
                 }
-                repairPortPairings(node, currentBPortOrder, currentTPortOrder, upwards);
+                int iterations = 4;
+                for (int i = 0; i < iterations; i++) {
+                    repairPortPairings(node, currentBPortOrder, currentTPortOrder, ((upwards ? 0 : 1) + i) % 2 == 0,
+                            isFinalSorting && i == iterations - 1);
+                }
             }
             if (updateCurrentValues) {
                 if (method.equals(CrossingMinimizationMethod.PORTS)) {
@@ -749,143 +754,226 @@ public class CrossingMinimization2 {
     }
 
     private void repairPortPairings(Vertex node, Map<Vertex, List<Port>> currentBPortOrder,
-                                    Map<Vertex, List<Port>> currentTPortOrder, boolean preferredSwapSideTop) {
+                                    Map<Vertex, List<Port>> currentTPortOrder, boolean preferredSwapSideTop,
+                                    boolean isFinalSorting) {
         List<Port> bottomOrder = currentBPortOrder.get(node);
         List<Port> topOrder = currentTPortOrder.get(node);
 
+        List<Port> firstOrder = preferredSwapSideTop ? topOrder : bottomOrder;
+        List<Port> secondOrder = preferredSwapSideTop ? bottomOrder : topOrder;
+
         //first find all port pairings
         List<Pair<Port>> allPortPairings = new ArrayList<>(bottomOrder.size());
-        for (Port port : bottomOrder) {
+        Set<Port> allPairedPorts = new LinkedHashSet<>();
+        for (Port port : secondOrder) {
             Port pairedPort = sugy.getPairedPort(port);
             if (pairedPort != null) {
                 allPortPairings.add(new Pair<>(port, pairedPort));
+                allPairedPorts.add(port);
+                allPairedPorts.add(pairedPort);
             }
         }
 
+        //find orderings purely of port pairing ports
+        List<Port> bottomPairingOrder = extractOrderingOfPairedPorts(bottomOrder, allPairedPorts);
+        List<Port> topPairingOrder = extractOrderingOfPairedPorts(topOrder, allPairedPorts);
+
+        List<Port> firstOrderPairedPorts = preferredSwapSideTop ? topPairingOrder : bottomPairingOrder;
+        List<Port> secondOrderPairedPorts = preferredSwapSideTop ? bottomPairingOrder : topPairingOrder;
+
         for (int i = 0; i < allPortPairings.size(); i++) {
             Pair<Port> portPairing = allPortPairings.get(i);
-            Port bottomPort = portPairing.getFirst();
-            Port topPort = portPairing.getSecond();
-            int indexBottom = bottomOrder.indexOf(bottomPort);
-            int indexTop = topOrder.indexOf(topPort);
-            int prevIndexPairedPortTop = i == 0 ? -1 : topOrder.indexOf(allPortPairings.get(i - 1).getSecond());
-            int nextIndexPairedPortTop = i == allPortPairings.size() - 1 ? allPortPairings.size() :
-                    topOrder.indexOf(allPortPairings.get(i + 1).getSecond());
-            int prevIndexPairedPortBottom = i == 0 ? -1 : bottomOrder.indexOf(allPortPairings.get(i - 1).getFirst());
-            int nextIndexPairedPortBottom = i == allPortPairings.size() - 1 ? allPortPairings.size() :
-                    bottomOrder.indexOf(allPortPairings.get(i + 1).getFirst());
+            Port firstPort = portPairing.getSecond();
+            Port secondPort = portPairing.getFirst();
+            Port bottomPort = preferredSwapSideTop ? secondPort : firstPort;
+            Port topPort = preferredSwapSideTop ? firstPort : secondPort;
+            int indexBottom = bottomPairingOrder.indexOf(bottomPort);
+            int indexTop = topPairingOrder.indexOf(topPort);
             //move port on preferred side to bring the paired ports closer to each other -- ideally over each other
             //without creating new crossings with other port pairings
             //possibility of endless loop -> add max iteration condition. maybe do something better later
             //going over whole bottom and top order should definitely be enough
-            int maxIteration = bottomOrder.size() + topOrder.size();
+            int maxIteration = 2 * (bottomOrder.size() + topOrder.size());
             int currIteration = 0;
+            boolean forceSwapping = false;
             while (indexBottom != indexTop && currIteration++ < maxIteration) {
                 //first we move ports with swapping ports on the preferred side until it is not possible any more
                 // because of port constraints
                 //then we try to swap the port groups
                 //then the same for the other side
-                List<Port> firstOrder = preferredSwapSideTop ? topOrder : bottomOrder;
-                Port firstPort = preferredSwapSideTop ? topPort : bottomPort;
                 int indexFirstPort = preferredSwapSideTop ? indexTop : indexBottom;
-                int firstPrevIndexPairedPort = preferredSwapSideTop ? prevIndexPairedPortTop :
-                        prevIndexPairedPortBottom;
-                int firstNextIndexPairedPort = preferredSwapSideTop ? nextIndexPairedPortTop :
-                        nextIndexPairedPortBottom;
-                List<Port> secondOrder = preferredSwapSideTop ? bottomOrder : topOrder;
-                Port secondPort = preferredSwapSideTop ? bottomPort : topPort;
                 int indexSecondPort = preferredSwapSideTop ? indexBottom : indexTop;
-                int secondPrevIndexPairedPort = preferredSwapSideTop ? prevIndexPairedPortBottom :
-                        prevIndexPairedPortTop;
-                int secondNextIndexPairedPort = preferredSwapSideTop ? nextIndexPairedPortBottom :
-                        nextIndexPairedPortTop;
 
-                if (indexBottom < indexTop) {
-                    int newIndexFirstPort = swapIfPossible(firstOrder, firstPort, indexFirstPort,
-                            firstPrevIndexPairedPort, true);
-                    if (newIndexFirstPort != indexFirstPort) {
+                if (indexFirstPort < indexSecondPort) {
+                    boolean hasChanged = swapIfPossible(firstOrder, firstPort, firstOrderPairedPorts, indexFirstPort,
+                           false, !isFinalSorting, forceSwapping, allPairedPorts);
+                    if (hasChanged) {
+                        forceSwapping = false;
                         if (preferredSwapSideTop) {
-                            indexTop = newIndexFirstPort;
+                            indexTop = topPairingOrder.indexOf(topPort);
+                        } else {
+                            indexBottom = bottomPairingOrder.indexOf(bottomPort);
                         }
-                        else {
-                            indexBottom = newIndexFirstPort;
+                    } else {
+                        //for the second side we swap only to the right and we do not swap port groups to not destroy
+                        // previously made arrangements on the left
+                        hasChanged = swapIfPossible(secondOrder, secondPort, secondOrderPairedPorts, indexSecondPort,
+                                true, false, forceSwapping, allPairedPorts);
+                        if (hasChanged) {
+                            forceSwapping = false;
+                            if (preferredSwapSideTop) {
+                                indexBottom = bottomPairingOrder.indexOf(bottomPort);
+                            } else {
+                                indexTop = topPairingOrder.indexOf(topPort);
+                            }
+                        } else {
+                            //we cannot improve the current situation any more -> force swapping and possibly destroy
+                            // the order within a port group
+                            forceSwapping = true;
                         }
                     }
-                    else {
-                        int newIndexSecondPort = swapIfPossible(secondOrder, secondPort, indexSecondPort,
-                                secondPrevIndexPairedPort, true);
-                        if (newIndexSecondPort != indexSecondPort) {
-                            if (preferredSwapSideTop) {
-                                indexBottom = newIndexSecondPort;
-                            }
-                            else {
-                                indexTop = newIndexSecondPort;
-                            }
+                } else { //indexFirstPort > indexSecondPort
+                    boolean hasChanged = false;
+                    if (!isFinalSorting) {
+                        hasChanged = swapIfPossible(firstOrder, firstPort, firstOrderPairedPorts, indexFirstPort,
+                                true, !isFinalSorting, forceSwapping, allPairedPorts);
+                    }
+                    if (hasChanged) {
+                        forceSwapping = false;
+                        if (preferredSwapSideTop) {
+                            indexTop = topPairingOrder.indexOf(topPort);
+                        } else {
+                            indexBottom = bottomPairingOrder.indexOf(bottomPort);
                         }
-                        else {
-                            //we cannot improve the current situation any more
-                            break;
+                    } else {
+                        hasChanged = swapIfPossible(secondOrder, secondPort, secondOrderPairedPorts, indexSecondPort,
+                                false, false, forceSwapping, allPairedPorts);
+                        if (hasChanged) {
+                            forceSwapping = false;
+                            if (preferredSwapSideTop) {
+                                indexBottom = bottomPairingOrder.indexOf(bottomPort);
+                            } else {
+                                indexTop = topPairingOrder.indexOf(topPort);
+                            }
+                        } else {
+                            //we cannot improve the current situation any more -> force swapping and possibly destroy
+                            // the order within a port group
+                            forceSwapping = true;
                         }
                     }
                 }
+            }
+        }
 
-                else { //indexBottom > indexTop
-                    int newIndexFirstPort = swapIfPossible(firstOrder, firstPort, indexFirstPort,
-                            firstNextIndexPairedPort, false);
-                    if (newIndexFirstPort != indexFirstPort) {
-                        if (preferredSwapSideTop) {
-                            indexTop = newIndexFirstPort;
-                        }
-                        else {
-                            indexBottom = newIndexFirstPort;
-                        }
-                    }
-                    else {
-                        int newIndexSecondPort = swapIfPossible(secondOrder, secondPort, indexSecondPort,
-                                secondNextIndexPairedPort, false);
-                        if (newIndexSecondPort != indexSecondPort) {
-                            if (preferredSwapSideTop) {
-                                indexBottom = newIndexSecondPort;
-                            }
-                            else {
-                                indexTop = newIndexSecondPort;
-                            }
-                        }
-                        else {
-                            //we cannot improve the current situation any more
-                            break;
-                        }
-                    }
+        //check success
+        if (isFinalSorting) {
+            //check port pairings
+            boolean portParingsValid = true;
+            for (Pair<Port> portPairing : allPortPairings) {
+                Port bottomPort = preferredSwapSideTop ? portPairing.getFirst() : portPairing.getSecond();
+                Port topPort = preferredSwapSideTop ? portPairing.getSecond() : portPairing.getFirst();
+                int indexBottom = bottomPairingOrder.indexOf(bottomPort);
+                int indexTop = topPairingOrder.indexOf(topPort);
+                if (indexBottom != indexTop) {
+                    portParingsValid = false;
                 }
+            }
+            if (!portParingsValid) {
+                System.out.println("No valid arrangement of port pairings found for plug "
+                        + sugy.getPlugs().get(node).getContainedVertices());
+            }
+            //check port groups
+            List<Port> allPortsCombined = new ArrayList<>(bottomOrder);
+            allPortsCombined.addAll(topOrder);
+            if (!PortUtils.arrangmentOfPortsIsValidAccordingToPortGroups(allPortsCombined, node.getPortCompositions())) {
+                System.out.println("Constraints due to port groups " +
+                        "not completely fulfilled (possibly because of conflicts with port pairings) at plug "
+                        + sugy.getPlugs().get(node).getContainedVertices());
             }
         }
     }
 
-    private int swapIfPossible(List<Port> orderedPorts, Port consideredPort, int indexConsideredPort,
-                               int prevOrNextIndexPairedPort, boolean swapLeft) {
-        //second condition to not make new crossings with previous port parings (only when swapping left)
+    private List<Port> extractOrderingOfPairedPorts(List<Port> orderingOfAllPorts, Set<Port> allPairedPorts) {
+        List<Port> orderOfPairedPorts = new ArrayList<>(allPairedPorts.size() / 2);
+        return updateOrderingOfPairedPorts(orderOfPairedPorts, orderingOfAllPorts, allPairedPorts);
+    }
+
+    private List<Port> updateOrderingOfPairedPorts(List<Port> orderOfPairedPorts, List<Port> orderingOfAllPorts,
+                                                   Set<Port> allPairedPorts) {
+        orderOfPairedPorts.clear();
+        for (Port port : orderingOfAllPorts) {
+            if (allPairedPorts.contains(port)) {
+                orderOfPairedPorts.add(port);
+            }
+        }
+        return orderOfPairedPorts;
+    }
+
+    private boolean swapIfPossible(List<Port> orderedPorts, Port consideredPort, List<Port> orderOfPairedPorts,
+                                   int indexWithinPairedPorts, boolean swapLeft, boolean swapPortGroups,
+                                   boolean forceSwapping, Set<Port> allPairedPorts) {
+        int indexConsideredPort = orderedPorts.indexOf(consideredPort);
         if (swapLeft) {
-            if (canSwapLeft(indexConsideredPort, orderedPorts) && prevOrNextIndexPairedPort != indexConsideredPort - 1) {
+            int prevIndexPairedPort = indexWithinPairedPorts == 0 ? -1 :
+                    orderedPorts.indexOf(orderOfPairedPorts.get(indexWithinPairedPorts - 1));
+            //second condition to not make new crossings with previous port parings (only when swapping left)
+            if (canSwapLeft(indexConsideredPort, orderedPorts)) {// && prevIndexPairedPort != indexConsideredPort - 1) {
                 swapLeft(indexConsideredPort, orderedPorts);
-                --indexConsideredPort;
-            } else if (canSwapPortGroupLeft(indexConsideredPort, orderedPorts, prevOrNextIndexPairedPort)) {
+                //check if the swap on the larger list (including non-paired ports) effected also a swap of the list
+                // where only paired ports are contained
+                if (indexWithinPairedPorts > 0 &&
+                        orderOfPairedPorts.get(indexWithinPairedPorts - 1) == orderedPorts.get(indexConsideredPort)) {
+                    Collections.swap(orderOfPairedPorts, indexWithinPairedPorts - 1, indexWithinPairedPorts);
+                }
+                return true;
+            }
+            else if (swapPortGroups && canSwapPortGroupLeft(indexConsideredPort, orderedPorts, prevIndexPairedPort)) {
                 swapPortGroupLeft(indexConsideredPort, orderedPorts);
-                indexConsideredPort = orderedPorts.indexOf(consideredPort);
+                updateOrderingOfPairedPorts(orderOfPairedPorts, orderedPorts, allPairedPorts);
+                return true;
+            }
+            else if (forceSwapping && indexConsideredPort > 0) {
+                swapLeft(indexConsideredPort, orderedPorts);
+                //check if the swap on the larger list (including non-paired ports) effected also a swap of the list
+                // where only paired ports are contained
+                if (indexWithinPairedPorts > 0 &&
+                        orderOfPairedPorts.get(indexWithinPairedPorts - 1) == orderedPorts.get(indexConsideredPort)) {
+                    Collections.swap(orderOfPairedPorts, indexWithinPairedPorts - 1, indexWithinPairedPorts);
+                }
+                return true;
             }
         }
         else {
-            //we don't need the check nextIndexPairedPortTop != indexTop + 1 because if we make new crossings
+            //we don't need the check nextIndexPairedPort != index + 1 because if we make new crossings
             // this way, they will be removed in the next steps of the for loop when the next port pairings
             // are considered
             if (canSwapRight(indexConsideredPort, orderedPorts)) {
                 swapRight(indexConsideredPort, orderedPorts);
-                ++indexConsideredPort;
-            } else if (canSwapPortGroupRight(indexConsideredPort, orderedPorts, prevOrNextIndexPairedPort)) {
+                //check if the swap on the larger list (including non-paired ports) effected also a swap of the list
+                // where only paired ports are contained
+                if (indexWithinPairedPorts < orderOfPairedPorts.size() - 1 &&
+                        orderOfPairedPorts.get(indexWithinPairedPorts + 1) == orderedPorts.get(indexConsideredPort)) {
+                    Collections.swap(orderOfPairedPorts, indexWithinPairedPorts + 1, indexWithinPairedPorts);
+                }
+                return true;
+            }
+            else if (swapPortGroups && canSwapPortGroupRight(indexConsideredPort, orderedPorts)) {
                 swapPortGroupRight(indexConsideredPort, orderedPorts);
-                indexConsideredPort = orderedPorts.indexOf(consideredPort);
+                updateOrderingOfPairedPorts(orderOfPairedPorts, orderedPorts, allPairedPorts);
+                return true;
+            }
+            else if (forceSwapping && indexConsideredPort < orderedPorts.size() - 1) {
+                swapRight(indexConsideredPort, orderedPorts);
+                //check if the swap on the larger list (including non-paired ports) effected also a swap of the list
+                // where only paired ports are contained
+                if (indexWithinPairedPorts < orderOfPairedPorts.size() - 1 &&
+                        orderOfPairedPorts.get(indexWithinPairedPorts + 1) == orderedPorts.get(indexConsideredPort)) {
+                    Collections.swap(orderOfPairedPorts, indexWithinPairedPorts + 1, indexWithinPairedPorts);
+                }
+                return true;
             }
         }
-        return indexConsideredPort;
+        return false;
     }
 
     private boolean canSwapLeft(int index, List<Port> portOrder) {
@@ -938,22 +1026,10 @@ public class CrossingMinimization2 {
         return true;
     }
 
-    private boolean canSwapPortGroupRight(int index, List<Port> portOrder, int nextIndexPairedPort) {
-        if (index >= portOrder.size() - 1) {
-            return false;
-        }
-        Port portSelf = portOrder.get(index);
-        Port portRight = portOrder.get(index + 1);
-        PortGroup leastCommonAncestor = (PortGroup) PortUtils.getLeastCommonAncestor(portSelf, portRight);
-        PortComposition candidateRight =
-                PortUtils.getTopMostChildContainingThisPort(leastCommonAncestor, portRight);
-        for (Port port : PortUtils.getPortsRecursively(candidateRight)) {
-            int indexMember = portOrder.indexOf(port);
-            if (indexMember == nextIndexPairedPort) {
-                return false;
-            }
-        }
-        return true;
+    //we don't need the check nextIndexPairedPort because if we make new crossings this way, they will be removed in
+    // the next steps of the for loop when the next port pairings are considered
+    private boolean canSwapPortGroupRight(int index, List<Port> portOrder) {
+        return index < portOrder.size() - 1;
     }
 
     private void swapPortGroupLeft(int index, List<Port> portOrder) {
