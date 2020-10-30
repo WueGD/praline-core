@@ -400,19 +400,16 @@ public class SugiyamaLayouter implements PralineLayouter {
                 getGraph().addVertex(representative);
                 hyperEdges.put(representative, edge);
             }
+            else if (edge.getPorts().size() < 2) {
+                System.out.println("removed edge " + edge.toString() + " because it was not connected to at least two vertices");
+                getGraph().removeEdge(edge);
+            }
         }
         for (Edge edge : hyperEdges.values()) {
             for (Port port : new ArrayList<>(edge.getPorts())) {
                 port.removeEdge(edge);
             }
             getGraph().removeEdge(edge);
-        }
-        for (Edge edge : new LinkedList<>(getGraph().getEdges())) {
-            if (edge.getPorts().size() < 2) {
-                System.out.println("removed edge " + edge.toString() + " because it was not connected to at least two vertices");
-                getGraph().removeEdge(edge);
-            }
-
         }
     }
 

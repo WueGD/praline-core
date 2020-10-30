@@ -1,10 +1,11 @@
 package de.uniwue.informatik.praline.io.output.svg;
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
+import de.uniwue.informatik.praline.datastructure.labels.Label;
+import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.paths.Path;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
-import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import org.apache.batik.dom.GenericDOMImplementation;
@@ -98,15 +99,12 @@ public class SVGDrawer {
             }
             //draw ports and port groups
             for (PortComposition pc : node.getPortCompositions()) {
-                paintPortComposition(pc, g2d);
+                drawPortComposition(pc, g2d, (Rectangle) node.getShape());
             }
             //draw node label
-            Rectangle2D nodeRectangle = (Rectangle2D) node.getShape();
-            g2d.drawString(node.getLabelManager().getMainLabel().toString(),
-                    (float) ((nodeRectangle).getX() + drawInfo.getHorizontalTextOffset()),
-                    (float) (((nodeRectangle).getY()
-                            + (nodeRectangle).getHeight()
-                            + drawInfo.getVerticalTextOffset())));
+            if (drawInfo.isShowVertexLabels()) {
+                drawNodeLabel(g2d, node);
+            }
         }
         //draw edges
         for (Edge edge : graph.getEdges()) {
@@ -127,6 +125,19 @@ public class SVGDrawer {
                     }
                 }
             }
+        }
+    }
+
+    private void drawNodeLabel(SVGGraphics2D g2d, Vertex node) {
+        Rectangle2D nodeRectangle = (Rectangle2D) node.getShape();
+        Label mainLabel = node.getLabelManager().getMainLabel(); //TODO: draw all labels, not only main label
+        if (mainLabel instanceof TextLabel) {
+            g2d.setFont(((TextLabel) mainLabel).getFont());
+            //TODO: differentiate between input text and layout text in the text label
+            g2d.drawString(((TextLabel) mainLabel).getInputText(),
+                    (float) ((nodeRectangle).getX() + drawInfo.getHorizontalVertexLabelOffset()),
+                    (float) (((nodeRectangle).getY() + (nodeRectangle).getHeight()
+                            + drawInfo.getVerticalVertexLabelOffset())));
         }
     }
 
@@ -190,14 +201,14 @@ public class SVGDrawer {
 
     }
 
-    private Rectangle2D paintPortComposition(PortComposition pc, Graphics2D g2d) {
+    private Rectangle2D drawPortComposition(PortComposition pc, Graphics2D g2d, Rectangle nodeRectangle) {
         if (pc instanceof PortGroup) {
             double maxX = Double.MIN_VALUE;
             double minX = Double.MAX_VALUE;
             double maxY = Double.MIN_VALUE;
             double minY = Double.MAX_VALUE;
             for (PortComposition pcspc : ((PortGroup)pc).getPortCompositions()) {
-                Rectangle2D rect = paintPortComposition(pcspc, g2d);
+                Rectangle2D rect = drawPortComposition(pcspc, g2d, nodeRectangle);
                 maxX = Math.max(maxX, rect.getMaxX());
                 minX = Math.min(minX, rect.getMinX());
                 maxY = Math.max(maxY, rect.getMaxY());
@@ -223,9 +234,29 @@ public class SVGDrawer {
                 g2d.setColor(Color.BLACK);
             }
             g2d.draw(portRectangle);
+
+            //draw port label
+            if (drawInfo.isShowPortLabels()) {
+                drawPortLabel((Port) pc, g2d, nodeRectangle, portRectangle);
+            }
             return portRectangle;
-            // g2d.drawString(((Port) pc).getLabelManager().getMainLabel().toString(), ((float)(((Rectangle2D)(((Port) pc).getShape())).getX())), ((float)(((Rectangle2D)(((Port) pc).getShape())).getY())));
         }
         return null;
+    }
+
+    private void drawPortLabel(Port port, Graphics2D g2d, Rectangle nodeRectangle, Rectangle2D portRectangle) {
+        Label mainLabel = port.getLabelManager().getMainLabel(); //TODO: draw all labels, not only main label
+        if (mainLabel instanceof TextLabel) {
+            g2d.setFont(((TextLabel) mainLabel).getFont());
+            //TODO: differentiate between input text and layout text in the text label
+            String text = ((TextLabel) mainLabel).getInputText();
+            double yCoordinate = portRectangle.getY() +
+                    (portRectangle.getY() < nodeRectangle.getY() ?
+                            portRectangle.getHeight() + drawInfo.getVerticalPortLabelOffset()
+                                    + g2d.getFontMetrics().getStringBounds(text, g2d).getHeight() :
+                            0 - drawInfo.getVerticalPortLabelOffset());
+            g2d.drawString(text, ((float) (portRectangle.getX() + drawInfo.getHorizontalPortLabelOffset())),
+                    (float) yCoordinate);
+        }
     }
 }
