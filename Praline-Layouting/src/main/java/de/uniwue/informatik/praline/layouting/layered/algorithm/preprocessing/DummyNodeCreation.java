@@ -187,7 +187,7 @@ public class DummyNodeCreation {
     }
 
     private void createSelfLoopDummyNodes() {
-        for (Edge loopEdge : sugy.getLoopEdges()) {
+        for (Edge loopEdge : sugy.getLoopEdgesAsSet()) {
             //we have split the hyperedges -> there are precisely 2 ports per edge
             List<Port> ports = sugy.getPortsOfLoopEdge(loopEdge);
             Vertex vertex = ports.get(0).getVertex();
