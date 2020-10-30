@@ -20,7 +20,7 @@ import java.io.IOException;
  */
 public class Serialization {
 
-    private final static ObjectMapper mapper =
+    protected final static ObjectMapper mapper =
             new ObjectMapper()
                     .enable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT)
                     .registerModule(new SimpleModule()
