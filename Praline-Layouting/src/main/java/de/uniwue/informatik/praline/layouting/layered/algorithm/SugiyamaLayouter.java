@@ -49,6 +49,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     private Map<Vertex, Set<Port>> dummyPortsForLabelPadding;
     private List<Port> dummyPortsForNodesWithoutPort;
     private List<PortGroup> dummyPortGroupsForEdgeBundles;
+    private Map<PortPairing, PortPairing> replacedPortPairings;
 
     //additional structures
 
@@ -293,6 +294,7 @@ public class SugiyamaLayouter implements PralineLayouter {
         loopEdge2Ports = new LinkedHashMap<>();
         dummyEdge2RealEdge = new LinkedHashMap<>();
         dummyPortGroupsForEdgeBundles = new ArrayList<>(graph.getEdgeBundles().size());
+        replacedPortPairings = new LinkedHashMap<>();
 
         edgeToStart = new LinkedHashMap<>();
         edgeToEnd = new LinkedHashMap<>();
@@ -688,7 +690,9 @@ public class SugiyamaLayouter implements PralineLayouter {
                         LinkedHashSet<Port> portsOfPortPairing = new LinkedHashSet<>(portPairing.getPorts());
                         portsOfPortPairing.remove(port);
                         Port otherPort = portsOfPortPairing.iterator().next();
-                        node.getVertexGroup().addPortPairing(new PortPairing(otherPort, arbitraryPortOfTheNewGroup));
+                        PortPairing replacementPortPairing = new PortPairing(otherPort, arbitraryPortOfTheNewGroup);
+                        node.getVertexGroup().addPortPairing(replacementPortPairing);
+                        replacedPortPairings.put(replacementPortPairing, portPairing);
                     }
                 }
                 for (PortPairing portPairing : toRemove) {
@@ -1046,22 +1050,27 @@ public class SugiyamaLayouter implements PralineLayouter {
         return dummyPortGroupsForEdgeBundles;
     }
 
+    public Map<PortPairing, PortPairing> getReplacedPortPairings() {
+        return replacedPortPairings;
+    }
+
     /////////////////
     // for testing //
     /////////////////
 
     // todo: delete when done with debugging and testing
+
     public int getNumberOfDummys () {
         return dummyNodesLongEdges.size();
     }
-
     // todo: delete when done with debugging and testing
+
     public int getNumberOfCrossings () {
         return countCrossings(orders);
     }
-
     //////////////
     // override //
+
     //////////////
 
     @Override
@@ -1090,5 +1099,4 @@ public class SugiyamaLayouter implements PralineLayouter {
         }
         return sb.toString();
     }
-
 }

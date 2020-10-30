@@ -24,7 +24,7 @@ public class DrawingInformation {
     public final static double DEFAULT_DISTANCE_BETWEEN_LAYERS = 20;
     public final static Font DEFAULT_FONT = new Font("Myanmar Text", Font.PLAIN, 10);
     public final static double DEFAULT_HORIZONTAL_TEXT_OFFSET = 2;
-    public final static double DEFAULT_VERTICAL_TEXT_OFFSET = -5;
+    public final static double DEFAULT_VERTICAL_TEXT_OFFSET = -10;
     public final static Color DEFAULT_PORT_PAIRING_COLOR = Color.DARK_GRAY;
     public final static boolean DEFAULT_SHOW_PORT_PAIRINGS = true;
     public final static Color DEFAULT_PORT_GROUP_COLOR = Color.LIGHT_GRAY;

@@ -258,6 +258,19 @@ public class PortUtils {
         return pp.getPort0();
     }
 
+    public static PortPairing getPortPairing(Port port0, Port port1, VertexGroup vertexGroup) {
+        for (PortPairing portPairing : vertexGroup.getPortPairings()) {
+            if (portPairing.getPorts().contains(port0) && portPairing.getPorts().contains(port1)) {
+                return portPairing;
+            }
+        }
+        return null;
+    }
+
+    public static PortPairing getPortPairing(Port port, VertexGroup vertexGroup) {
+        return getPortPairing(port, port, vertexGroup);
+    }
+
     public static Port getPortAtVertex(Edge edge, Vertex vertex) {
         for (Port port : edge.getPorts()) {
             if (vertex.getPorts().contains(port)) {

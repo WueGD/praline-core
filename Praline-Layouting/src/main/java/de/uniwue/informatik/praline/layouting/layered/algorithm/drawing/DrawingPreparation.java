@@ -512,6 +512,11 @@ public class DrawingPreparation {
         for (Port origPort : sugy.getMultipleEdgePort2replacePorts().keySet()) {
             restorePortsWithMultipleEdges(origPort);
         }
+
+        //restore ports of devices that have nothing but a port pairing to a port of another vertex
+        for (VertexGroup vertexGroup : sugy.getGraph().getVertexGroups()) {
+            restorePortPairingsOfDeviceVertices(vertexGroup);
+        }
     }
 
     private void restorePortsWithMultipleEdges(Port origPort) {
@@ -529,9 +534,19 @@ public class DrawingPreparation {
             containingPortGroup.addPortComposition(origPort);
         }
         //remove all replace ports and possible save shape
+        VertexGroup vertexGroup = vertex.getVertexGroup();
         for (Port replacePort : replacePorts) {
             if (sugy.isPaired(replacePort)) {
                 shapeOfPairedPort = replacePort.getShape();
+            }
+            //this if condition is not the same as the one above because there may be a port pairing with device port
+            // that's been removed from the graph before, so sugy.isPaired(replacePort) would return false in this case
+            if (vertexGroup != null && PortUtils.getPortPairing(replacePort, vertexGroup) != null) {
+                //replace port pairing back to original
+                PortPairing replacePortPairing = PortUtils.getPortPairing(replacePort, vertexGroup);
+                PortPairing origPortPairing = sugy.getReplacedPortPairings().get(replacePortPairing);
+                vertexGroup.removePortPairing(replacePortPairing);
+                vertexGroup.addPortPairing(origPortPairing);
             }
             vertex.removePortComposition(replacePort);
         }
@@ -747,6 +762,43 @@ public class DrawingPreparation {
                 }
                 else if (deviceShape.y + deviceShape.height < portShape.y) {
                     shiftPort(deviceShape.y + deviceShape.height - portShape.y, origPort);
+                }
+            }
+        }
+    }
+
+    private void restorePortPairingsOfDeviceVertices(VertexGroup vertexGroup) {
+
+        Vertex deviceVertex = null;
+        for (Vertex vertex : vertexGroup.getContainedVertices()) {
+            if (sugy.getDeviceVertices().contains(vertex)) {
+                deviceVertex = vertex;
+            }
+        }
+        if (deviceVertex == null) {
+            return;
+        }
+        Rectangle deviceShape = (Rectangle) deviceVertex.getShape();
+
+        //check each port of the other vertices if they have a port pairing to the device vertex
+        for (Vertex vertex : vertexGroup.getContainedVertices()) {
+            if (vertex == deviceVertex) {
+                continue;
+            }
+            Rectangle vertexShape = (Rectangle) vertex.getShape();
+            for (Port port : vertex.getPorts()) {
+                //port at the device is connected via a port pairing to a port of another node
+                PortPairing portPairing = PortUtils.getPortPairing(port, deviceVertex.getVertexGroup());
+                if (portPairing != null) {
+                    Port devicePort = PortUtils.getOtherPortOfPortPairing(portPairing, port);
+                    Rectangle devicePortShape = (Rectangle) port.getShape().clone();
+                    if (devicePortShape.y < deviceShape.y) {
+                        devicePortShape.y += vertexShape.height;
+                    }
+                    else {
+                        devicePortShape.y -= vertexShape.height;
+                    }
+                    devicePort.setShape(devicePortShape);
                 }
             }
         }
