@@ -28,6 +28,7 @@ import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
         @JsonSubTypes.Type(value = TextLabel.class, name = "text"),
         @JsonSubTypes.Type(value = IconLabel.class, name = "icon"),
         @JsonSubTypes.Type(value = LeaderedLabel.class, name = "leadered"),
+        @JsonSubTypes.Type(value = ReferenceIconLabel.class, name = "referenceIcon"),
 })
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public abstract class Label implements ShapedObject {
