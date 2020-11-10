@@ -70,6 +70,16 @@ public class PolygonalPath extends Path {
         this.bendPoints = newArrayListNullSafe(bendPoints);
     }
 
+    /*==========
+     * Modifiers
+     *==========*/
+
+    public void reverse() {
+        Point2D.Double swap = startPoint;
+        startPoint = endPoint;
+        endPoint = swap;
+        Collections.reverse(bendPoints);
+    }
 
     /*==========
      * Getters & Setters
@@ -162,5 +172,42 @@ public class PolygonalPath extends Path {
             sb.append("-").append(bendPoint.toString());
         }
         return sb.append("-").append(endPoint.toString()).toString();
+    }
+
+    /*==========
+     * clone & equals & hashCode
+     *==========*/
+
+    @Override
+    protected PolygonalPath clone() {
+        ArrayList<Point2D.Double> copiedBendPoints = new ArrayList<>(bendPoints.size());
+        for (Point2D.Double bendPoint : bendPoints) {
+            copiedBendPoints.add((Point2D.Double) bendPoint.clone());
+        }
+        return new PolygonalPath((Point2D.Double) startPoint.clone(), (Point2D.Double) endPoint.clone(),
+                copiedBendPoints);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PolygonalPath that = (PolygonalPath) o;
+        // we also check if a  reversed version equals this -> than we return also true
+        PolygonalPath thatReversed = that.clone();
+        thatReversed.reverse();
+        return this.equalsWithoutReversing(that) || this.equalsWithoutReversing(thatReversed);
+    }
+
+    private boolean equalsWithoutReversing(PolygonalPath other) {
+        if (this == other) return true;
+        if (other == null) return false;
+        return Objects.equals(startPoint, other.startPoint) && Objects.equals(endPoint, other.endPoint) &&
+                Objects.equals(bendPoints, other.bendPoints);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(startPoint, endPoint, bendPoints);
     }
 }
