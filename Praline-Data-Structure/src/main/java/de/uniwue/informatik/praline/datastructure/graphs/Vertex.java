@@ -7,6 +7,7 @@ import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
+import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 
 import java.util.*;
 
@@ -44,9 +45,9 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
     private final List<PortComposition> portCompositions;
     private final LinkedHashSet<Port> ports;
     private VertexGroup vertexGroup;
-    private final LabelManager labelManager;
-    private Shape shape;
-    private String reference;
+    protected final LabelManager labelManager;
+    protected Shape shape;
+    protected String reference;
 
 
     /*==========
@@ -323,5 +324,20 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
     @Override
     public String toString() {
         return labelManager.getStringForLabeledObject();
+    }
+
+
+    /*==========
+     * equalLabeling
+     *==========*/
+
+    @Override
+    public boolean equalLabeling(LabeledObject o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Vertex vertex = (Vertex) o;
+        return EqualLabeling.equalLabelingLists(new ArrayList<>(portCompositions),
+                new ArrayList<>(vertex.portCompositions)) && labelManager.equalLabeling(vertex.labelManager) &&
+                Objects.equals(reference, vertex.reference);
     }
 }

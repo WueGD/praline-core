@@ -10,6 +10,7 @@ import de.uniwue.informatik.praline.datastructure.shapes.ArrowHeadTriangle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * Rather special version of {@link Label} (see there for more).
@@ -133,5 +134,27 @@ public class LeaderedLabel extends Label implements LabeledObject {
     @Override
     public String toString() {
         return labelManager.getStringForLabeledObject();
+    }
+
+
+    /*==========
+     * equalLabeling
+     *==========*/
+
+    @Override
+    public boolean equalLabeling(Label o) {
+        return equalLabelingInternal(o);
+    }
+
+    @Override
+    public boolean equalLabeling(LabeledObject o) {
+        return equalLabelingInternal(o);
+    }
+
+    private boolean equalLabelingInternal(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LeaderedLabel that = (LeaderedLabel) o;
+        return labelManager.equalLabeling(that.labelManager);
     }
 }

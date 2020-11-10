@@ -3,11 +3,9 @@ package de.uniwue.informatik.praline.datastructure.labels;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Manages the {@link Label}s of and for a {@link LabeledObject}.
@@ -211,5 +209,18 @@ public class LabelManager {
     @Override
     public String toString() {
         return this.getClass().getSimpleName() + "_of_" + managedLabeledObject.toString();
+    }
+
+
+    /*==========
+     * equalLabeling
+     *==========*/
+
+    public boolean equalLabeling(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LabelManager that = (LabelManager) o;
+        return EqualLabeling.equalLabelingLists(new ArrayList<>(labels), new ArrayList<>(that.labels))
+                && ((mainLabel == null && that.mainLabel == null) || mainLabel.equalLabeling(that.mainLabel));
     }
 }

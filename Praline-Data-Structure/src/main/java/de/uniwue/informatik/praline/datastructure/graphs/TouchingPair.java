@@ -5,11 +5,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
 import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
+import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * A {@link TouchingPair} specifies two vertices ({@link Vertex}) that must be drawn such that their boundaries touch
@@ -138,6 +136,16 @@ public class TouchingPair {
 
 
     /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        return "[" + getVertex0() + "|" + getVertex1() + "]";
+    }
+
+
+    /*==========
      * equals & hashCode
      *
      * (should depend here only on contained objects and their order does not matter)
@@ -166,11 +174,14 @@ public class TouchingPair {
 
 
     /*==========
-     * toString
+     * equalLabeling
      *==========*/
 
-    @Override
-    public String toString() {
-        return "[" + getVertex0() + "|" + getVertex1() + "]";
+    public boolean equalLabeling(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TouchingPair that = (TouchingPair) o;
+        return EqualLabeling.equalLabelingLists(new ArrayList<>(this.getVertices()),
+                new ArrayList<>(that.getVertices()));
     }
 }

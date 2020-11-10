@@ -117,7 +117,7 @@ public class Rectangle extends Rectangle2D.Double implements Shape {
     }
 
     /*==========
-     * Clone, equals, hashCode
+     * clone & equals & hashCode
      *==========*/
 
     @Override

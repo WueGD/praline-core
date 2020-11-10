@@ -3,11 +3,9 @@ package de.uniwue.informatik.praline.datastructure.graphs;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 
 /**
@@ -73,6 +71,16 @@ public class PortPairing {
 
 
     /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        return "[" + getPort0() + "--" + getPort1() + "]";
+    }
+
+
+    /*==========
      * equals & hashCode
      *
      * (should depend here only on contained objects and their order does not matter)
@@ -101,11 +109,13 @@ public class PortPairing {
 
 
     /*==========
-     * toString
+     * equalLabeling
      *==========*/
 
-    @Override
-    public String toString() {
-        return "[" + getPort0() + "--" + getPort1() + "]";
+    public boolean equalLabeling(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PortPairing that = (PortPairing) o;
+        return EqualLabeling.equalLabelingLists(new ArrayList<>(this.getPorts()), new ArrayList<>(that.getPorts()));
     }
 }

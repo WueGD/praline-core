@@ -41,4 +41,6 @@ public interface PortComposition {
      * @param portGroup
      */
     void setPortGroup(PortGroup portGroup);
+
+    boolean equalLabeling(PortComposition portComposition);
 }

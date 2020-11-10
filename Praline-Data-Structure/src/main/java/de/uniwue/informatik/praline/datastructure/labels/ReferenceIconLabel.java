@@ -8,6 +8,8 @@ import de.uniwue.informatik.praline.datastructure.placements.Placement;
 import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 
+import java.util.Objects;
+
 public class ReferenceIconLabel extends IconLabel implements ReferenceObject
 {
     private String reference;
@@ -40,5 +42,27 @@ public class ReferenceIconLabel extends IconLabel implements ReferenceObject
     public void setReference(String reference)
     {
         this.reference = reference;
+    }
+
+    /*==========
+     * toString
+     *==========*/
+
+    @Override
+    public String toString() {
+        return "reference=" + reference;
+    }
+
+
+    /*==========
+     * equalLabeling
+     *==========*/
+
+    @Override
+    public boolean equalLabeling(Label o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ReferenceIconLabel that = (ReferenceIconLabel) o;
+        return Objects.equals(reference, that.reference);
     }
 }

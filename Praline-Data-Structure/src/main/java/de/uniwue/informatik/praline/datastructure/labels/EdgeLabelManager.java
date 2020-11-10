@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.uniwue.informatik.praline.datastructure.graphs.Edge;
 import de.uniwue.informatik.praline.datastructure.graphs.Port;
+import de.uniwue.informatik.praline.datastructure.graphs.PortComposition;
+import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 
 import java.util.*;
 
@@ -235,5 +237,31 @@ public class EdgeLabelManager extends LabelManager {
         else {
             mainLabel = null;
         }
+    }
+
+    /*==========
+     * equalLabeling
+     *==========*/
+
+    @Override
+    public boolean equalLabeling(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equalLabeling(o)) return false;
+        EdgeLabelManager that = (EdgeLabelManager) o;
+        for (Port port : portLabels.keySet()) {
+            Port otherPort = null;
+            for (Port thatPort : that.portLabels.keySet()) {
+                if (port.equalLabeling((PortComposition) thatPort)) {
+                    otherPort = thatPort;
+                    break;
+                }
+            }
+            if (otherPort == null || !EqualLabeling.equalLabelingLists(new ArrayList<>(portLabels.get(port)),
+                    new ArrayList<>(that.portLabels.get(otherPort)))) {
+                return false;
+            }
+        }
+        return true;
     }
 }

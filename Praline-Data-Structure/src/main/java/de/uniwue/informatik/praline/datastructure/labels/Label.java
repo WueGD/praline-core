@@ -150,4 +150,6 @@ public abstract class Label implements ShapedObject {
     public void setShape(Shape shape) {
         this.shape = shape;
     }
+
+    public abstract boolean equalLabeling(Label o);
 }

@@ -8,6 +8,7 @@ import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 
 import java.awt.*;
+import java.util.Objects;
 
 /**
  * Version of {@link Label} that provides text (see {@link Label} for more).
@@ -157,5 +158,19 @@ public class TextLabel extends Label {
     @Override
     public String toString() {
         return inputText;
+    }
+
+
+    /*==========
+     * equalLabeling
+     *==========*/
+
+    @Override
+    public boolean equalLabeling(Label o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TextLabel textLabel = (TextLabel) o;
+        return noBreak == textLabel.noBreak && Objects.equals(inputText, textLabel.inputText) &&
+                Objects.equals(font, textLabel.font) && Objects.equals(color, textLabel.color);
     }
 }

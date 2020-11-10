@@ -6,6 +6,7 @@ import de.uniwue.informatik.praline.datastructure.labels.EdgeLabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.paths.Path;
+import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 import de.uniwue.informatik.praline.datastructure.utils.InconsistentStateException;
 
 import java.awt.*;
@@ -247,4 +248,19 @@ public class Edge implements LabeledObject, ReferenceObject {
     public String toString() {
         return labelManager.getStringForLabeledObject();
     }
+
+    /*==========
+     * equalLabeling
+     *==========*/
+
+    @Override
+    public boolean equalLabeling(LabeledObject o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Edge edge = (Edge) o;
+        return EqualLabeling.equalLabelingLists(new ArrayList<>(ports), new ArrayList<>(edge.ports)) &&
+                Objects.equals(color, edge.color) && labelManager.equalLabeling(edge.labelManager) &&
+                Objects.equals(reference, edge.reference);
+    }
+
 }

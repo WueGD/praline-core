@@ -6,6 +6,13 @@ import java.util.*;
 
 public class PortUtils {
 
+    public static boolean contains(VertexGroup vertexGroup, Port port) {
+        if (port == null) {
+            return vertexGroup == null;
+        }
+        return vertexGroup.getAllRecursivelyContainedVertices().contains(port.getVertex());
+    }
+
     public static List<Edge> getEdges(Vertex vertex) {
         List<Edge> edges = new ArrayList<>();
         for (Port port : vertex.getPorts()) {
@@ -341,4 +348,5 @@ public class PortUtils {
         }
         return true;
     }
+
 }

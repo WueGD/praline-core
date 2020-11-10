@@ -235,4 +235,26 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
     public String toString() {
         return labelManager.getStringForLabeledObject();
     }
+
+    /*==========
+     * equalLabeling
+     *==========*/
+
+    @Override
+    public boolean equalLabeling(LabeledObject o) {
+        return equalLabelingInternal(o);
+    }
+
+    @Override
+    public boolean equalLabeling(PortComposition o) {
+        return equalLabelingInternal(o);
+    }
+
+    private boolean equalLabelingInternal(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Port port = (Port) o;
+        return (orientationAtVertex == port.orientationAtVertex && labelManager.equalLabeling(port.labelManager) &&
+                Objects.equals(reference, port.reference));
+    }
 }

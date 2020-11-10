@@ -7,11 +7,9 @@ import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
+import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
@@ -321,4 +319,21 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
         return labelManager.getStringForLabeledObject();
     }
 
+
+    /*==========
+     * equalLabeling
+     *==========*/
+
+    @Override
+    public boolean equalLabeling(LabeledObject o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        VertexGroup that = (VertexGroup) o;
+        return drawnFrame == that.drawnFrame && EqualLabeling.equalLabelingLists(new ArrayList<>(containedVertices),
+                new ArrayList<>(that.containedVertices)) && EqualLabeling.equalLabelingLists(
+                new ArrayList<>(containedVertexGroups), new ArrayList<>(that.containedVertexGroups)) &&
+                EqualLabeling.equalLabelingLists(new ArrayList<>(touchingPairs), new ArrayList<>(that.touchingPairs)) &&
+                EqualLabeling.equalLabelingLists(new ArrayList<>(portPairings), new ArrayList<>(that.portPairings)) &&
+                labelManager.equalLabeling(that.labelManager) && Objects.equals(reference, that.reference);
+    }
 }

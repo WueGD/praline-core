@@ -3,11 +3,9 @@ package de.uniwue.informatik.praline.datastructure.graphs;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 
@@ -223,5 +221,20 @@ public class Graph {
     public String toString() {
         return "Graph{vertices:" + vertices + ", vertexGroups:" + vertexGroups + ", edges:" + edges + ", edgeBundles:"
                 + edgeBundles + "}";
+    }
+
+
+    /*==========
+     * equalLabeling
+     *==========*/
+
+    public boolean equalLabeling(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Graph graph = (Graph) o;
+        return EqualLabeling.equalLabelingLists(new ArrayList<>(vertices), new ArrayList<>(graph.vertices)) &&
+                EqualLabeling.equalLabelingLists(new ArrayList<>(vertexGroups), new ArrayList<>(graph.vertexGroups)) &&
+                EqualLabeling.equalLabelingLists(new ArrayList<>(edges), new ArrayList<>(graph.edges)) &&
+                EqualLabeling.equalLabelingLists(new ArrayList<>(edgeBundles), new ArrayList<>(graph.edgeBundles));
     }
 }
