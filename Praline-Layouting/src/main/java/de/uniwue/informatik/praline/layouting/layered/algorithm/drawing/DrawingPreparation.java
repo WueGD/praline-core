@@ -24,6 +24,7 @@ public class DrawingPreparation {
     private List<Port> dummyPortsForNodesWithoutPort;
     private double delta;
     private Map<Integer, Double> layer2shiftForUnionNodes;
+    private List<Port> portsWithMultipleEdgesToBeRestoredLater;
 
     public DrawingPreparation (SugiyamaLayouter sugy) {
         this.sugy = sugy;
@@ -37,6 +38,7 @@ public class DrawingPreparation {
         this.dummyPortsForLabelPadding = dummyPortsForLabelPadding;
         this.dummyPortsForNodesWithoutPort = dummyPortsForNodesWithoutPort;
         this.layer2shiftForUnionNodes = new LinkedHashMap<>();
+        this.portsWithMultipleEdgesToBeRestoredLater = new ArrayList<>();
     }
 
     public void prepareDrawing(DrawingInformation drawInfo, SortingOrder sortingOrder,
@@ -478,26 +480,13 @@ public class DrawingPreparation {
                 }
             }
 
-            if (sugy.isTurningPointDummy(vertex) || sugy.isDummyNodeOfSelfLoop(vertex)) {
-                sugy.getGraph().removeVertex(vertex);
-            }
-
-            if (sugy.getDummyNodesLongEdges().containsKey(vertex)) {
+            //remove all dummy nodes
+            if (sugy.isDummy(vertex)) {
                 sugy.getGraph().removeVertex(vertex);
             }
         }
 
-        //remove port groups introduced for edge bundles
-        for (PortGroup dummyPortGroupForEdgeBundle : sugy.getDummyPortGroupsForEdgeBundles()) {
-            //transfer current children to parent of this dummy port group (may be null then its directly the vertex)
-            PortGroup parent = dummyPortGroupForEdgeBundle.getPortGroup();
-            PortUtils.movePortCompositionsToPortGroup(dummyPortGroupForEdgeBundle.getPortCompositions(), parent);
-            //remove dummy port group
-            Vertex vertex = dummyPortGroupForEdgeBundle.getVertex();
-            if (vertex != null) {
-                vertex.removePortComposition(dummyPortGroupForEdgeBundle);
-            }
-        }
+        restoreEdgeBundles();
 
         //TODO: add ports of vertexGroup that are paired within the vertex group but do not have outgoing edges
         //TODO: check that #ports, #vertices, #edges is in the end the same as at the beginning
@@ -512,6 +501,11 @@ public class DrawingPreparation {
         for (Port origPort : sugy.getMultipleEdgePort2replacePorts().keySet()) {
             restorePortsWithMultipleEdges(origPort);
         }
+        //Due to ports with multiple edges on both sides of a port pairing, the order we restore these ports matters.
+        // Hence, we may handle some ports of in another run to be executed in the following for-loop
+        for (Port origPort : portsWithMultipleEdgesToBeRestoredLater) {
+            restorePortsWithMultipleEdges(origPort);
+        }
 
         //restore ports of devices that have nothing but a port pairing to a port of another vertex
         for (VertexGroup vertexGroup : sugy.getGraph().getVertexGroups()) {
@@ -519,10 +513,40 @@ public class DrawingPreparation {
         }
     }
 
+    private void restoreEdgeBundles() {
+        //remove port groups introduced for edge bundles
+        for (PortGroup dummyPortGroupForEdgeBundle : sugy.getDummyPortGroupsForEdgeBundles()) {
+            //transfer current children to parent of this dummy port group (may be null then it's directly the vertex)
+            PortGroup parent = dummyPortGroupForEdgeBundle.getPortGroup();
+            PortUtils.movePortCompositionsToPortGroup(dummyPortGroupForEdgeBundle.getPortCompositions(), parent);
+            //remove dummy port group
+            Vertex vertex = dummyPortGroupForEdgeBundle.getVertex();
+            if (vertex != null) {
+                vertex.removePortComposition(dummyPortGroupForEdgeBundle);
+            }
+        }
+        //re-add edges originally contained in edge bundles
+        Map<EdgeBundle, Collection<Edge>> originalEdgeBundles = sugy.getOriginalEdgeBundles();
+        for (EdgeBundle edgeBundle : originalEdgeBundles.keySet()) {
+            edgeBundle.addEdges(originalEdgeBundles.get(edgeBundle));
+        }
+    }
+
     private void restorePortsWithMultipleEdges(Port origPort) {
         List<Port> replacePorts = sugy.getMultipleEdgePort2replacePorts().get(origPort);
-        Shape shapeOfPairedPort = null;
         Vertex vertex = replacePorts.iterator().next().getVertex();
+        VertexGroup vertexGroup = vertex.getVertexGroup();
+
+        //special case: if the origPortPairing was itself also a replacePortPairing, we have to apply this
+        // step in the right order to get the real original port pairing -- int the same as it was inserted in the map
+        // sugy.getReplacedPortPairings() . This happens if on both sides of a port pairing, the port has multiple edges
+        // We handle such a port in the end (after the opposite side port with multiple edges has been handled)
+        if (checkIfWeHaveToRestoreItLater(origPort, replacePorts, vertexGroup)) {
+            return;
+        }
+
+
+        Shape shapeOfPairedPort = null;
         PortGroup portGroupOfThisReplacement = replacePorts.iterator().next().getPortGroup();
         PortGroup containingPortGroup = portGroupOfThisReplacement.getPortGroup(); //second call because
         // first port group is just the port group created extra for the replace ports
@@ -534,7 +558,6 @@ public class DrawingPreparation {
             containingPortGroup.addPortComposition(origPort);
         }
         //remove all replace ports and possible save shape
-        VertexGroup vertexGroup = vertex.getVertexGroup();
         for (Port replacePort : replacePorts) {
             if (sugy.isPaired(replacePort)) {
                 shapeOfPairedPort = replacePort.getShape();
@@ -617,6 +640,22 @@ public class DrawingPreparation {
                 }
             }
         }
+    }
+
+    private boolean checkIfWeHaveToRestoreItLater(Port origPort, List<Port> replacePorts, VertexGroup vertexGroup) {
+        for (Port replacePort : replacePorts) {
+            if (vertexGroup != null && PortUtils.getPortPairing(replacePort, vertexGroup) != null) {
+                PortPairing replacePortPairing = PortUtils.getPortPairing(replacePort, vertexGroup);
+                PortPairing origPortPairing = sugy.getReplacedPortPairings().get(replacePortPairing);
+
+                if (sugy.getReplacedPortPairings().containsKey(origPortPairing)
+                        && origPortPairing.getPorts().contains(replacePort)) {
+                    portsWithMultipleEdgesToBeRestoredLater.add(origPort);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void restoreVertexGroup(Vertex dummyUnificationVertex, VertexGroup vertexGroup) {
@@ -878,7 +917,6 @@ public class DrawingPreparation {
         List<Point2D.Double> bendsCombined = bendsFirstPath;
         bendsCombined.addAll(bendsLastPath);
         hyperEdge.addPath(new PolygonalPath(bendsCombined));
-        sugy.getGraph().removeVertex(hyperEdgeDummyVertex);
     }
 
     private void restoreHyperedgePart(Edge edgePart) {
@@ -988,9 +1026,7 @@ public class DrawingPreparation {
         //add ports of dummy edge to original edge
         for (Port port : dummyEdge.getPorts()) {
             Vertex vertex = port.getVertex();
-            if (sugy.getDummyTurningNodes() != null
-                    && !sugy.getDummyTurningNodes().containsKey(vertex)
-                    && !sugy.getDummyNodesLongEdges().containsKey(vertex)
+            if (!sugy.isDummyTurningNode(vertex) && !sugy.isDummyNodeOfLongEdge(vertex)
                     && !originalEdge.getPorts().contains(port)) {
                 originalEdge.addPort(port);
             }

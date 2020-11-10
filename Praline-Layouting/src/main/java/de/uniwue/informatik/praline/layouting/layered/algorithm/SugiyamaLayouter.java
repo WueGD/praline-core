@@ -37,6 +37,8 @@ public class SugiyamaLayouter implements PralineLayouter {
     private Map<Vertex, Edge> dummyNodesLongEdges;
     private Map<Vertex, Edge> dummyNodesSelfLoops;
     private Map<Vertex, Vertex> dummyTurningNodes;
+    private Set<Vertex> dummyNodesForEdgesOfDeg1or0;
+    private Set<Vertex> dummyNodesForNodelessPorts;
     private Map<Port, Port> replacedPorts;
     private Map<Port, List<Port>> multipleEdgePort2replacePorts;
     private Map<Port, Port> keptPortPairings;
@@ -46,6 +48,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     private Map<Vertex, Set<Port>> dummyPortsForLabelPadding;
     private List<Port> dummyPortsForNodesWithoutPort;
     private List<PortGroup> dummyPortGroupsForEdgeBundles;
+    private Map<EdgeBundle, Collection<Edge>> originalEdgeBundles;
     private Map<PortPairing, PortPairing> replacedPortPairings;
 
     //additional structures
@@ -254,6 +257,8 @@ public class SugiyamaLayouter implements PralineLayouter {
         hyperEdges = new LinkedHashMap<>();
         hyperEdgeParts = new LinkedHashMap<>();
         dummyNodesLongEdges = new LinkedHashMap<>();
+        dummyNodesForEdgesOfDeg1or0 = new LinkedHashSet<>();
+        dummyNodesForNodelessPorts = new LinkedHashSet<>();
         replacedPorts = new LinkedHashMap<>();
         multipleEdgePort2replacePorts = new LinkedHashMap<>();
         keptPortPairings = new LinkedHashMap<>();
@@ -261,6 +266,7 @@ public class SugiyamaLayouter implements PralineLayouter {
         loopEdge2Ports = new LinkedHashMap<>();
         dummyEdge2RealEdge = new LinkedHashMap<>();
         dummyPortGroupsForEdgeBundles = new ArrayList<>(graph.getEdgeBundles().size());
+        originalEdgeBundles = new LinkedHashMap<>();
         replacedPortPairings = new LinkedHashMap<>();
         dummyPortsForNodesWithoutPort = new ArrayList<>();
         deviceVertices = new LinkedHashSet<>();
@@ -433,8 +439,9 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     public boolean isDummy(Vertex node) {
-        return isDummyNodeOfLongEdge(node) || isDummyNodeOfSelfLoop(node) ||
-                isTurningPointDummy(node) || getHyperEdges().containsKey(node);
+        return isDummyNodeOfLongEdge(node) || isDummyNodeOfSelfLoop(node) || isDummyTurningNode(node) ||
+                isDummyNodeForEdgesOfDeg1or0(node) || isDummyNodeForNodelessPorts(node) ||
+                getHyperEdges().containsKey(node);
     }
 
     public boolean isDummyNodeOfLongEdge(Vertex node) {
@@ -445,7 +452,7 @@ public class SugiyamaLayouter implements PralineLayouter {
         return dummyNodesSelfLoops.containsKey(node);
     }
 
-    public boolean isTurningPointDummy (Vertex node) {
+    public boolean isDummyTurningNode(Vertex node) {
         return dummyTurningNodes.containsKey(node);
     }
 
@@ -459,6 +466,22 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public boolean isTopPort (Port port) {
         return orders.getTopPortOrder().get(port.getVertex()).contains(port);
+    }
+
+    public boolean isDummyNodeForEdgesOfDeg1or0(Vertex node) {
+        return dummyNodesForEdgesOfDeg1or0.contains(node);
+    }
+
+    public void addDummyNodeForEdgesOfDeg1or0(Vertex dummyNode) {
+        dummyNodesForEdgesOfDeg1or0.add(dummyNode);
+    }
+
+    public boolean isDummyNodeForNodelessPorts(Vertex node) {
+        return dummyNodesForNodelessPorts.contains(node);
+    }
+
+    public void addDummyNodeForNodelessPorts(Vertex dummyNode) {
+        dummyNodesForNodelessPorts.add(dummyNode);
     }
 
     public Map<Edge, Edge> getDummyEdge2RealEdge () {
@@ -573,14 +596,6 @@ public class SugiyamaLayouter implements PralineLayouter {
         return hyperEdgeParts;
     }
 
-    public Map<Vertex, Edge> getDummyNodesLongEdges() {
-        return dummyNodesLongEdges;
-    }
-
-    public Map<Vertex, Vertex> getDummyTurningNodes() {
-        return dummyTurningNodes;
-    }
-
     public Map<Port, Port> getReplacedPorts() {
         return replacedPorts;
     }
@@ -605,12 +620,16 @@ public class SugiyamaLayouter implements PralineLayouter {
         return replacedPortPairings;
     }
 
-    public List<Port> getDummyPortsForNodesWithoutPort() {
-        return dummyPortsForNodesWithoutPort;
+    public void addDummyPortsForNodesWithoutPort(Port port) {
+        dummyPortsForNodesWithoutPort.add(port);
     }
 
     public Map<Edge, List<Port>> getLoopEdge2Ports() {
         return loopEdge2Ports;
+    }
+
+    public Map<EdgeBundle, Collection<Edge>> getOriginalEdgeBundles() {
+        return originalEdgeBundles;
     }
 
     /////////////////

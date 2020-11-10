@@ -32,6 +32,8 @@ public class MainDrawPackage {
     public static final String PATH_RESULTS =
             "Praline-Layouting/results/all-svgs-" + DATE_FORMAT.format(new Date());
 
+    private static final boolean CHECK_COMPLETENESS_OF_GRAPH = true;
+
     private static final DirectionMethod DIRECTION_METHOD = DirectionMethod.FORCE;
 
     private static final CrossingMinimizationMethod CROSSING_MINIMIZATION_METHOD = CrossingMinimizationMethod.PORTS;
@@ -121,6 +123,17 @@ public class MainDrawPackage {
             }
         }
 
+        if (CHECK_COMPLETENESS_OF_GRAPH) {
+            Graph sameGraphReloaded = null;
+            try {
+                sameGraphReloaded = Serialization.read(file, Graph.class);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (!bestRunSugy.getGraph().equalLabeling(sameGraphReloaded)) {
+                System.out.println("Warning! Drawn graph and input graph differ.");
+            }
+        }
 
         String filename = file.getName();
         filename = filename.substring(0, filename.length() - 5); //remove ".json"

@@ -42,19 +42,21 @@ public class GraphPreprocessor {
     }
 
     private void handleEdgeBundle(EdgeBundle edgeBundle) {
+        //save current edge bundle
+        sugy.getOriginalEdgeBundles().put(edgeBundle, new ArrayList<>(edgeBundle.getContainedEdges()));
         //first find all ports of the bundle
-        Map<Vertex, List<Port>> vertices2bundlePorts = new LinkedHashMap<>();
+        Map<Vertex, Set<Port>> vertices2bundlePorts = new LinkedHashMap<>();
         //all ports in the bundle should end up next to the other -> also include recursively contained ones
         for (Edge edge : edgeBundle.getAllRecursivelyContainedEdges()) {
             for (Port port : edge.getPorts()) {
                 Vertex vertex = port.getVertex();
-                vertices2bundlePorts.putIfAbsent(vertex, new ArrayList<>());
+                vertices2bundlePorts.putIfAbsent(vertex, new LinkedHashSet<>());
                 vertices2bundlePorts.get(vertex).add(port);
             }
         }
         //create a port group for the ports of the bundle at each vertex
         for (Vertex vertex : vertices2bundlePorts.keySet()) {
-            List<Port> ports = vertices2bundlePorts.get(vertex);
+            Set<Port> ports = vertices2bundlePorts.get(vertex);
             Map<PortGroup, List<PortComposition>> group2bundlePorts = new LinkedHashMap<>();
             PortGroup nullGroup = new PortGroup(); //dummy object for ports without port group
             //for this first find the containing port groups
@@ -65,6 +67,7 @@ public class GraphPreprocessor {
             }
             //and now create these port groups
             for (PortGroup portGroup : group2bundlePorts.keySet()) {
+                List<PortComposition> portCompositions = group2bundlePorts.get(portGroup);
                 PortGroup portGroupForEdgeBundle = new PortGroup(null, false);
                 if (portGroup == nullGroup) {
                     //if not port group add it directly to the vertex
@@ -73,7 +76,7 @@ public class GraphPreprocessor {
                 else {
                     portGroup.addPortComposition(portGroupForEdgeBundle);
                 }
-                PortUtils.movePortCompositionsToPortGroup(group2bundlePorts.get(portGroup), portGroupForEdgeBundle);
+                PortUtils.movePortCompositionsToPortGroup(portCompositions, portGroupForEdgeBundle);
                 sugy.getDummyPortGroupsForEdgeBundles().add(portGroupForEdgeBundle);
             }
         }
@@ -87,10 +90,11 @@ public class GraphPreprocessor {
         for (Edge edge : sugy.getGraph().getEdges()) {
             for (Port port : edge.getPorts()) {
                 if (port.getVertex() == null) {
-                    Vertex node = new Vertex();
-                    sugy.getGraph().addVertex(node);
-                    createMainLabel("addNodeFor" + port.getLabelManager().getMainLabel().toString() , node);
-                    node.addPortComposition(port);
+                    Vertex dummyNode = new Vertex();
+                    sugy.getGraph().addVertex(dummyNode);
+                    createMainLabel("addNodeFor" + port , dummyNode);
+                    dummyNode.addPortComposition(port);
+                    sugy.addDummyNodeForNodelessPorts(dummyNode);
                 }
             }
         }
@@ -101,7 +105,7 @@ public class GraphPreprocessor {
             if (vertex.getPorts().isEmpty()) {
                 Port dummyPort = new Port(null, Collections.singleton(new TextLabel("dummyPortForVertexWithoutPort")));
                 vertex.addPortComposition(dummyPort);
-                sugy.getDummyPortsForNodesWithoutPort().add(dummyPort);
+                sugy.addDummyPortsForNodesWithoutPort(dummyPort);
             }
         }
     }
@@ -112,12 +116,14 @@ public class GraphPreprocessor {
 
         for (Edge edge : new ArrayList<>(sugy.getGraph().getEdges())) {
             if (edge.getPorts().size() > 2) {
+                //for hyperedges of degree >= 3 we add a central representative vertex which is adjacent with a
+                // "normal" degree 2 edge to all original end points of this hyperedge
                 Vertex representative = new Vertex();
-                createMainLabel(("EdgeRep_for_" + edge.getLabelManager().getMainLabel().toString() + "_#" + index1++), representative);
+                createMainLabel(("EdgeRep_for_" + edge + "_#" + index1++), representative);
                 index2 = 0;
                 for (Port port : edge.getPorts()) {
                     Port p = new Port();
-                    createMainLabel(("HE_PortRep_for_" + port.getLabelManager().getMainLabel().toString() + "_#" + index1 + "-" + index2), p);
+                    createMainLabel(("HE_PortRep_for_" + port + "_#" + index1 + "-" + index2), p);
                     representative.addPortComposition(p);
                     List<Port> ps = new LinkedList<>();
                     ps.add(p);
@@ -130,9 +136,26 @@ public class GraphPreprocessor {
                 sugy.getGraph().addVertex(representative);
                 sugy.getHyperEdges().put(representative, edge);
             }
-            else if (edge.getPorts().size() < 2) {
-                System.out.println("removed edge " + edge.toString() + " because it was not connected to at least two vertices");
-                sugy.getGraph().removeEdge(edge);
+            else{
+                //edges of degree 0 or 1 get dummy nodes as endpoints to have degree 2.
+                // In the end these dummy nodes will be removed and only the edge paths remain
+                if (edge.getPorts().size() == 0) {
+                    System.out.println("Warning! Edge " + edge + " has no endpoints.");
+                }
+                else if (edge.getPorts().size() == 1) {
+                    System.out.println("Warning! Edge " + edge + " has only one endpoint.");
+                }
+                while (edge.getPorts().size() < 2) {
+                    Vertex dummyNode = new Vertex();
+                    sugy.getGraph().addVertex(dummyNode);
+                    createMainLabel("addNodeForEdge_" + edge, dummyNode);
+                    sugy.addDummyNodeForEdgesOfDeg1or0(dummyNode);
+                    Port dummyPort = new Port();
+                    dummyNode.addPortComposition(dummyPort);
+                    createMainLabel("", dummyPort);
+                    //add this new dummy port as a second port to this edge
+                    edge.addPort(dummyPort);
+                }
             }
         }
         for (Edge edge : sugy.getHyperEdges().values()) {
@@ -181,11 +204,7 @@ public class GraphPreprocessor {
             Vertex representative = new Vertex();
 
             // create main Label
-            String groupLabelText = ""; //"no_GroupMainLabel";
-//            if (group.getLabelManager().getMainLabel() != null) {
-//                groupLabelText = group.getLabelManager().getMainLabel().toString();
-//            }
-//            String idV = ("GroupRep_for_" + groupLabelText + "_#" + index1++);
+//            String idV = ("GroupRep_for_" + group + "_#" + index1++);
             String idV = ("R#" + index1++);
 //            if (stickTogether) idV = ("PlugRep_for_" + groupLabelText + "_#" + (index1-1));
             createMainLabel(idV, representative);
@@ -201,7 +220,7 @@ public class GraphPreprocessor {
                         // hang the edges from the old to the new port
                         Port replacePort = new Port();
                         createMainLabel(
-                                ("VG_PortRep_for_" + port.getLabelManager().getMainLabel().toString() + "_#" + index1 +
+                                ("VG_PortRep_for_" + port + "_#" + index1 +
                                         "-" + index2), replacePort);
 
                         for (Edge edge : new ArrayList<>(port.getEdges())) {
@@ -355,7 +374,7 @@ public class GraphPreprocessor {
                         repGroup.addPortComposition(addPort);
                         toRemove.get(port).add(edge);
                         toAdd.put(addPort, edge);
-                        createMainLabel(("AddPort_for_" + port.getLabelManager().getMainLabel().toString() + "_#" + index1++), addPort);
+                        createMainLabel(("AddPort_for_" + port + "_#" + index1++), addPort);
                         sugy.getReplacedPorts().put(addPort, port);
                     }
                     replaceGroups.put(repGroup, port);

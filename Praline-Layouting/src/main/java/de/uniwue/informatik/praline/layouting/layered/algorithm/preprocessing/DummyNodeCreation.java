@@ -198,7 +198,7 @@ public class DummyNodeCreation {
             Port dummyPort0 = new Port();
             Port dummyPort1 = new Port();
             Vertex dummy = new Vertex(Arrays.asList(dummyPort0, dummyPort1), Collections.singleton(new TextLabel(
-                            "selfLoopDummyFor_" + loopEdge.getLabelManager().getMainLabel().toString())));
+                            "selfLoopDummyFor_" + loopEdge)));
 
             // add everything to graph and rank dummy
             sugy.getGraph().addVertex(dummy);
@@ -211,9 +211,9 @@ public class DummyNodeCreation {
             //add new connections
             int counter = 0;
             Edge dummyEdge0 = new Edge(Arrays.asList(ports.get(0), dummyPort0), Collections.singleton(new TextLabel(
-                    "selfLoopEdge_" + loopEdge.getLabelManager().getMainLabel().toString() + "_#" + counter++)));
+                    "selfLoopEdge_" + loopEdge + "_#" + counter++)));
             Edge dummyEdge1 = new Edge(Arrays.asList(ports.get(1), dummyPort1), Collections.singleton(new TextLabel(
-                    "selfLoopEdge_" + loopEdge.getLabelManager().getMainLabel().toString() + "_#" + counter++)));
+                    "selfLoopEdge_" + loopEdge + "_#" + counter++)));
             sugy.getGraph().addEdge(dummyEdge0);
             sugy.getGraph().addEdge(dummyEdge1);
             sugy.assignDirection(dummyEdge0, port0TopSide ? vertex : dummy, port0TopSide ? dummy : vertex);
@@ -227,7 +227,7 @@ public class DummyNodeCreation {
                 Port dummyPort3 = new Port();
                 Vertex additionalDummy = new Vertex(Arrays.asList(dummyPort2, dummyPort3),
                         Collections.singleton(new TextLabel(
-                                "additionalSelfLoopDummyFor_" + loopEdge.getLabelManager().getMainLabel().toString())));
+                                "additionalSelfLoopDummyFor_" + loopEdge)));
 
                 // add everything to graph and rank dummy
                 sugy.getGraph().addVertex(additionalDummy);
@@ -244,7 +244,7 @@ public class DummyNodeCreation {
                 sugy.assignDirection(dummyEdge1,
                         port0TopSide ? additionalDummy : dummy, port0TopSide ? dummy : additionalDummy);
                 Edge dummyEdge2 = new Edge(Arrays.asList(ports.get(1), dummyPort3), Collections.singleton(new TextLabel(
-                        "selfLoopEdge_" + loopEdge.getLabelManager().getMainLabel().toString() + "_#" + counter++)));
+                        "selfLoopEdge_" + loopEdge + "_#" + counter++)));
                 sugy.getGraph().addEdge(dummyEdge2);
                 sugy.assignDirection(dummyEdge2,
                         port1TopSide ? vertex : additionalDummy, port0TopSide ? additionalDummy : vertex);
@@ -302,7 +302,7 @@ public class DummyNodeCreation {
         Vertex dummy = new Vertex();
         String place = lowerTurningPoint ? "lower" : "upper";
         Label idDummy =
-                new TextLabel(place + "_turning_dummy_for_" + vertex.getLabelManager().getMainLabel().toString());
+                new TextLabel(place + "_turning_dummy_for_" + vertex);
         dummy.getLabelManager().addLabel(idDummy);
         dummy.getLabelManager().setMainLabel(idDummy);
 
@@ -326,8 +326,8 @@ public class DummyNodeCreation {
         LinkedList<Port> portsFor2 = new LinkedList<>();
         Port p1 = new Port();
         Port p2 = new Port();
-        Label idp1 = new TextLabel("DummyPort_to_" + edge.getPorts().get(0).getLabelManager().getMainLabel().toString());
-        Label idp2 = new TextLabel("DummyPort_to_" + edge.getPorts().get(1).getLabelManager().getMainLabel().toString());
+        Label idp1 = new TextLabel("DummyPort_to_" + edge.getPorts().get(0));
+        Label idp2 = new TextLabel("DummyPort_to_" + edge.getPorts().get(1));
         p1.getLabelManager().addLabel(idp1);
         p2.getLabelManager().addLabel(idp2);
         p1.getLabelManager().setMainLabel(idp1);
@@ -342,8 +342,8 @@ public class DummyNodeCreation {
         portsFor2.add(edge.getPorts().get(1));
         Edge e1 = new Edge(portsFor1);
         Edge e2 = new Edge(portsFor2);
-        Label ide1 = new TextLabel("DummyEdge_to_" + edge.getPorts().get(0).getLabelManager().getMainLabel().toString());
-        Label ide2 = new TextLabel("DummyEdge_to_" + edge.getPorts().get(1).getLabelManager().getMainLabel().toString());
+        Label ide1 = new TextLabel("DummyEdge_to_" + edge.getPorts().get(0));
+        Label ide2 = new TextLabel("DummyEdge_to_" + edge.getPorts().get(1));
         e1.getLabelManager().addLabel(ide1);
         e2.getLabelManager().addLabel(ide2);
         e1.getLabelManager().setMainLabel(ide1);
@@ -372,17 +372,17 @@ public class DummyNodeCreation {
     }
 
     private void createAllDummyNodesForEdge (Edge edge) {
-        String edgeName = edge.getLabelManager().getMainLabel().toString();
+        String edgeName = edge.toString();
         Edge refEdge = edge;
         if (edgeName.startsWith("DummyEdge_to_")) {
             refEdge = dummyEdge2RealEdge.get(edge);
-            edgeName = refEdge.getLabelManager().getMainLabel().toString();
-//            if (edge.getPorts().get(0).getVertex().getLabelManager().getMainLabel().toString().startsWith("Dummy_for_")) {
+            edgeName = refEdge.toString();
+//            if (edge.getPorts().get(0).getVertex().toString().startsWith("Dummy_for_")) {
 //                refEdge = dummyNodesLongEdges.get(edge.getPorts().get(0).getVertex());
-//                edgeName = refEdge.getLabelManager().getMainLabel().toString();
+//                edgeName = refEdge.toString();
 //            } else {
 //                refEdge = dummyNodesLongEdges.get(edge.getPorts().get(1).getVertex());
-//                edgeName = refEdge.getLabelManager().getMainLabel().toString();
+//                edgeName = refEdge.toString();
 //            }
         }
 

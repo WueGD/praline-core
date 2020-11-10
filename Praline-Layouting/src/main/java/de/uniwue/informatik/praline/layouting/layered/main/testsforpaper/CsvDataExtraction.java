@@ -52,7 +52,7 @@ public class CsvDataExtraction {
 //            "ran";
             "kieler";
 
-    private static final Map<String, String> KNOWN_NAMES = new LinkedHashMap<String, String>() {
+    private static final Map<String, String> KNOWN_NAMES = new LinkedHashMap<>() {
         {
             put("noc", "\\ncr");
             put("nob", "\\nbp");

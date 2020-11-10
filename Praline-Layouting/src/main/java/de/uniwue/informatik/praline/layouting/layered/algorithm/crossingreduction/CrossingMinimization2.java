@@ -194,7 +194,7 @@ public class CrossingMinimization2 {
                 for (Port port : node.getPorts()) {
                     for (Edge edge : port.getEdges()) {
                         for (Port otherPort : edge.getPorts()) {
-                            if (!port.equals(otherPort) && sugy.isTurningPointDummy(otherPort.getVertex())) {
+                            if (!port.equals(otherPort) && sugy.isDummyTurningNode(otherPort.getVertex())) {
                                 this.adjacentToDummyTurningPoints.add(node);
                             }
                         }
@@ -243,7 +243,7 @@ public class CrossingMinimization2 {
             //extract all turning dummies
             ArrayList<Vertex> turningDummiesOnLayer = new ArrayList<>();
             for (Vertex vertex : new ArrayList<>(currentLayer)) {
-                if (sugy.isTurningPointDummy(vertex)) {
+                if (sugy.isDummyTurningNode(vertex)) {
                     currentLayer.remove(vertex);
                     turningDummiesOnLayer.add(vertex);
                 }
@@ -368,7 +368,7 @@ public class CrossingMinimization2 {
     private boolean considerPortsOfNode(Vertex node) {
         return method.equals(CrossingMinimizationMethod.PORTS)
                 || (method.equals(CrossingMinimizationMethod.MIXED)
-                && (sugy.isPlug(node) || sugy.isTurningPointDummy(node)
+                && (sugy.isPlug(node) || sugy.isDummyTurningNode(node)
                     || this.adjacentToDummyTurningPoints.contains(node)));
     }
 
@@ -481,7 +481,7 @@ public class CrossingMinimization2 {
     private void handleTurningVerticesFinally(boolean sortPortsAtCorrespondingRealNode) {
         for (List<Vertex> layer : orders.getNodeOrder()) {
             for (Vertex node : layer) {
-                if (sugy.isTurningPointDummy(node)) {
+                if (sugy.isDummyTurningNode(node)) {
                     sortPortsAtTurningDummy(node, sortPortsAtCorrespondingRealNode);
                 }
             }
@@ -670,7 +670,7 @@ public class CrossingMinimization2 {
         for (List<Vertex> layer : nodeOrder) {
             for (Vertex node : layer) {
                 //do not sort ports of turning dummies, this will be done by handleTurningVerticesFinally()
-                if (sugy.isTurningPointDummy(node)) {
+                if (sugy.isDummyTurningNode(node)) {
                     continue;
                 }
                 for (Map<Vertex, List<Port>> currentPortOrderMap : portOrdersToBeSorted) {
@@ -719,7 +719,7 @@ public class CrossingMinimization2 {
                 portsOfEdge.remove(consideredPort);
                 Port otherPort = portsOfEdge.get(0);
                 Vertex turningPointDummy = otherPort.getVertex();
-                if (sugy.isTurningPointDummy(turningPointDummy)) {
+                if (sugy.isDummyTurningNode(turningPointDummy)) {
                     List<Vertex> otherNodesOnSameLayer = new ArrayList<>();
                     for (Port portOfDummy : turningPointDummy.getPorts()) {
                         for (Edge portEdge : portOfDummy.getEdges()) {
@@ -879,16 +879,16 @@ public class CrossingMinimization2 {
                 }
             }
             if (!portParingsValid) {
-                System.out.println("No valid arrangement of port pairings found for plug "
-                        + sugy.getPlugs().get(node).getContainedVertices());
+                System.out.println("Warning! No valid arrangement of port pairings found for plug "
+                        + sugy.getPlugs().get(node).getContainedVertices() + ".");
             }
             //check port groups
             List<Port> allPortsCombined = new ArrayList<>(bottomOrder);
             allPortsCombined.addAll(topOrder);
             if (!PortUtils.arrangmentOfPortsIsValidAccordingToPortGroups(allPortsCombined, node.getPortCompositions())) {
-                System.out.println("Constraints due to port groups " +
+                System.out.println("Warning! Constraints due to port groups " +
                         "not completely fulfilled (possibly because of conflicts with port pairings) at plug "
-                        + sugy.getPlugs().get(node).getContainedVertices());
+                        + sugy.getPlugs().get(node).getContainedVertices() + ".");
             }
         }
     }
@@ -1184,7 +1184,7 @@ public class CrossingMinimization2 {
 
         for (Vertex node : orders.getNodeOrder().get(rank)) {
             if (considerPortsOfNode(node)) {
-                if (sugy.isTurningPointDummy(node)) {
+                if (sugy.isDummyTurningNode(node)) {
                     sortPortsAtTurningDummy(node, false);
                 }
                 else {

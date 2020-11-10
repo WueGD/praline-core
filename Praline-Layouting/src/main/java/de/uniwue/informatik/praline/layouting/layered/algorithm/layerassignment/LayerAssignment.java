@@ -27,11 +27,8 @@ public class LayerAssignment {
      on  a network simplex formulation  [15].  Although its time
      complexity has not been proven polynomial, in practice it takes
      few iterations and runs quickly.
-     */
-    /**
      calculateCutValues can be speed up by pre-calculating cutValues for all nodes if necessary
      */
-
     public Map<Vertex, Integer> networkSimplex () {
         //execute individually for each connected component
         ConnectedComponentClusterer connectedComponentClusterer = new ConnectedComponentClusterer(sugy.getGraph());
@@ -157,8 +154,8 @@ public class LayerAssignment {
         while (tree.size() != (treeNodes.size() - 1)) {
             Set<Vertex> connectedComponent = new LinkedHashSet<>();
             if (component.isEmpty()) {
-                System.out.println("No vertex found in (a component of) graph " + sugy.getGraph() +". Abort layer " +
-                        "assignment.");
+                System.out.println("Warning! No vertex found in (a component of) graph " + sugy.getGraph() +". Abort " +
+                        "layer assignment.");
                 return;
             }
             Vertex firstNode = component.iterator().next();

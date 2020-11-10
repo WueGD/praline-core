@@ -56,6 +56,8 @@ public class MainDrawSinglePlan {
     private static final String TARGET_PATH =
             "Praline-Layouting/results/singleTest.svg";
 
+    private static final boolean CHECK_COMPLETENESS_OF_GRAPH = true;
+
     private static final DirectionMethod DIRECTION_METHOD = DirectionMethod.FORCE;
 
     private static final CrossingMinimizationMethod CROSSING_MINIMIZATION_METHOD = CrossingMinimizationMethod.PORTS;
@@ -107,11 +109,29 @@ public class MainDrawSinglePlan {
                 bestRun.drawResult(TARGET_PATH);
 
                 if (i > 1) {
+                    System.out.println();
                     System.out.println("Best run had " + fewestCrossings + " crossings -> to be saved as svg");
                 }
                 System.out.println("Created svg " + TARGET_PATH);
+                System.out.println();
             }
-        }
 
+            if (CHECK_COMPLETENESS_OF_GRAPH) {
+                Graph sameGraphReloaded = null;
+                try {
+                    sameGraphReloaded = Serialization.read(file, Graph.class);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (!graph.equalLabeling(sameGraphReloaded)) {
+                    System.out.println("Warning! Drawn graph and input graph differ.");
+                }
+                else {
+                    System.out.println("Checked: drawn graph contains the same objects as the input graph");
+                }
+            }
+            System.out.println();
+            System.out.println();
+        }
     }
 }

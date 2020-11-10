@@ -81,7 +81,7 @@ public class EdgeRouting {
         // search for turningDummys which are routed trough the active edge layer and handle them
         List<Double> activeCandidates = new ArrayList<>();
         for (Vertex node : vertices) {
-            if (sugy.isTurningPointDummy(node) || sugy.isDummyNodeOfSelfLoop(node)) {
+            if (sugy.isDummyTurningNode(node) || sugy.isDummyNodeOfSelfLoop(node)) {
                 List<Port> ports = (top) ? sortingOrder.getTopPortOrder().get(node) : sortingOrder.getBottomPortOrder().get(node);
                 if (!ports.isEmpty()) {
                     Vertex v = sugy.getVertexOfTurningDummy(node);
@@ -169,8 +169,8 @@ public class EdgeRouting {
                     ports.add(p4); // add endPort of edge segment
                     Edge newEdge = new Edge(ports);
                     newEdge.getLabelManager().addLabel(new TextLabel(
-                            "replEdgeFrom_" + p1.getVertex().getLabelManager().getMainLabel().toString()
-                                    + "_to_" + p4.getVertex().getLabelManager().getMainLabel().toString()));
+                            "replEdgeFrom_" + p1.getVertex()
+                                    + "_to_" + p4.getVertex()));
                     sugy.getGraph().addEdge(newEdge);
                     sugy.assignDirection(newEdge, p1.getVertex(), p4.getVertex());
                     sugy.getDummyEdge2RealEdge().put(newEdge, sugy.getDummyEdge2RealEdge().get(e1));
@@ -279,7 +279,7 @@ public class EdgeRouting {
         // for all nodes
         for (Vertex node : sortingOrder.getNodeOrder().get(rank)) {
             // if it is no TurningDummy
-            if (!(sugy.isTurningPointDummy(node)) && !sugy.isDummyNodeOfSelfLoop(node)) {
+            if (!(sugy.isDummyTurningNode(node)) && !sugy.isDummyNodeOfSelfLoop(node)) {
                 // for all ports
                 for (Port bottomPort : sortingOrder.getTopPortOrder().get(node)) {
                     //if it has an edge
@@ -418,7 +418,7 @@ public class EdgeRouting {
         // for all nodes
         for (Vertex node : sortingOrder.getNodeOrder().get(rank + 1)) {
             // if it is no TurningDummy
-            if (!(sugy.isTurningPointDummy(node)) && !sugy.isDummyNodeOfSelfLoop(node)) {
+            if (!(sugy.isDummyTurningNode(node)) && !sugy.isDummyNodeOfSelfLoop(node)) {
                 // for all ports
                 for (Port topPort : sortingOrder.getBottomPortOrder().get(node)) {
                     //if it has an edge
