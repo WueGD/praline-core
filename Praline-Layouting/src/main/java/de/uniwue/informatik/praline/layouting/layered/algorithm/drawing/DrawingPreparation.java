@@ -342,19 +342,19 @@ public class DrawingPreparation {
     }
 
     private void shiftAllUpToRank (double shiftValue, int rank, double shiftValueEdges) {
-        Set<Path> pathsAlreadyShifted = new LinkedHashSet<>();
+        Set<Edge> edgesAlreadyShifted = new LinkedHashSet<>();
         for (int i = sugy.getMaxRank(); i >= rank; i--) {
-            shift(shiftValue, i, shiftValueEdges, pathsAlreadyShifted);
+            shift(shiftValue, i, shiftValueEdges, edgesAlreadyShifted);
         }
     }
 
     // shift all nodes of rank rank with their ports and all edgePaths to nodes below
-    private void shift (double shiftValue, int rank, Set<Path> pathsAlreadyShifted) {
-        shift(shiftValue, rank, shiftValue, pathsAlreadyShifted);
+    private void shift (double shiftValue, int rank, Set<Edge> edgesAlreadyShifted) {
+        shift(shiftValue, rank, shiftValue, edgesAlreadyShifted);
     }
 
     // shift all nodes of rank rank with their ports and all edgePaths to nodes below
-    private void shift (double shiftValue, int rank, double shiftValueEdges, Set<Path> pathsAlreadyShifted) {
+    private void shift (double shiftValue, int rank, double shiftValueEdges, Set<Edge> edgesAlreadyShifted) {
         for (Vertex node : sortingOrder.getNodeOrder().get(rank)) {
             Rectangle currentShape = (Rectangle) node.getShape();
             currentShape.y = currentShape.getY() + shiftValue;
@@ -370,7 +370,10 @@ public class DrawingPreparation {
             // shift edgePaths on the top side ports
             for (Port topPort : sortingOrder.getTopPortOrder().get(node)) {
                 for (Edge edge : topPort.getEdges()) {
-                    shiftInnerPartOfEdge(shiftValueEdges, edge, pathsAlreadyShifted);
+                    if (!edgesAlreadyShifted.contains(edge)) {
+                        shiftInnerPartOfEdge(shiftValueEdges, edge);
+                        edgesAlreadyShifted.add(edge);
+                    }
                 }
             }
         }
@@ -379,20 +382,20 @@ public class DrawingPreparation {
             for (Vertex node : sortingOrder.getNodeOrder().get(rank + 1)) {
                 for (Port bottomPort : sortingOrder.getBottomPortOrder().get(node)) {
                     for (Edge edge : bottomPort.getEdges()) {
-                        shiftInnerPartOfEdge(shiftValueEdges, edge, pathsAlreadyShifted);
+                        if (!edgesAlreadyShifted.contains(edge)) {
+                            shiftInnerPartOfEdge(shiftValueEdges, edge);
+                            edgesAlreadyShifted.add(edge);
+                        }
                     }
                 }
             }
         }
     }
 
-    private void shiftInnerPartOfEdge(double shiftValue, Edge edge, Set<Path> pathsAlreadyShifted) {
+    private void shiftInnerPartOfEdge(double shiftValue, Edge edge) {
         for (Path path : edge.getPaths()) {
-            if (!pathsAlreadyShifted.contains(path)) {
-                for (Point2D.Double innerPoint : ((PolygonalPath) path).getBendPoints()) {
-                    innerPoint.setLocation(innerPoint.getX(), (innerPoint.getY() + shiftValue));
-                }
-                pathsAlreadyShifted.add(path);
+            for (Point2D.Double innerPoint : ((PolygonalPath) path).getBendPoints()) {
+                innerPoint.setLocation(innerPoint.getX(), (innerPoint.getY() + shiftValue));
             }
         }
     }

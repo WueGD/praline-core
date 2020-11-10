@@ -34,10 +34,11 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0005-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0006-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0007-praline.json";
-            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0008-praline.json";
+//            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0008-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0009-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0024-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0282-praline.json";
+            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0414-praline.json";
 //            //check vertices a66062305ffbb6ac + 84a0e499304ed15b
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-d4cbdce2-3a35-4fc1-9ed8-69e196371ee5.json";
 //            //small, but many vertex groups
