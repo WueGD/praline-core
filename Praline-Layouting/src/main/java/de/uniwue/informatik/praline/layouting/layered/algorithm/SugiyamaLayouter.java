@@ -154,16 +154,16 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
     public void copyDirections(SugiyamaLayouter otherSugiyamaLayouterWithSameGraph)  {
         for (Edge edge : otherSugiyamaLayouterWithSameGraph.getGraph().getEdges()) {
-            this.assignDirection(edge,
-                    otherSugiyamaLayouterWithSameGraph.getStartNode(edge), otherSugiyamaLayouterWithSameGraph.getEndNode(edge));
+            this.assignDirection(edge, otherSugiyamaLayouterWithSameGraph.getStartNode(edge),
+                    otherSugiyamaLayouterWithSameGraph.getEndNode(edge));
         }
 
         //check that all edges got a direction
         for (Edge edge : this.getGraph().getEdges()) {
             if (!edgeToStart.containsKey(edge)) {
                 throw new NoSuchElementException("No edge direction found to copy. The input parameter " +
-                        "otherSugiyamaLayouterWithSameGraph has either not yet directions assigned or the graph is not " +
-                        "identical with the graph of this SugiyamaLayouter object.");
+                        "otherSugiyamaLayouterWithSameGraph has either not yet directions assigned or the graph is not "
+                        + "identical with the graph of this SugiyamaLayouter object.");
             }
         }
     }
@@ -317,11 +317,13 @@ public class SugiyamaLayouter implements PralineLayouter {
                     if (topPort.equals(bottomPort)) bottomPort = edge.getPorts().get(1);
                     int bottomPortPosition = 0;
                     bottomPortPosition = positions.get(bottomPort);
-                    for (int topPosition = (topPortPosition + 1); topPosition < topPorts.get(layer).size(); topPosition++) {
+                    for (int topPosition = (topPortPosition + 1); topPosition < topPorts.get(layer).size();
+                         topPosition++) {
                         Port crossingTopPort = topPorts.get(layer).get(topPosition);
                         for (Edge crossingEdge : crossingTopPort.getEdges()) {
                             Port crossingBottomPort = crossingEdge.getPorts().get(0);
-                            if (crossingTopPort.equals(crossingBottomPort)) crossingBottomPort = crossingEdge.getPorts().get(1);
+                            if (crossingTopPort.equals(crossingBottomPort))
+                                crossingBottomPort = crossingEdge.getPorts().get(1);
                             if (positions.get(crossingBottomPort) < bottomPortPosition) crossings++;
                         }
                     }
@@ -396,21 +398,26 @@ public class SugiyamaLayouter implements PralineLayouter {
         return -1;
     }
 
+    public void setRank (Vertex node, Integer rank) {
+        if (nodeToRank.containsKey(node)) {
+            int oldRank = getRank(node);
+            rankToNodes.get(oldRank).remove(node);
+            if (rankToNodes.get(oldRank).isEmpty()) {
+                rankToNodes.remove(oldRank);
+            }
+            rankToNodes.putIfAbsent(rank, new LinkedHashSet<>());
+            rankToNodes.get(rank).add(node);
+            nodeToRank.replace(node, rank);
+        } else {
+            nodeToRank.put(node, rank);
+            rankToNodes.putIfAbsent(rank, new LinkedHashSet<>());
+            rankToNodes.get(rank).add(node);
+        }
+    }
+
     public void changeRanks (Map<Vertex, Integer> newRanks) {
         for (Vertex node: newRanks.keySet()) {
-            int newRank = newRanks.get(node);
-            if (nodeToRank.containsKey(node)) {
-                int oldRank = getRank(node);
-                rankToNodes.get(oldRank).remove(node);
-                if (rankToNodes.get(oldRank).isEmpty()) rankToNodes.remove(oldRank);
-                if (!rankToNodes.containsKey(newRank)) rankToNodes.put(newRank, new LinkedHashSet<>());
-                rankToNodes.get(newRank).add(node);
-                nodeToRank.replace(node, newRanks.get(node));
-            } else {
-                nodeToRank.put(node, newRank);
-                if (!rankToNodes.containsKey(newRank)) rankToNodes.put(newRank, new LinkedHashSet<>());
-                rankToNodes.get(newRank).add(node);
-            }
+            setRank(node, newRanks.get(node));
         }
     }
 
@@ -556,7 +563,8 @@ public class SugiyamaLayouter implements PralineLayouter {
     public double getTextWidthForNode(Vertex node) {
         double width = 0;
         for (String label : getNodeName(node)) {
-            width = Math.max(width, DrawingInformation.g2d.getFontMetrics().getStringBounds(label, DrawingInformation.g2d).getWidth());
+            width = Math.max(width, DrawingInformation.g2d.getFontMetrics().getStringBounds(label,
+                    DrawingInformation.g2d).getWidth());
         }
         return width;
     }

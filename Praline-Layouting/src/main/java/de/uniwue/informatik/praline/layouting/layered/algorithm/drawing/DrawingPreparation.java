@@ -24,7 +24,6 @@ public class DrawingPreparation {
     private List<Port> dummyPortsForNodesWithoutPort;
     private double delta;
     private Map<Integer, Double> layer2shiftForUnionNodes;
-    private List<Port> portsWithMultipleEdgesToBeRestoredLater;
 
     public DrawingPreparation (SugiyamaLayouter sugy) {
         this.sugy = sugy;
@@ -38,7 +37,6 @@ public class DrawingPreparation {
         this.dummyPortsForLabelPadding = dummyPortsForLabelPadding;
         this.dummyPortsForNodesWithoutPort = dummyPortsForNodesWithoutPort;
         this.layer2shiftForUnionNodes = new LinkedHashMap<>();
-        this.portsWithMultipleEdgesToBeRestoredLater = new ArrayList<>();
     }
 
     public void prepareDrawing(DrawingInformation drawInfo, SortingOrder sortingOrder,
@@ -337,24 +335,24 @@ public class DrawingPreparation {
         }
     }
 
-    private void shiftAllUpToRank (double shiftValue, int rank) {
-        shiftAllUpToRank(shiftValue, rank, shiftValue);
+    private void shiftAllUpToRank(int rank, double shiftValue) {
+        shiftAllUpToRank(rank, shiftValue, shiftValue);
     }
 
-    private void shiftAllUpToRank (double shiftValue, int rank, double shiftValueEdges) {
+    private void shiftAllUpToRank(int rank, double shiftValue, double shiftValueEdges) {
         Set<Edge> edgesAlreadyShifted = new LinkedHashSet<>();
         for (int i = sugy.getMaxRank(); i >= rank; i--) {
-            shift(shiftValue, i, shiftValueEdges, edgesAlreadyShifted);
+            shift(i, shiftValue, shiftValueEdges, edgesAlreadyShifted);
         }
     }
 
     // shift all nodes of rank rank with their ports and all edgePaths to nodes below
-    private void shift (double shiftValue, int rank, Set<Edge> edgesAlreadyShifted) {
-        shift(shiftValue, rank, shiftValue, edgesAlreadyShifted);
+    private void shift(int rank, double shiftValue, Set<Edge> edgesAlreadyShifted) {
+        shift(rank, shiftValue, shiftValue, edgesAlreadyShifted);
     }
 
     // shift all nodes of rank rank with their ports and all edgePaths to nodes below
-    private void shift (double shiftValue, int rank, double shiftValueEdges, Set<Edge> edgesAlreadyShifted) {
+    private void shift(int rank, double shiftValue, double shiftValueEdges, Set<Edge> edgesAlreadyShifted) {
         for (Vertex node : sortingOrder.getNodeOrder().get(rank)) {
             Rectangle currentShape = (Rectangle) node.getShape();
             currentShape.y = currentShape.getY() + shiftValue;
@@ -364,14 +362,14 @@ public class DrawingPreparation {
                     Arrays.asList(sortingOrder.getBottomPortOrder().get(node), sortingOrder.getTopPortOrder().get(node));
             for (List<Port> ports : portsToBeShifted) {
                 for (Port port : ports) {
-                    shiftPort(shiftValue, port);
+                    shiftPort(port, shiftValue);
                 }
             }
             // shift edgePaths on the top side ports
             for (Port topPort : sortingOrder.getTopPortOrder().get(node)) {
                 for (Edge edge : topPort.getEdges()) {
                     if (!edgesAlreadyShifted.contains(edge)) {
-                        shiftInnerPartOfEdge(shiftValueEdges, edge);
+                        shiftInnerPartOfEdge(edge, shiftValueEdges);
                         edgesAlreadyShifted.add(edge);
                     }
                 }
@@ -383,7 +381,7 @@ public class DrawingPreparation {
                 for (Port bottomPort : sortingOrder.getBottomPortOrder().get(node)) {
                     for (Edge edge : bottomPort.getEdges()) {
                         if (!edgesAlreadyShifted.contains(edge)) {
-                            shiftInnerPartOfEdge(shiftValueEdges, edge);
+                            shiftInnerPartOfEdge(edge, shiftValueEdges);
                             edgesAlreadyShifted.add(edge);
                         }
                     }
@@ -392,7 +390,7 @@ public class DrawingPreparation {
         }
     }
 
-    private void shiftInnerPartOfEdge(double shiftValue, Edge edge) {
+    private void shiftInnerPartOfEdge(Edge edge, double shiftValue) {
         for (Path path : edge.getPaths()) {
             for (Point2D.Double innerPoint : ((PolygonalPath) path).getBendPoints()) {
                 innerPoint.setLocation(innerPoint.getX(), (innerPoint.getY() + shiftValue));
@@ -400,7 +398,7 @@ public class DrawingPreparation {
         }
     }
 
-    private void shiftPort(double shiftValue, PortComposition portComposition) {
+    private void shiftPort(PortComposition portComposition, double shiftValue) {
         if (portComposition instanceof Port) {
             for (Edge edge : ((Port) portComposition).getEdges()) {
                 lengthenEdge(edge, (Rectangle) ((Port) portComposition).getShape(), shiftValue);
@@ -409,7 +407,7 @@ public class DrawingPreparation {
             currentShape.y = currentShape.getY() + shiftValue;
         } else if (portComposition instanceof PortGroup) {
             for (PortComposition member : ((PortGroup)portComposition).getPortCompositions()) {
-                shiftPort(shiftValue, member);
+                shiftPort(member, shiftValue);
             }
         }
     }
@@ -427,6 +425,12 @@ public class DrawingPreparation {
 
     public void restoreOriginalElements () {
 
+        //<shifting involved>
+
+        // The first two blocks involve shifting. For them we need a clear structure with edges going only between
+        // neighboring layers. Hence they have to occur first before we replace dummy edges, unify their paths and
+        // remove several types of dummy vertices contained in edges
+
         //restore vertex groups
         for (Vertex vertex : new ArrayList<>(sugy.getGraph().getVertices())) {
             if (sugy.getVertexGroups().containsKey(vertex)) {
@@ -439,6 +443,14 @@ public class DrawingPreparation {
                 restoreVertexGroup(vertex, vertexGroup);
             }
         }
+
+
+        //do extra shifts at nodes with ports with multiple edges, to redraw them -> they should go as skewed edges
+        // to that port
+        makeSpaceForSkewEdgesAtPortsWithMultipleEdges();
+
+        //</shifting involved>
+
 
         //replace dummy edges
         boolean hasChanged = true;
@@ -491,9 +503,6 @@ public class DrawingPreparation {
 
         restoreEdgeBundles();
 
-        //TODO: add ports of vertexGroup that are paired within the vertex group but do not have outgoing edges
-        //TODO: check that #ports, #vertices, #edges is in the end the same as at the beginning
-
         //first we have already replaced in restoreVertexGroup (...) the ports that were created during vertex group
         // handling; these are the ports in replacedPorts where the original vertex is not in
         // multipleEdgePort2replacePorts
@@ -501,13 +510,14 @@ public class DrawingPreparation {
         //second we replace the ports that were created during the phase where ports with multiple edges were split to
         // multiple ports; now we re-unify all these ports back to one. If there is a port pairing involved, we keep
         // the one on the opposite site to the port pairing; otherwise we keep the/a middle one
+        List<Port> portsWithMultipleEdgesToBeRestoredLater = new ArrayList<>();
         for (Port origPort : sugy.getMultipleEdgePort2replacePorts().keySet()) {
-            restorePortsWithMultipleEdges(origPort);
+            restorePortsWithMultipleEdges(origPort, portsWithMultipleEdgesToBeRestoredLater);
         }
         //Due to ports with multiple edges on both sides of a port pairing, the order we restore these ports matters.
         // Hence, we may handle some ports of in another run to be executed in the following for-loop
         for (Port origPort : portsWithMultipleEdgesToBeRestoredLater) {
-            restorePortsWithMultipleEdges(origPort);
+            restorePortsWithMultipleEdges(origPort, portsWithMultipleEdgesToBeRestoredLater);
         }
 
         //restore ports of devices that have nothing but a port pairing to a port of another vertex
@@ -535,7 +545,30 @@ public class DrawingPreparation {
         }
     }
 
-    private void restorePortsWithMultipleEdges(Port origPort) {
+    private void makeSpaceForSkewEdgesAtPortsWithMultipleEdges() {
+        Set<Integer> layerBottomSidesAlreadyShifted = new LinkedHashSet<>();
+        Set<Integer> layerTopSidesAlreadyShifted = new LinkedHashSet<>();
+
+        for (Port portWithMultipleEdges : sugy.getMultipleEdgePort2replacePorts().keySet()) {
+            List<Port> replacePorts = sugy.getMultipleEdgePort2replacePorts().get(portWithMultipleEdges);
+
+            //shift everything (if it has not been done yet) to have space to add another bend to each edge
+            boolean topPort = sugy.isTopPort(replacePorts.get(0));
+            int rankOfLayer = sugy.getRank(replacePorts.get(0).getVertex());
+            Set<Integer> layerAlreadyShifted = topPort ? layerTopSidesAlreadyShifted : layerBottomSidesAlreadyShifted;
+            if (!layerAlreadyShifted.contains(rankOfLayer)) {
+                double shiftValue = drawInfo.getEdgeDistanceVertical();
+                //shift all layers above
+                shiftAllUpToRank(rankOfLayer + 1, shiftValue, shiftValue);
+                layerAlreadyShifted.add(rankOfLayer);
+                //for the current layer shift the edges, but shift the nodes only if we have to make space for the
+                // bottom side
+                shift(rankOfLayer, topPort ? 0 : shiftValue, shiftValue, new LinkedHashSet<>());
+            }
+        }
+    }
+
+    private void restorePortsWithMultipleEdges(Port origPort, List<Port> portsWithMultipleEdgesToBeRestoredLater) {
         List<Port> replacePorts = sugy.getMultipleEdgePort2replacePorts().get(origPort);
         Vertex vertex = replacePorts.iterator().next().getVertex();
         VertexGroup vertexGroup = vertex.getVertexGroup();
@@ -544,10 +577,10 @@ public class DrawingPreparation {
         // step in the right order to get the real original port pairing -- int the same as it was inserted in the map
         // sugy.getReplacedPortPairings() . This happens if on both sides of a port pairing, the port has multiple edges
         // We handle such a port in the end (after the opposite side port with multiple edges has been handled)
-        if (checkIfWeHaveToRestoreItLater(origPort, replacePorts, vertexGroup)) {
+        if (checkIfWeHaveToRestoreItLater(origPort, replacePorts, vertexGroup,
+                portsWithMultipleEdgesToBeRestoredLater)) {
             return;
         }
-
 
         Shape shapeOfPairedPort = null;
         PortGroup portGroupOfThisReplacement = replacePorts.iterator().next().getPortGroup();
@@ -628,8 +661,7 @@ public class DrawingPreparation {
                     if (pointAtPort != null) {
                         newForeLastPoint.x = pointAtPort.x;
                         newForeLastPoint.y = pointAtPort.y +
-                                //TODO: transform the .75 into a variable in DrawingInformation
-                                drawInfo.getEdgeDistanceVertical() * (foreLastPoint.y > pointAtPort.y ? .75 : -.75);
+                                drawInfo.getEdgeDistanceVertical() * (foreLastPoint.y > pointAtPort.y ? 1.0 : -1.0);
                         if (pointAtPort == startPoint) {
                             ((PolygonalPath) path).getBendPoints().add(0, newForeLastPoint);
                             startPoint.setLocation(targetPoint);
@@ -645,7 +677,8 @@ public class DrawingPreparation {
         }
     }
 
-    private boolean checkIfWeHaveToRestoreItLater(Port origPort, List<Port> replacePorts, VertexGroup vertexGroup) {
+    private boolean checkIfWeHaveToRestoreItLater(Port origPort, List<Port> replacePorts, VertexGroup vertexGroup,
+                                                  List<Port> portsWithMultipleEdgesToBeRestoredLater) {
         for (Port replacePort : replacePorts) {
             if (vertexGroup != null && PortUtils.getPortPairing(replacePort, vertexGroup) != null) {
                 PortPairing replacePortPairing = PortUtils.getPortPairing(replacePort, vertexGroup);
@@ -716,18 +749,18 @@ public class DrawingPreparation {
             layer2shiftForUnionNodes.put(layer, shiftNodeBy);
         }
         if (shiftLayerBy > 0) {
-            shiftAllUpToRank(shiftLayerBy / 2.0, layer, shiftLayerBy);
+            shiftAllUpToRank(layer, shiftLayerBy / 2.0, shiftLayerBy);
             if (layer < sugy.getMaxRank()) {
-                shiftAllUpToRank(shiftLayerBy / 2.0, layer + 1, 0);
+                shiftAllUpToRank(layer + 1, shiftLayerBy / 2.0, 0);
             }
         }
         unionVertexShape.height += shiftNodeBy;
         unionVertexShape.y -= shiftNodeBy / 2.0;
         for (Port port : sugy.getOrders().getBottomPortOrder().get(dummyUnificationVertex)) {
-            shiftPort(-shiftNodeBy / 2.0, port);
+            shiftPort(port, -shiftNodeBy / 2.0);
         }
         for (Port port : sugy.getOrders().getTopPortOrder().get(dummyUnificationVertex)) {
-            shiftPort(shiftNodeBy / 2.0, port);
+            shiftPort(port, shiftNodeBy / 2.0);
         }
 
         //draw each original vertex
@@ -755,6 +788,7 @@ public class DrawingPreparation {
                     int indexUnionVertex = sortingOrder.getNodeOrder().get(layer).indexOf(dummyUnificationVertex);
                     if (originalVertex != dummyDeviceRepresenter) {
                         sugy.getGraph().addVertex(originalVertex);
+                        sugy.setRank(originalVertex, sugy.getRank(dummyUnificationVertex));
                         sortingOrder.getNodeOrder().get(layer).add(indexUnionVertex, originalVertex);
                         sortingOrder.getBottomPortOrder().put(originalVertex, new ArrayList<>());
                         sortingOrder.getTopPortOrder().put(originalVertex, new ArrayList<>());
@@ -800,10 +834,10 @@ public class DrawingPreparation {
                 Rectangle deviceShape = (Rectangle) deviceVertex.getShape();
                 Rectangle portShape = (Rectangle) origPort.getShape();
                 if (deviceShape.y > portShape.y + portShape.height) {
-                    shiftPort(deviceShape.y - portShape.height - portShape.y, origPort);
+                    shiftPort(origPort, deviceShape.y - portShape.height - portShape.y);
                 }
                 else if (deviceShape.y + deviceShape.height < portShape.y) {
-                    shiftPort(deviceShape.y + deviceShape.height - portShape.y, origPort);
+                    shiftPort(origPort, deviceShape.y + deviceShape.height - portShape.y);
                 }
             }
         }

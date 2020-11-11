@@ -30,7 +30,7 @@ public class BendsCounting {
             //for the different paths, we do not count the end points at the ports
             startAndEndPointsOfPaths -= edge.getPorts().size();
             //for the remaining connection points of different paths we count 1,
-            //TODO: maybe this is to pessimistic: if two paths end in the same point, they contribute 1 or 0 bends
+            //TODO: maybe this is too pessimistic: if two paths end in the same point, they contribute 1 or 0 bends
             // instead of 2
             sum += startAndEndPointsOfPaths;
         }
