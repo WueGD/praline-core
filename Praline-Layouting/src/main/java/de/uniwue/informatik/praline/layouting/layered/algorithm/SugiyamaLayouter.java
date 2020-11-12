@@ -2,6 +2,7 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm;
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
+import de.uniwue.informatik.praline.datastructure.placements.Orientation;
 import de.uniwue.informatik.praline.io.output.svg.SVGDrawer;
 import de.uniwue.informatik.praline.layouting.PralineLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.GraphPreprocessor;
@@ -74,6 +75,7 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public SugiyamaLayouter(Graph graph, DrawingInformation drawInfo) {
         this.graph = graph;
+
         initialize();
         for (Vertex node : graph.getVertices()) {
             if (node.getLabelManager().getLabels().get(0) instanceof TextLabel) {
@@ -115,8 +117,8 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     // change graph so that
-    // each Edge has exact two Ports
-    // each Port has not max one Edge
+    // each Edge has exactly two Ports
+    // each Port has max one Edge
     // VertexGroups are replaced by a single node
     // if all Nodes of a Group are touching each other PortGroups are kept
     // save changes to resolve later

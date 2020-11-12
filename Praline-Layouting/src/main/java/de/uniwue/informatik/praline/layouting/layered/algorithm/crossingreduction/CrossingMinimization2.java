@@ -429,7 +429,8 @@ public class CrossingMinimization2 {
         //re-sort ports
         for (Vertex vertex : verticesOfLayer) {
             if (considerPortsOfNode(vertex)) {
-                List<Port> portsOfVertex = orderPortsConstraintToPortGroups(portOrdering,vertex.getPortCompositions());
+                List<Port> portsOfVertex = orderPortsConstraintToPortGroups(portOrdering,
+                        vertex.getPortCompositions(), true);
                 if (upwards) {
                     orders.getBottomPortOrder().replace(vertex, portsOfVertex);
                 } else {
@@ -573,7 +574,7 @@ public class CrossingMinimization2 {
 
     private boolean swapPortsIfPossible(List<Port> ports, Port port0, Port port1, boolean swapPairedPorts) {
         if ((!sugy.isPaired(port0) && !sugy.isPaired(port1))) {
-            if (PortUtils.areInTheSamePortGroup(port0, port1)) {
+            if (areInTheSameFreePortGroup(port0, port1)) {
                 Collections.swap(ports, ports.indexOf(port0), ports.indexOf(port1));
                 return true;
             }
@@ -593,11 +594,11 @@ public class CrossingMinimization2 {
             if (otherSidePort0 == null) {
                 indexUnpairedOtherSidePort = otherSidePorts.indexOf(otherSidePort1) + (indexPort0 - indexPort1);
                 if (indexUnpairedOtherSidePort < 0) {
-                    canSwapOtherSide = PortUtils.areInTheSamePortGroup(otherSidePorts.get(0), otherSidePort1);
+                    canSwapOtherSide = areInTheSameFreePortGroup(otherSidePorts.get(0), otherSidePort1);
                 }
                 else if (indexUnpairedOtherSidePort >= otherSidePorts.size()) {
-                    canSwapOtherSide = PortUtils.areInTheSamePortGroup(otherSidePorts.get(otherSidePorts.size() - 1),
-                            otherSidePort1);
+                    canSwapOtherSide = areInTheSameFreePortGroup(
+                            otherSidePorts.get(otherSidePorts.size() - 1), otherSidePort1);
                 }
                 else {
                     otherSidePort0 = otherSidePorts.get(indexUnpairedOtherSidePort);
@@ -606,10 +607,10 @@ public class CrossingMinimization2 {
             else if (otherSidePort1 == null) {
                 indexUnpairedOtherSidePort = otherSidePorts.indexOf(otherSidePort0) + (indexPort1 - indexPort0);
                 if (indexUnpairedOtherSidePort < 0) {
-                    canSwapOtherSide = PortUtils.areInTheSamePortGroup(otherSidePort0, otherSidePorts.get(0));
+                    canSwapOtherSide = areInTheSameFreePortGroup(otherSidePort0, otherSidePorts.get(0));
                 }
                 else if (indexUnpairedOtherSidePort >= otherSidePorts.size()) {
-                    canSwapOtherSide = PortUtils.areInTheSamePortGroup(otherSidePort0,
+                    canSwapOtherSide = areInTheSameFreePortGroup(otherSidePort0,
                             otherSidePorts.get(otherSidePorts.size() - 1));
                 }
                 else {
@@ -618,11 +619,11 @@ public class CrossingMinimization2 {
             }
 
             if (otherSidePort0 != null && otherSidePort1 != null) {
-                canSwapOtherSide = PortUtils.areInTheSamePortGroup(otherSidePort0, otherSidePort1);
+                canSwapOtherSide = areInTheSameFreePortGroup(otherSidePort0, otherSidePort1);
             }
 
             //if we can swap both sides, we do it
-            if (canSwapOtherSide && PortUtils.areInTheSamePortGroup(port0, port1)) {
+            if (canSwapOtherSide && areInTheSameFreePortGroup(port0, port1)) {
                 //swap this side
                 Collections.swap(ports, ports.indexOf(port0), ports.indexOf(port1));
                 //swap other side
@@ -654,6 +655,11 @@ public class CrossingMinimization2 {
         return false;
     }
 
+    private static boolean areInTheSameFreePortGroup(Port port0, Port port1) {
+         return PortUtils.areInTheSamePortGroup(port0, port1) &&
+                 (port0.getPortGroup() == null || !port0.getPortGroup().isOrdered());
+    }
+
     private void orderPortsFinally (boolean upwards, boolean isFinalSorting) {
         orderPortsFinally(this.orders.getTopPortOrder(), this.orders.getBottomPortOrder(), true, upwards, isFinalSorting);
     }
@@ -676,7 +682,8 @@ public class CrossingMinimization2 {
                 for (Map<Vertex, List<Port>> currentPortOrderMap : portOrdersToBeSorted) {
                     List<Port> portsOfThisNodeSide = new ArrayList<>(currentPortOrderMap.get(node));
                     orderPorts(portsOfThisNodeSide, node);
-                    portsOfThisNodeSide = orderPortsConstraintToPortGroups(portsOfThisNodeSide, node.getPortCompositions());
+                    portsOfThisNodeSide = orderPortsConstraintToPortGroups(portsOfThisNodeSide,
+                            node.getPortCompositions(), true);
                     currentPortOrderMap.replace(node, portsOfThisNodeSide);
                 }
                 int iterations = 4;
@@ -985,7 +992,7 @@ public class CrossingMinimization2 {
         if (portGroup == null) {
             return portGroupLeft == null;
         }
-        return portGroup.equals(portGroupLeft);
+        return portGroup.equals(portGroupLeft) && !portGroup.isOrdered();
     }
 
     private boolean canSwapRight(int index, List<Port> portOrder) {
@@ -997,7 +1004,7 @@ public class CrossingMinimization2 {
         if (portGroup == null) {
             return portGroupRight == null;
         }
-        return portGroup.equals(portGroupRight);
+        return portGroup.equals(portGroupRight) && !portGroup.isOrdered();
     }
 
     private void swapLeft(int index, List<Port> portOrder) {
@@ -1015,6 +1022,9 @@ public class CrossingMinimization2 {
         Port portSelf = portOrder.get(index);
         Port portLeft = portOrder.get(index - 1);
         PortGroup leastCommonAncestor = (PortGroup) PortUtils.getLeastCommonAncestor(portSelf, portLeft);
+        if (leastCommonAncestor != null && leastCommonAncestor.isOrdered()) {
+            return false; //we cannot swap within port groups of fixed order
+        }
         PortComposition candidateLeft =
                 PortUtils.getTopMostChildContainingThisPort(leastCommonAncestor, portLeft);
         for (Port port : PortUtils.getPortsRecursively(candidateLeft)) {
@@ -1026,10 +1036,21 @@ public class CrossingMinimization2 {
         return true;
     }
 
-    //we don't need the check nextIndexPairedPort because if we make new crossings this way, they will be removed in
-    // the next steps of the for loop when the next port pairings are considered
+    //why only 2 params and not 3 as for left swapping groups? -> see comment inside (before return true)
     private boolean canSwapPortGroupRight(int index, List<Port> portOrder) {
-        return index < portOrder.size() - 1;
+        if (index >= portOrder.size() - 1) {
+            return false;
+        }
+
+        Port portSelf = portOrder.get(index);
+        Port portRight = portOrder.get(index + 1);
+        PortGroup leastCommonAncestor = (PortGroup) PortUtils.getLeastCommonAncestor(portSelf, portRight);
+        if (leastCommonAncestor != null && leastCommonAncestor.isOrdered()) {
+            return false; //we cannot swap within port groups of fixed order
+        }
+        //we don't need the check nextIndexPairedPort because if we make new crossings this way, they will be removed in
+        // the next steps of the for loop when the next port pairings are considered
+        return true;
     }
 
     private void swapPortGroupLeft(int index, List<Port> portOrder) {
@@ -1089,49 +1110,62 @@ public class CrossingMinimization2 {
         Collections.sort(ports, (Comparator.comparingDouble(port2barycenter::get)));
     }
 
-    private List<Port> orderPortsConstraintToPortGroups(List<Port> arbitraryPortOrder,
-                                                        Collection<PortComposition> constrainingPortCompositions) {
-        //find all ports of the port compositions and compute the barycenter
-        LinkedHashMap<PortComposition, Double> portComposition2portBarycenter = new LinkedHashMap<>();
+    private List<Port> orderPortsConstraintToPortGroups(List<Port> idealPortOrder,
+                                                        Collection<PortComposition> constrainingPortCompositions,
+                                                        boolean reSortPortCompositions) {
+        //find all ports of the port compositions and order ports of contained port compositions recursively
+        //if we have a port group with fixed order, we set reSortPortCompositions to false
         LinkedHashMap<PortComposition, List<Port>> portComposition2ports = new LinkedHashMap<>();
         for (PortComposition portComposition : constrainingPortCompositions) {
-            List<Port> portsOfThisPC = PortUtils.getPortsRecursively(portComposition);
-            List<Port> portsOfThisPCcorrectSideInOrder = new ArrayList<>(portsOfThisPC.size());
+            Set<Port> portsOfThisPC = new LinkedHashSet<>(PortUtils.getPortsRecursively(portComposition));
+            List<Port> portsOfThisPcCorrectSideInOrder = new ArrayList<>(portsOfThisPC.size());
             //keep only the ports on the correct side and in correct order
-            for (Port port : arbitraryPortOrder) {
+            for (Port port : idealPortOrder) {
                 if (portsOfThisPC.contains(port)) {
-                    portsOfThisPCcorrectSideInOrder.add(port);
+                    portsOfThisPcCorrectSideInOrder.add(port);
                 }
             }
             //find and save barycenter of pc
             if (portComposition instanceof PortGroup) {
-                //compute barycenter of this port group
-                int barycenterSum = 0;
-                int portCount = 0;
-                for (Port port : portsOfThisPCcorrectSideInOrder) {
-                    barycenterSum += arbitraryPortOrder.indexOf(port);
-                    ++portCount;
-                }
-                portComposition2portBarycenter.put(portComposition, (double) barycenterSum / (double) portCount);
                 //order ports of this port group recursively
-                portsOfThisPCcorrectSideInOrder = orderPortsConstraintToPortGroups(portsOfThisPCcorrectSideInOrder,
-                        ((PortGroup) portComposition).getPortCompositions());
-            }
-            else if (portComposition instanceof Port) {
-                portComposition2portBarycenter.put(portComposition,
-                        (double) arbitraryPortOrder.indexOf(portComposition));
+                portsOfThisPcCorrectSideInOrder = orderPortsConstraintToPortGroups(portsOfThisPcCorrectSideInOrder,
+                        ((PortGroup) portComposition).getPortCompositions(),
+                        !((PortGroup) portComposition).isOrdered());
             }
             //save list that is recursively correctly sorted
-            portComposition2ports.put(portComposition, portsOfThisPCcorrectSideInOrder);
+            portComposition2ports.put(portComposition, portsOfThisPcCorrectSideInOrder);
+        }
+
+        //re-sort port compositions as blocks (if we are allowed to -- it may be forbidden because we are in a port
+        // group with fixed order right now)
+        List<PortComposition> portCompositions = new ArrayList<>(constrainingPortCompositions);
+        if (reSortPortCompositions) {
+            //compute the barycenters of the currently considered port compositions
+            LinkedHashMap<PortComposition, Double> portComposition2portBarycenter = new LinkedHashMap<>();
+            for (PortComposition portComposition : constrainingPortCompositions) {
+                List<Port> portsOfThisPcCorrectSideInOrder = portComposition2ports.get(portComposition);
+                //find and save barycenter of pc
+                if (portComposition instanceof PortGroup) {
+                    //compute barycenter of this port group
+                    int barycenterSum = 0;
+                    int portCount = 0;
+                    for (Port port : portsOfThisPcCorrectSideInOrder) {
+                        barycenterSum += idealPortOrder.indexOf(port);
+                        ++portCount;
+                    }
+                    portComposition2portBarycenter.put(portComposition, (double) barycenterSum / (double) portCount);
+                } else if (portComposition instanceof Port) {
+                    portComposition2portBarycenter.put(portComposition,
+                            (double) idealPortOrder.indexOf(portComposition));
+                }
+            }
+            //order by barycenter
+            portCompositions.sort(Comparator.comparingDouble(portComposition2portBarycenter::get));
         }
         //concatenate all lists of these port compositions sorted by the barycenters
-        List<PortComposition> portCompositions = new ArrayList<>(constrainingPortCompositions);
-        Collections.sort(portCompositions, (Comparator.comparingDouble(portComposition2portBarycenter::get)));
-        List<Port> resultingList = new ArrayList<>(arbitraryPortOrder.size());
+        List<Port> resultingList = new ArrayList<>(idealPortOrder.size());
         for (PortComposition portComposition : portCompositions) {
-            for (Port port : portComposition2ports.get(portComposition)) {
-                resultingList.add(port);
-            }
+            resultingList.addAll(portComposition2ports.get(portComposition));
         }
         return resultingList;
     }
