@@ -2,7 +2,6 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm;
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
-import de.uniwue.informatik.praline.datastructure.placements.Orientation;
 import de.uniwue.informatik.praline.io.output.svg.SVGDrawer;
 import de.uniwue.informatik.praline.layouting.PralineLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.GraphPreprocessor;
@@ -66,8 +65,6 @@ public class SugiyamaLayouter implements PralineLayouter {
     private SortingOrder orders;
     private boolean hasAssignedLayers;
     private Set<Object> deviceVertices;
-
-    //TODO: take into account pre-set values like port.getOrientationAtVertex(), fixed order port groups
 
     public SugiyamaLayouter(Graph graph) {
         this(graph, new DrawingInformation());

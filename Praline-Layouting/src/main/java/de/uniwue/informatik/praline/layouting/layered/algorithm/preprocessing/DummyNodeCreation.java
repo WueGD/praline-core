@@ -3,6 +3,7 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing;
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
+import de.uniwue.informatik.praline.datastructure.placements.Orientation;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
@@ -110,7 +111,12 @@ public class DummyNodeCreation {
                 //for each port composition (usually a port group), compute a score that equals the number of edges
                 // going upwards minus the number of edges going downwards. Depending on the sign of the score, we
                 // will assign the port composition
-                int score = countEdgesUpwardsMinusEdgesDownwards(portComposition);
+                //Maybe vertex side is also predefined, then set it to a positive or negative value first
+                int score = predefinedPortSide(portComposition);
+                if (score == 0) {
+                    score = countEdgesUpwardsMinusEdgesDownwards(portComposition);
+                }
+                //assign to side acc. to score
                 if (score < 0) {
                     portCompositionsBottom.add(portComposition);
                 }
@@ -138,6 +144,42 @@ public class DummyNodeCreation {
             orders.getTopPortOrder().put(node, PortUtils.getPortsRecursively(portCompositionsTop));
             orders.getBottomPortOrder().put(node, PortUtils.getPortsRecursively(portCompositionsBottom));
         }
+    }
+
+    /**
+     *
+     * @param portComposition
+     * @return
+     *      a negative value if portComposition has more South side ports than North side ports,
+     *      a positive value if portComposition has fewer South side ports than North side ports,
+     *      and 0 if it has equally many or no North or South side ports.
+     */
+    private int predefinedPortSide(PortComposition portComposition) {
+        boolean hasNorthSidePorts = false;
+        boolean hasSouthSidePorts = false;
+
+        int score = 0;
+        for (Port port : PortUtils.getPortsRecursively(portComposition)) {
+            if (port.getOrientationAtVertex() == Orientation.WEST
+                    || port.getOrientationAtVertex() == Orientation.EAST) {
+                System.out.println("Warning! Port " + port + " at vertex " + port.getVertex() + " has orientation " +
+                        port.getOrientationAtVertex() + ", but this case is not yet implemented. Ignored orientation.");
+            }
+            else if (port.getOrientationAtVertex() == Orientation.NORTH) {
+                hasNorthSidePorts = true;
+                ++score;
+            }
+            else if (port.getOrientationAtVertex() == Orientation.SOUTH) {
+                hasSouthSidePorts = true;
+                --score;
+            }
+        }
+        if (hasNorthSidePorts && hasSouthSidePorts) {
+            System.out.println("Warning! A port group at vertex " + portComposition.getVertex() + " has both, ports " +
+                    "assigned to " + Orientation.NORTH + " and to " + Orientation.SOUTH + ".");
+        }
+
+        return score;
     }
 
     private void repairPortSidesOfPlug(List<PortComposition> portCompositionsTop,
