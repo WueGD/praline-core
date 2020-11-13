@@ -27,10 +27,11 @@ public class CrossingMinimization2 {
 
     private SugiyamaLayouter sugy;
     private SortingOrder orders;
-    private LinkedHashSet<Vertex> adjacentToDummyTurningPoints;
-    private LinkedHashMap<Vertex, SortingNode> vertex2sortingNode;
-    private LinkedHashMap<Port, SortingNode> port2SortingNode;
+    private Set<Vertex> adjacentToDummyTurningPoints;
+    private Map<Vertex, SortingNode> vertex2sortingNode;
+    private Map<Port, SortingNode> port2SortingNode;
     private Map<SortingNode, Double> currentValues;
+    private Map<Vertex, Integer> vertex2component;
     private int maxRank;
     private int numberOfCrossings;
     private CrossingMinimizationMethod method;
@@ -154,6 +155,7 @@ public class CrossingMinimization2 {
         this.vertex2sortingNode = new LinkedHashMap<>();
         this.port2SortingNode = new LinkedHashMap<>();
         this.adjacentToDummyTurningPoints = new LinkedHashSet<>();
+        this.vertex2component = new LinkedHashMap<>();
         maxRank = sugy.getMaxRank();
         if (currentNodeOrder == null) {
             // generate random order for each rank if nothing is given
@@ -162,7 +164,14 @@ public class CrossingMinimization2 {
             ConnectedComponentClusterer connectedComponentClusterer = new ConnectedComponentClusterer(sugy.getGraph());
             List<Set<Vertex>> components = new ArrayList<>(connectedComponentClusterer.getConnectedComponents());
             Collections.shuffle(components, Constants.random);
+            //save for each vertex its component
+            for (int i = 0; i < components.size(); i++) {
+                for (Vertex vertex : components.get(i)) {
+                    vertex2component.put(vertex, i);
+                }
+            }
 
+            //compute random start position for each vertex (in order of connected components)
             for (int r = 0; r <= maxRank; r++) {
                 Collection<Vertex> allNodesWithRank = sugy.getAllNodesWithRank(r);
                 List<Vertex> order = new ArrayList<>(allNodesWithRank.size());
@@ -173,11 +182,6 @@ public class CrossingMinimization2 {
                 }
                 this.orders.getNodeOrder().add(order);
             }
-
-            //TODO: maybe forbid swaps between nodes/ports of different components to have all components
-            // cleanly separated from each other in the end.
-            // Alternatively run the whole crossing minimization once for each component and put the single components
-            // layer-wise together in the end.
         }
         else {
             copyCurrentNodeOrder(currentNodeOrder);
@@ -421,9 +425,10 @@ public class CrossingMinimization2 {
                 }
             }
         }
-        //re-sort vertices
+        //re-sort vertices -- but respect order of components (add scaled up value of component to the comparison)
         Collections.sort(verticesOfLayer,
-                Comparator.comparingDouble(v -> barycenterSum.get(v) / (double) counter.get(v)));
+                Comparator.comparingDouble(v -> (double) (vertex2component.get(v) * currentLayer.size())
+                        + barycenterSum.get(v) / (double) counter.get(v)));
         orders.getNodeOrder().set(layerIndex, verticesOfLayer);
 
         //re-sort ports
