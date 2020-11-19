@@ -8,10 +8,14 @@ import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.layouting.PralineLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
+import de.uniwue.informatik.praline.layouting.layered.kieleraccess.util.ElkLayeredWithoutLayerRemoval;
 import de.uniwue.informatik.praline.layouting.layered.kieleraccess.util.OrthogonalCrossingsAnalysis;
-import org.eclipse.elk.alg.layered.ElkLayered;
 import org.eclipse.elk.alg.layered.graph.LGraph;
+import org.eclipse.elk.alg.layered.graph.LNode;
+import org.eclipse.elk.alg.layered.graph.Layer;
 import org.eclipse.elk.alg.layered.graph.transform.ElkGraphTransformer;
+import org.eclipse.elk.alg.layered.options.InternalProperties;
 import org.eclipse.elk.alg.layered.options.LayeredMetaDataProvider;
 import org.eclipse.elk.alg.layered.options.LayeredOptions;
 import org.eclipse.elk.core.data.LayoutMetaDataService;
@@ -29,9 +33,11 @@ public class KielerLayouter implements PralineLayouter {
     private SugiyamaLayouter sugiyForInternalUse;
     private DrawingInformation drawInfo;
     private LinkedHashMap<Vertex, ElkNode> vertices;
+    private LinkedHashMap<ElkNode, Vertex> reverseVertices;
     private LinkedHashMap<Port, ElkPort> ports;
     private LinkedHashMap<Edge, ElkEdge> edges;
     private int numberOfCrossings = -1;
+    private List<List<LNode>> lGraphLayers;
 
     public KielerLayouter(Graph graph) {
         this(graph, new DrawingInformation());
@@ -84,7 +90,8 @@ public class KielerLayouter implements PralineLayouter {
         Graph pralineGraph = getStoredPralineGraph();
         writeResultToPralineGraph(pralineGraph);
 
-        //TODO: fix the following when using KielerLayouter
+        analyzeOrderings();
+
         sugiyForInternalUse.restoreOriginalElements();
     }
 
@@ -136,9 +143,13 @@ public class KielerLayouter implements PralineLayouter {
         LGraph lGraph = elkGraphTransformer.importGraph(graph);
 
         //compute drawing
-        ElkLayered elkLayeredAlgorithm = new ElkLayered();
+        ElkLayeredWithoutLayerRemoval elkLayeredAlgorithm = new ElkLayeredWithoutLayerRemoval();
         BasicProgressMonitor basicProgressMonitor = new BasicProgressMonitor();
         elkLayeredAlgorithm.doLayout(lGraph, basicProgressMonitor);
+
+        //save layers before removing nodes from the layers
+        saveLayers(elkLayeredAlgorithm);
+        elkLayeredAlgorithm.finishLayouting(lGraph);
 
         //re-transform
         elkGraphTransformer.applyLayout(lGraph);
@@ -148,6 +159,21 @@ public class KielerLayouter implements PralineLayouter {
         this.numberOfCrossings = orthogonalCrossingsAnalysis.countCrossings(graph);
 
         return graph;
+    }
+
+    private void saveLayers(ElkLayeredWithoutLayerRemoval lGraphAlgo) {
+        lGraphLayers = new ArrayList<>();
+
+
+        for (LGraph component : lGraphAlgo.getComponents()) {
+            for (int i = 0; i < component.getLayers().size(); i++) {
+                Layer layer = component.getLayers().get(i);
+                if (lGraphLayers.size() <= i) {
+                    lGraphLayers.add(new ArrayList<>());
+                }
+                lGraphLayers.get(i).addAll(layer.getNodes());
+            }
+        }
     }
 
     private void writeResultToPralineGraph(Graph pralineGraph) {
@@ -177,6 +203,59 @@ public class KielerLayouter implements PralineLayouter {
         }
     }
 
+    private void analyzeOrderings() {
+        //find node order
+        List<List<Vertex>> pralineNodeOrder = new ArrayList<>(lGraphLayers.size());
+
+        for (List<LNode> lGraphLayer : lGraphLayers) {
+            List<Vertex> pralineLayer = new ArrayList<>();
+            pralineNodeOrder.add(pralineLayer);
+            //find all praline nodes of this layer and collect them in a list
+            for (LNode lNode : lGraphLayer) {
+                ElkNode elkNode = (ElkNode) lNode.getProperty(InternalProperties.ORIGIN);
+                pralineLayer.add(reverseVertices.get(elkNode));
+            }
+            //sort nodes on a layer by x-coordinate
+            pralineLayer.sort(Comparator.comparingDouble(v -> v.getShape().getXPosition()));
+        }
+
+        //find port order
+        Map<Vertex, List<Port>> topPortOrder = new LinkedHashMap<>();
+        Map<Vertex, List<Port>> bottomPortOrder = new LinkedHashMap<>();
+
+        for (List<Vertex> pralineLayer : pralineNodeOrder) {
+            for (Vertex pralineNode : pralineLayer) {
+                assignToTopAndBottomSideAndSort(pralineNode, topPortOrder, bottomPortOrder);
+            }
+        }
+
+        //save ordering
+        sugiyForInternalUse.setOrders(new SortingOrder(pralineNodeOrder, topPortOrder, bottomPortOrder));
+        sugiyForInternalUse.changeRanksAccordingToSortingOrder();
+    }
+
+    private void assignToTopAndBottomSideAndSort(Vertex pralineNode, Map<Vertex, List<Port>> topPortOrder,
+                                                 Map<Vertex, List<Port>> bottomPortOrder) {
+        List<Port> bottomList = new ArrayList<>();
+        List<Port> topList = new ArrayList<>();
+        double yPositionNode = pralineNode.getShape().getYPosition();
+        //assign ports to either top or bottom side (acc. to y-coordinates)
+        for (Port port : pralineNode.getPorts()) {
+            if (port.getShape().getYPosition() <= yPositionNode) {
+                bottomList.add(port);
+            }
+            else {
+                topList.add(port);
+            }
+        }
+        //sort the ports on each of both sides acc. to x-coordinates
+        bottomList.sort(Comparator.comparingDouble(p -> p.getShape().getXPosition()));
+        topList.sort(Comparator.comparingDouble(p -> p.getShape().getXPosition()));
+        //save results
+        bottomPortOrder.put(pralineNode, bottomList);
+        topPortOrder.put(pralineNode, topList);
+    }
+
     private static List<Point2D.Double> transformElkBendPoints2ListPoint2dDouble(EList<ElkBendPoint> points) {
         List<Point2D.Double> list = new ArrayList<>(points.size());
         for (ElkBendPoint point : points) {
@@ -190,6 +269,7 @@ public class KielerLayouter implements PralineLayouter {
         ElkNode wholeGraph = elkGraphFactory.createElkNode();
         //create vertices and ports
         vertices = new LinkedHashMap<>(pralineGraph.getVertices().size());
+        reverseVertices = new LinkedHashMap<>(pralineGraph.getVertices().size());
         ports = new LinkedHashMap<>();
         LinkedHashMap<ElkNode, LinkedHashSet<ElkPort>> pairedPorts = new LinkedHashMap<>();
         LinkedHashMap<ElkPort, ElkPort> portPairings = new LinkedHashMap<>();
@@ -213,6 +293,7 @@ public class KielerLayouter implements PralineLayouter {
                 vertex.setWidth(drawInfo.getMinVertexWidth(pralineVertex));
             }
             vertices.put(pralineVertex, vertex);
+            reverseVertices.put(vertex, pralineVertex);
 
             //go carefully through each port composition and fix the complete order if there are constraints
             Collection<ElkPort> portsOfThisVertex = getPortsInOrder(pralineVertex.getPortCompositions(), ports,
@@ -303,25 +384,29 @@ public class KielerLayouter implements PralineLayouter {
      * @return
      *      {@link List} if it is ordered or {@link Set} if it is unordered
      */
-    private Collection<ElkPort> getPortsInOrder(List<PortComposition> portCompositions, LinkedHashMap<Port, ElkPort> ports,
+    private Collection<ElkPort> getPortsInOrder(List<PortComposition> portCompositions,
+                                                LinkedHashMap<Port, ElkPort> ports,
                                                 ElkGraphFactory elkGraphFactory) {
         boolean fixOrder = false;
 
         ArrayList<ElkPort> portList = new ArrayList<>();
         for (PortComposition portComposition : portCompositions) {
             if (portComposition instanceof PortGroup) {
-                //TODO: first case check additionally that there is >1 port within the port group
-                if (portCompositions.size() > 1 || ((PortGroup) portComposition).isOrdered()) {
+                //if this element has > 1 children and either is ordered or we have on the current level more than one
+                // element, i.e. the multiple children of this port composition have uncles and aunts, then
+                // the order of ports matters and we set it to fixed
+                if (((PortGroup) portComposition).getPortCompositions().size() > 1 &&
+                        (((PortGroup) portComposition).isOrdered() || portCompositions.size() > 1)) {
                     fixOrder = true;
                 }
                 Collection<ElkPort> subPorts =
                         getPortsInOrder(((PortGroup) portComposition).getPortCompositions(), ports, elkGraphFactory);
+                //if the children  say that the order matters (because of their children or something below), then we
+                // must also fix the order of the above level
                 if (List.class.isAssignableFrom(subPorts.getClass())) {
                     fixOrder = true;
                 }
-                for (ElkPort subPort : subPorts) {
-                    portList.add(subPort);
-                }
+                portList.addAll(subPorts);
             }
             else if (portComposition instanceof Port) {
                 ElkPort port = elkGraphFactory.createElkPort();
