@@ -22,7 +22,8 @@ public class SortingOrder {
         this(copyOrder.getNodeOrder(), copyOrder.getTopPortOrder(), copyOrder.getBottomPortOrder());
     }
 
-    public SortingOrder(List<List<Vertex>> nodeOrder, Map<Vertex, List<Port>> topPortOrder, Map<Vertex, List<Port>> bottomPortOrder) {
+    public SortingOrder(List<List<Vertex>> nodeOrder, Map<Vertex, List<Port>> topPortOrder,
+                        Map<Vertex, List<Port>> bottomPortOrder) {
         this.nodeOrder = nodeOrder;
         this.topPortOrder = topPortOrder;
         this.bottomPortOrder = bottomPortOrder;

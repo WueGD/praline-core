@@ -132,7 +132,7 @@ public class EdgeRouting {
         if (sugy.isDummyNodeOfSelfLoop(node)) {
             //in this case, node has exactly two ports with one edge each
             List<Port> adjacentPorts = PortUtils.getAdjacentPorts(node);
-            Collections.sort(adjacentPorts, Comparator.comparingDouble(o -> o.getShape().getXPosition()));
+            adjacentPorts.sort(Comparator.comparingDouble(o -> o.getShape().getXPosition()));
             portOrder = new ArrayList<>(Collections.singleton(adjacentPorts.get(0)));
             double[] initInterval =
                     {adjacentPorts.get(0).getShape().getXPosition(), adjacentPorts.get(0).getShape().getYPosition(),

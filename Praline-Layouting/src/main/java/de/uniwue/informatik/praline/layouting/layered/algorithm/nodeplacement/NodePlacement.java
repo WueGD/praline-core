@@ -63,7 +63,7 @@ public class NodePlacement {
                 case 3:
                     Collections.reverse(structure);
             }
-            // initialise datastructure portValues
+            // initialize datastructure portValues
             initialisePortValues();
             // mark conflicts (crossing edges)
             handleCrossings();
@@ -363,7 +363,7 @@ public class NodePlacement {
                     }
                 }
             }
-            // initialise root and align according to Alg. 2 from paper
+            // initialize root and align according to Alg. 2 from paper
             verticalAlignment(stack);
         }
     }
@@ -491,7 +491,7 @@ public class NodePlacement {
         for (int layer = 0; layer < structure.size(); layer++) {
             // x1, y1, x2, y2
             int nodePosition = 0;
-            // initialise shape of first node
+            // initialize shape of first node
             double xPos = (portValues.get(structure.get(layer).get(0)).getX() + (delta / 2.0));
             double yPos = currentY;
 
@@ -506,7 +506,7 @@ public class NodePlacement {
                     Rectangle nodeShape = new Rectangle(xPos, yPos, width, height, null);
                     nodeInTheGraph.setShape(nodeShape);
 
-                    // initialise shape of next node
+                    // initialize shape of next node
                     xPos = (portValues.get(port).getX() + (delta / 2.0));
                     yPos = currentY;
                 } else {

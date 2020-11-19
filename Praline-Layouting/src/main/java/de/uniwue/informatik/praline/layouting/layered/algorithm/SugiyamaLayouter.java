@@ -6,7 +6,7 @@ import de.uniwue.informatik.praline.io.output.svg.SVGDrawer;
 import de.uniwue.informatik.praline.layouting.PralineLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.GraphPreprocessor;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimization2;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.drawing.DrawingPreparation;
@@ -192,14 +192,14 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     public void crossingMinimization (CrossingMinimizationMethod cmMethod, int numberOfIterations) {
-        crossingMinimization(cmMethod, CrossingMinimization2.DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE
-                , CrossingMinimization2.DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX, numberOfIterations);
+        crossingMinimization(cmMethod, CrossingMinimization.DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE
+                , CrossingMinimization.DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX, numberOfIterations);
     }
 
     public void crossingMinimization(CrossingMinimizationMethod cmMethod,
                                      boolean movePortsAdjToTurningDummiesToTheOutside,
                                      boolean placeTurningDummiesNextToTheirVertex, int numberOfIterations) {
-        CrossingMinimization2 cm = new CrossingMinimization2(this);
+        CrossingMinimization cm = new CrossingMinimization(this);
         SortingOrder result = cm.layerSweepWithBarycenterHeuristic(null, cmMethod, orders,
                 movePortsAdjToTurningDummiesToTheOutside,
                 placeTurningDummiesNextToTheirVertex);
@@ -234,9 +234,14 @@ public class SugiyamaLayouter implements PralineLayouter {
     /**
      * This is already done when calling {@link SugiyamaLayouter#prepareDrawing()}.
      * So only use this if, the former one is not used!
+     *
+     * This was extra created for
+     * other layouters like {@link de.uniwue.informatik.praline.layouting.layered.kieleraccess.KielerLayouter}
+     * that use a {@link SugiyamaLayouter} only partially
      */
     public void restoreOriginalElements() {
         DrawingPreparation dp = new DrawingPreparation(this);
+        dp.initialize(drawInfo, orders, new LinkedHashMap<>(), new ArrayList<>());
         dp.restoreOriginalElements();
     }
 
@@ -414,6 +419,16 @@ public class SugiyamaLayouter implements PralineLayouter {
         }
     }
 
+    public void changeRanksAccordingToSortingOrder() {
+        List<List<Vertex>> nodeOrder = orders.getNodeOrder();
+        for (int i = 0; i < nodeOrder.size(); i++) {
+            List<Vertex> layer = nodeOrder.get(i);
+            for (Vertex node : layer) {
+                setRank(node, i);
+            }
+        }
+    }
+
     public void changeRanks (Map<Vertex, Integer> newRanks) {
         for (Vertex node: newRanks.keySet()) {
             setRank(node, newRanks.get(node));
@@ -451,14 +466,23 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     public boolean isDummyNodeOfLongEdge(Vertex node) {
+        if (dummyNodesLongEdges == null) {
+            return false;
+        }
         return dummyNodesLongEdges.containsKey(node);
     }
 
     public boolean isDummyNodeOfSelfLoop(Vertex node) {
+        if (dummyNodesSelfLoops == null) {
+            return false;
+        }
         return dummyNodesSelfLoops.containsKey(node);
     }
 
     public boolean isDummyTurningNode(Vertex node) {
+        if (dummyTurningNodes == null) {
+            return false;
+        }
         return dummyTurningNodes.containsKey(node);
     }
 
@@ -585,6 +609,10 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public SortingOrder getOrders() {
         return orders;
+    }
+
+    public void setOrders(SortingOrder orders) {
+        this.orders = orders;
     }
 
     public Map<Vertex, VertexGroup> getPlugs() {

@@ -108,7 +108,7 @@ public class LayerAssignment {
                 }
                 ranks.put(toRemove,rank);
 
-                //// start //// initialise tree ///////////
+                //// start //// initialize tree ///////////
                 // find one incoming edge from a node with rank one smaller
                 // this edge is tight and therefore used as tree edge
                 for (Edge inEdge : sugy.getIncomingEdges(toRemove)) {
@@ -119,7 +119,7 @@ public class LayerAssignment {
                         break;
                     }
                 }
-                ///// end ///// initialise tree ///////////
+                ///// end ///// initialize tree ///////////
 
                 vertices.remove(toRemove);
             }
@@ -206,7 +206,7 @@ public class LayerAssignment {
     // edge must be already removed from the tree so that the tree is split into two components
     private int calculateCutValue (Edge toCheck, Set<Vertex> component) {
 
-        // initialise the two components of the tree new by using a simple bfs
+        // initialize the two components of the tree new by using a simple bfs
         tailComponent = new LinkedHashSet<>(component);
         headComponent = new LinkedHashSet<>();
 

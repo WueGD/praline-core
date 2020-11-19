@@ -18,7 +18,7 @@ import java.util.*;
  * In the meantime it became a completely new class.
  * Hardly anything similar to its original class.
  */
-public class CrossingMinimization2 {
+public class CrossingMinimization {
 
     public static final CrossingMinimizationMethod DEFAULT_CROSSING_MINIMIZATION_METHOD =
             CrossingMinimizationMethod.MIXED;
@@ -38,7 +38,7 @@ public class CrossingMinimization2 {
     private boolean movePortsAdjToTurningDummiesToTheOutside;
     private boolean placeTurningDummiesNextToTheirVertex;
 
-    public CrossingMinimization2(SugiyamaLayouter sugy) {
+    public CrossingMinimization(SugiyamaLayouter sugy) {
         this.sugy = sugy;
     }
 
@@ -110,7 +110,7 @@ public class CrossingMinimization2 {
                     }
                     barycenters.put(node, barycenter);
                 }
-                Collections.sort(currentLayer, Comparator.comparingDouble(barycenters::get));
+                currentLayer.sort(Comparator.comparingDouble(barycenters::get));
                 updateVerticesAndPortsOrder(rank, currentLayer, barycenters, upwards);
                 reorderPortParingsAndTurningDummies(rank, upwards);
                 updateCurrentValues();
@@ -426,9 +426,8 @@ public class CrossingMinimization2 {
             }
         }
         //re-sort vertices -- but respect order of components (add scaled up value of component to the comparison)
-        Collections.sort(verticesOfLayer,
-                Comparator.comparingDouble(v -> (double) (vertex2component.get(v) * currentLayer.size())
-                        + barycenterSum.get(v) / (double) counter.get(v)));
+        verticesOfLayer.sort(Comparator.comparingDouble(v -> (double) (vertex2component.get(v) * currentLayer.size()) +
+                barycenterSum.get(v) / (double) counter.get(v)));
         orders.getNodeOrder().set(layerIndex, verticesOfLayer);
 
         //re-sort ports
@@ -514,7 +513,7 @@ public class CrossingMinimization2 {
         }
 
         //first sort ports at dummy turning vertex -- this should be unproblematic
-        Collections.sort(ports, Comparator.comparingDouble(port2adjacentNodePosition::get));
+        ports.sort(Comparator.comparingDouble(port2adjacentNodePosition::get));
 
         //now extract internal orderings
         List<Port> portsToDummyEdgeNodesLeft = new ArrayList<>();
@@ -541,7 +540,7 @@ public class CrossingMinimization2 {
                 }
             }
         }
-        Collections.sort(portsAtItsVertex, Comparator.comparingInt(allPortsAtItsVertex::indexOf));
+        portsAtItsVertex.sort(Comparator.comparingInt(allPortsAtItsVertex::indexOf));
 
         //now re-sort the ports at this turning dummy going to its corresponding vertex -- this is always possible
         Collections.reverse(portsToDummyEdgeNodesLeft);
@@ -1112,7 +1111,7 @@ public class CrossingMinimization2 {
         for (Port port : ports) {
             port2barycenter.put(port, getBarycenter(port));
         }
-        Collections.sort(ports, (Comparator.comparingDouble(port2barycenter::get)));
+        ports.sort((Comparator.comparingDouble(port2barycenter::get)));
     }
 
     private List<Port> orderPortsConstraintToPortGroups(List<Port> idealPortOrder,

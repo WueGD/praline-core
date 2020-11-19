@@ -29,8 +29,8 @@ public class DrawingPreparation {
         this.sugy = sugy;
     }
 
-    private void initialise(DrawingInformation drawInfo, SortingOrder sortingOrder,
-                            Map<Vertex, Set<Port>> dummyPortsForLabelPadding, List<Port> dummyPortsForNodesWithoutPort) {
+    public void initialize(DrawingInformation drawInfo, SortingOrder sortingOrder,
+                           Map<Vertex, Set<Port>> dummyPortsForLabelPadding, List<Port> dummyPortsForNodesWithoutPort) {
         this.drawInfo = drawInfo;
         this.delta = Math.max(drawInfo.getEdgeDistanceHorizontal(), drawInfo.getPortWidth() + drawInfo.getPortSpacing());
         this.sortingOrder = sortingOrder;
@@ -42,7 +42,7 @@ public class DrawingPreparation {
     public void prepareDrawing(DrawingInformation drawInfo, SortingOrder sortingOrder,
                                Map<Vertex, Set<Port>> dummyPortsForLabelPadding,
                                List<Port> dummyPortsForNodesWithoutPort) {
-        initialise(drawInfo, sortingOrder, dummyPortsForLabelPadding, dummyPortsForNodesWithoutPort);
+        initialize(drawInfo, sortingOrder, dummyPortsForLabelPadding, dummyPortsForNodesWithoutPort);
         // do path for edges
         doPathForEdges();
         // adjust port shapes
@@ -883,8 +883,12 @@ public class DrawingPreparation {
     private int changeVertexSideIfContained(Map<Vertex, Double> minX, Map<Vertex, Double> maxX, Vertex originalVertex,
                                             Vertex vertexForMinMaxX, int vertexSide, Port port, int changeTo) {
         //two cases: (A) a port corresponding to an original port before unification, (B) a dummy port for padding
-        Port portBeforeUnification = sugy.getReplacedPorts().get(port); //for case (A)
-        Set<Port> dummyPortsForPadding = dummyPortsForLabelPadding.get(originalVertex); //for case (B)
+        //for case (A)
+        Port portBeforeUnification = sugy.getReplacedPorts().get(port);
+        //for case (B)
+        Set<Port> dummyPortsForPadding =
+                dummyPortsForLabelPadding != null && dummyPortsForLabelPadding.containsKey(originalVertex) ?
+                dummyPortsForLabelPadding.get(originalVertex) : new LinkedHashSet<>();
         if (originalVertex.getPorts().contains(portBeforeUnification) || originalVertex.getPorts().contains(port)
                 || (dummyPortsForPadding != null && dummyPortsForPadding.contains(port))) {
             vertexSide = changeTo;
