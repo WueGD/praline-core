@@ -378,6 +378,18 @@ public class KielerLayouter implements PralineLayouter {
 //
 //        }
 
+        //re-add self loops
+        for (Vertex nodeWithLoop : sugiyForInternalUse.getLoopEdges().keySet()) {
+            Set<Edge> loopEdges = sugiyForInternalUse.getLoopEdges().get(nodeWithLoop);
+            for (Edge loopEdge : loopEdges) {
+                pralineGraph.addEdge(loopEdge);
+                if (loopEdge.getPorts().isEmpty()) {
+                    loopEdge.addPorts(sugiyForInternalUse.getPortsOfLoopEdge(loopEdge));
+                }
+            }
+        }
+        sugiyForInternalUse.getLoopEdges().clear();
+
         //create edges
         for (Edge pralineEdge : pralineGraph.getEdges()) {
             Port pralinePort0 = pralineEdge.getPorts().get(0);
@@ -393,8 +405,6 @@ public class KielerLayouter implements PralineLayouter {
             edge.getTargets().add(targetPort);
             edges.put(pralineEdge, edge);
         }
-
-        //todo: add self loops
 
         return wholeGraph;
     }

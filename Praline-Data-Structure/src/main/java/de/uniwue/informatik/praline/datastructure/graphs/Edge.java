@@ -192,6 +192,14 @@ public class Edge implements LabeledObject, ReferenceObject {
         this.paths.clear();
     }
 
+    public boolean addPorts(Collection<Port> ports) {
+        boolean success = true;
+        for (Port p : ports) {
+            success &= addPort(p);
+        }
+        return success;
+    }
+
     /**
      * this {@link Edge} is also added to the list of {@link Edge}s of the passed {@link Port} p
      *

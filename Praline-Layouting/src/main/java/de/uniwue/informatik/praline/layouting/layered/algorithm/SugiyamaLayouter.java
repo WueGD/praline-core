@@ -553,6 +553,10 @@ public class SugiyamaLayouter implements PralineLayouter {
         }
     }
 
+    public Map<Edge, List<Port>> getLoopEdge2Ports() {
+        return loopEdge2Ports;
+    }
+
     public List<Port> getPortsOfLoopEdge (Edge loopEdge) {
         if (loopEdge2Ports.containsKey(loopEdge)) {
             return Collections.unmodifiableList(loopEdge2Ports.get(loopEdge));
@@ -586,8 +590,8 @@ public class SugiyamaLayouter implements PralineLayouter {
         }
         return nodeNames;
     }
-
     //TODO: re-visit later
+
     public double getTextWidthForNode(Vertex node) {
         double width = 0;
         for (String label : getNodeName(node)) {
@@ -670,10 +674,6 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public void addDummyPortsForNodesWithoutPort(Port port) {
         dummyPortsForNodesWithoutPort.add(port);
-    }
-
-    public Map<Edge, List<Port>> getLoopEdge2Ports() {
-        return loopEdge2Ports;
     }
 
     public Map<EdgeBundle, Collection<Edge>> getOriginalEdgeBundles() {
