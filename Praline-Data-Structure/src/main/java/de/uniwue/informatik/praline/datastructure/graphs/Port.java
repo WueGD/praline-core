@@ -254,7 +254,6 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Port port = (Port) o;
-        return (orientationAtVertex == port.orientationAtVertex && labelManager.equalLabeling(port.labelManager) &&
-                Objects.equals(reference, port.reference));
+        return (labelManager.equalLabeling(port.labelManager) && Objects.equals(reference, port.reference));
     }
 }
