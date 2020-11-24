@@ -24,6 +24,7 @@ public class DrawingPreparation {
     private List<Port> dummyPortsForNodesWithoutPort;
     private double delta;
     private Map<Integer, Double> layer2shiftForUnionNodes;
+    private boolean diableShifting = false;
 
     public DrawingPreparation (SugiyamaLayouter sugy) {
         this.sugy = sugy;
@@ -50,13 +51,13 @@ public class DrawingPreparation {
         // add Edges with Paths for remaining dummyNodes
         drawEdgesForDummys();
         // restore original elements
-        restoreOriginalElements();
+        restoreOriginalElements(false);
         //tighten nodes after unifying ports with multiple edges
         // we also handle vertex groups as one unit
         tightenNodes();
     }
 
-    private void tightenNodes() {
+    public void tightenNodes() {
         Set<VertexGroup> processedVertexGroups = new LinkedHashSet<>();
         for (Vertex node : sugy.getGraph().getVertices()) {
             VertexGroup vertexGroup = node.getVertexGroup();
@@ -185,11 +186,10 @@ public class DrawingPreparation {
 
     private void applyBorders(Vertex vL, Vertex vR, double newL, double newR) {
         Rectangle realShapeL = (Rectangle) vL.getShape();
-        realShapeL.width -= Math.max(0, newL - realShapeL.x);
-        realShapeL.x = Math.max(realShapeL.x, newL);
+        realShapeL.width -= newL - realShapeL.x;
+        realShapeL.x = newL;
         Rectangle realShapeR = (Rectangle) vR.getShape();
-        realShapeR.width -= Math.max(0, (realShapeR.x + realShapeR.width) - newR);
-        realShapeR.x = Math.min(realShapeR.x, newR);
+        realShapeR.width -= (realShapeR.x + realShapeR.width) - newR;
     }
 
     /**
@@ -353,6 +353,9 @@ public class DrawingPreparation {
 
     // shift all nodes of rank rank with their ports and all edgePaths to nodes below
     private void shift(int rank, double shiftValue, double shiftValueEdges, Set<Edge> edgesAlreadyShifted) {
+        if (diableShifting) {
+            return;
+        }
         for (Vertex node : sortingOrder.getNodeOrder().get(rank)) {
             Rectangle currentShape = (Rectangle) node.getShape();
             currentShape.y = currentShape.getY() + shiftValue;
@@ -391,6 +394,9 @@ public class DrawingPreparation {
     }
 
     private void shiftInnerPartOfEdge(Edge edge, double shiftValue) {
+        if (diableShifting) {
+            return;
+        }
         for (Path path : edge.getPaths()) {
             for (Point2D.Double innerPoint : ((PolygonalPath) path).getBendPoints()) {
                 innerPoint.setLocation(innerPoint.getX(), (innerPoint.getY() + shiftValue));
@@ -399,6 +405,9 @@ public class DrawingPreparation {
     }
 
     private void shiftPort(PortComposition portComposition, double shiftValue) {
+        if (diableShifting) {
+            return;
+        }
         if (portComposition instanceof Port) {
             for (Edge edge : ((Port) portComposition).getEdges()) {
                 lengthenEdge(edge, (Rectangle) ((Port) portComposition).getShape(), shiftValue);
@@ -423,13 +432,16 @@ public class DrawingPreparation {
     }
 
 
-    public void restoreOriginalElements () {
+    public void restoreOriginalElements(boolean disableShifting) {
+        this.diableShifting = disableShifting;
 
         //<shifting involved>
 
         // The first two blocks involve shifting. For them we need a clear structure with edges going only between
         // neighboring layers. Hence they have to occur first before we replace dummy edges, unify their paths and
         // remove several types of dummy vertices contained in edges
+
+        //The shifts are not done if this is disabled because e. g. we are resolving a Kieler layout
 
         //restore vertex groups
         for (Vertex vertex : new ArrayList<>(sugy.getGraph().getVertices())) {
@@ -735,7 +747,7 @@ public class DrawingPreparation {
         int numberOfDifferentSides = vertexSide2origVertex.keySet().size();
         //adjust height of vertex by the number of sides it uses
         //for this also shift the drawing to get extra space
-        double shiftNodeBy = (double) (numberOfDifferentSides - 1) * drawInfo.getVertexHeight();
+        double shiftNodeBy = diableShifting ? 0.0 : (double) (numberOfDifferentSides - 1) * drawInfo.getVertexHeight();
         double shiftLayerBy = 0;
         int layer = sugy.getRank(dummyUnificationVertex);
         if (layer2shiftForUnionNodes.containsKey(layer)) {

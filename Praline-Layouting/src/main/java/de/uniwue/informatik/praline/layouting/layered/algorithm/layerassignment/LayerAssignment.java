@@ -1,9 +1,15 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment;
 
 import de.uniwue.informatik.praline.datastructure.graphs.Edge;
+import de.uniwue.informatik.praline.datastructure.graphs.Port;
+import de.uniwue.informatik.praline.datastructure.graphs.PortComposition;
 import de.uniwue.informatik.praline.datastructure.graphs.Vertex;
+import de.uniwue.informatik.praline.datastructure.placements.Orientation;
+import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.ConnectedComponentClusterer;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 
 import java.util.*;
 
@@ -15,10 +21,16 @@ public class LayerAssignment {
     private SugiyamaLayouter sugy;
     private Set<Vertex> tailComponent;
     private Set<Vertex> headComponent;
+    private SortingOrder orders;
 
     public LayerAssignment (SugiyamaLayouter sugy) {
         this.sugy = sugy;
         this.ranks = new LinkedHashMap<>();
+        this.orders = sugy.getOrders();
+        if (this.orders == null) {
+            this.orders = new SortingOrder();
+            sugy.setOrders(this.orders);
+        }
     }
 
     /**
@@ -38,11 +50,13 @@ public class LayerAssignment {
             networkSimplexPerComponent(component);
         }
 
+        assignRanksToOrders();
+
         return ranks;
     }
 
     private void networkSimplexPerComponent(Set<Vertex> component) {
-        initialiseRankAndTree(component);
+        initializeRankAndTree(component);
         // find edge with negative cut value and replace it
         // do till no more such edges can be found
         while (true) {
@@ -78,7 +92,7 @@ public class LayerAssignment {
         }
     }
 
-    private void initialiseRankAndTree(Set<Vertex> component) {
+    private void initializeRankAndTree(Set<Vertex> component) {
         this.tree = new LinkedHashSet<>();
         this.treeNodes = new LinkedHashMap<>();
         for (Vertex node : component) {
@@ -204,6 +218,7 @@ public class LayerAssignment {
 
     // calculates the cut value of an given edge
     // edge must be already removed from the tree so that the tree is split into two components
+
     private int calculateCutValue (Edge toCheck, Set<Vertex> component) {
 
         // initialize the two components of the tree new by using a simple bfs
@@ -243,10 +258,10 @@ public class LayerAssignment {
         }
         return cutValue;
     }
-
     // finds an alternative edge for a precalculated one with negative cutValue
     // replaces the negative edge with the new one and adjusts the ranks
     // just works if tailComponent and headComponent are already set e.g. by calculateCutValue()
+
     private void replaceEdge () {
         Edge newTreeEdge = null;
         int minSlack = Integer.MAX_VALUE;
@@ -274,4 +289,21 @@ public class LayerAssignment {
         }
     }
 
+    private void assignRanksToOrders() {
+        int maxRank = 0;
+        for (Integer rank : ranks.values()) {
+            maxRank = Math.max(maxRank, rank);
+        }
+
+        //init lists of node order
+        for (int i = 0; i <= maxRank; i++) {
+            orders.getNodeOrder().add(new ArrayList<>());
+        }
+
+
+        for (Vertex vertex : ranks.keySet()) {
+            int layer = ranks.get(vertex);
+            orders.getNodeOrder().get(layer).add(vertex);
+        }
+    }
 }

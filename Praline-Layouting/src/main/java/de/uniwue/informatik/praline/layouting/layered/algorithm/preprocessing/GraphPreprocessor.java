@@ -242,8 +242,10 @@ public class GraphPreprocessor {
             // create portGroups if stickTogether
             if (stickTogether) {
                 for (Vertex groupNode : group.getContainedVertices()) {
-                    representative.addPortComposition(keepPortGroupsRecursive(new PortGroup(),
+                    PortGroup replacePortGroup = new PortGroup();
+                    representative.addPortComposition(keepPortGroupsRecursive(replacePortGroup,
                             groupNode.getPortCompositions(), originalPort2representative));
+                    sugy.getOrigVertex2replacePortGroup().put(groupNode, replacePortGroup);
                 }
                 if (connectors.contains(group)) {
                     keepPortPairings(originalPort2representative, allPairings);

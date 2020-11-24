@@ -692,8 +692,8 @@ public class CrossingMinimization {
                 }
                 int iterations = 4;
                 for (int i = 0; i < iterations; i++) {
-                    repairPortPairings(node, currentBPortOrder, currentTPortOrder, ((upwards ? 0 : 1) + i) % 2 == 0,
-                            isFinalSorting && i == iterations - 1);
+                    repairPortPairings(sugy, node, currentBPortOrder, currentTPortOrder,
+                            ((upwards ? 0 : 1) + i) % 2 == 0, isFinalSorting && i == iterations - 1);
                 }
             }
             if (updateCurrentValues) {
@@ -764,9 +764,9 @@ public class CrossingMinimization {
         }
     }
 
-    private void repairPortPairings(Vertex node, Map<Vertex, List<Port>> currentBPortOrder,
-                                    Map<Vertex, List<Port>> currentTPortOrder, boolean preferredSwapSideTop,
-                                    boolean isFinalSorting) {
+    public static void repairPortPairings(SugiyamaLayouter sugy, Vertex node, Map<Vertex, List<Port>> currentBPortOrder,
+                                          Map<Vertex, List<Port>> currentTPortOrder, boolean preferredSwapSideTop,
+                                          boolean isFinalSorting) {
         List<Port> bottomOrder = currentBPortOrder.get(node);
         List<Port> topOrder = currentTPortOrder.get(node);
 
@@ -904,13 +904,13 @@ public class CrossingMinimization {
         }
     }
 
-    private List<Port> extractOrderingOfPairedPorts(List<Port> orderingOfAllPorts, Set<Port> allPairedPorts) {
+    private static List<Port> extractOrderingOfPairedPorts(List<Port> orderingOfAllPorts, Set<Port> allPairedPorts) {
         List<Port> orderOfPairedPorts = new ArrayList<>(allPairedPorts.size() / 2);
         return updateOrderingOfPairedPorts(orderOfPairedPorts, orderingOfAllPorts, allPairedPorts);
     }
 
-    private List<Port> updateOrderingOfPairedPorts(List<Port> orderOfPairedPorts, List<Port> orderingOfAllPorts,
-                                                   Set<Port> allPairedPorts) {
+    private static List<Port> updateOrderingOfPairedPorts(List<Port> orderOfPairedPorts, List<Port> orderingOfAllPorts,
+                                                          Set<Port> allPairedPorts) {
         orderOfPairedPorts.clear();
         for (Port port : orderingOfAllPorts) {
             if (allPairedPorts.contains(port)) {
@@ -920,9 +920,9 @@ public class CrossingMinimization {
         return orderOfPairedPorts;
     }
 
-    private boolean swapIfPossible(List<Port> orderedPorts, Port consideredPort, List<Port> orderOfPairedPorts,
-                                   int indexWithinPairedPorts, boolean swapLeft, boolean swapPortGroups,
-                                   boolean forceSwapping, Set<Port> allPairedPorts) {
+    private static boolean swapIfPossible(List<Port> orderedPorts, Port consideredPort, List<Port> orderOfPairedPorts,
+                                          int indexWithinPairedPorts, boolean swapLeft, boolean swapPortGroups,
+                                          boolean forceSwapping, Set<Port> allPairedPorts) {
         int indexConsideredPort = orderedPorts.indexOf(consideredPort);
         if (swapLeft) {
             int prevIndexPairedPort = indexWithinPairedPorts == 0 ? -1 :
@@ -987,7 +987,7 @@ public class CrossingMinimization {
         return false;
     }
 
-    private boolean canSwapLeft(int index, List<Port> portOrder) {
+    private static boolean canSwapLeft(int index, List<Port> portOrder) {
         if (index <= 0) {
             return false;
         }
@@ -999,7 +999,7 @@ public class CrossingMinimization {
         return portGroup.equals(portGroupLeft) && !portGroup.isOrdered();
     }
 
-    private boolean canSwapRight(int index, List<Port> portOrder) {
+    private static boolean canSwapRight(int index, List<Port> portOrder) {
         if (index >= portOrder.size() - 1) {
             return false;
         }
@@ -1011,15 +1011,15 @@ public class CrossingMinimization {
         return portGroup.equals(portGroupRight) && !portGroup.isOrdered();
     }
 
-    private void swapLeft(int index, List<Port> portOrder) {
+    private static void swapLeft(int index, List<Port> portOrder) {
         Collections.swap(portOrder, index, index - 1);
     }
 
-    private void swapRight(int index, List<Port> portOrder) {
+    private static void swapRight(int index, List<Port> portOrder) {
         Collections.swap(portOrder, index, index + 1);
     }
 
-    private boolean canSwapPortGroupLeft(int index, List<Port> portOrder, int lastIndexPairedPort) {
+    private static boolean canSwapPortGroupLeft(int index, List<Port> portOrder, int lastIndexPairedPort) {
         if (index <= 0) {
             return false;
         }
@@ -1041,7 +1041,7 @@ public class CrossingMinimization {
     }
 
     //why only 2 params and not 3 as for left swapping groups? -> see comment inside (before return true)
-    private boolean canSwapPortGroupRight(int index, List<Port> portOrder) {
+    private static boolean canSwapPortGroupRight(int index, List<Port> portOrder) {
         if (index >= portOrder.size() - 1) {
             return false;
         }
@@ -1057,7 +1057,7 @@ public class CrossingMinimization {
         return true;
     }
 
-    private void swapPortGroupLeft(int index, List<Port> portOrder) {
+    private static void swapPortGroupLeft(int index, List<Port> portOrder) {
         Port portSelf = portOrder.get(index);
         Port portLeft = portOrder.get(index - 1);
         PortGroup leastCommonAncestor = (PortGroup) PortUtils.getLeastCommonAncestor(portSelf, portLeft);
@@ -1066,7 +1066,7 @@ public class CrossingMinimization {
         swapPortCompositions(portOrder, candidateLeft, candidateSelf);
     }
 
-    private void swapPortGroupRight(int index, List<Port> portOrder) {
+    private static void swapPortGroupRight(int index, List<Port> portOrder) {
         Port portSelf = portOrder.get(index);
         Port portRight = portOrder.get(index + 1);
         PortGroup leastCommonAncestor = (PortGroup) PortUtils.getLeastCommonAncestor(portSelf, portRight);
@@ -1082,7 +1082,7 @@ public class CrossingMinimization {
      * @param leftPC
      * @param rightPC
      */
-    private void swapPortCompositions(List<Port> portOrder, PortComposition leftPC, PortComposition rightPC) {
+    private static void swapPortCompositions(List<Port> portOrder, PortComposition leftPC, PortComposition rightPC) {
         List<Port> portsLeftPC = PortUtils.getPortsRecursively(leftPC);
         LinkedList<Port> portsLeftPCInOrder = new LinkedList<>();
         List<Port> portsRightPC = PortUtils.getPortsRecursively(rightPC);

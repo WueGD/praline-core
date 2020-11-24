@@ -1,9 +1,11 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm;
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
+import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.io.output.svg.SVGDrawer;
 import de.uniwue.informatik.praline.layouting.PralineLayouter;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.PortSideAssignment;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.GraphPreprocessor;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimization;
@@ -32,6 +34,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     private DrawingInformation drawInfo;
     private Map<Vertex, VertexGroup> plugs;
     private Map<Vertex, VertexGroup> vertexGroups;
+    private Map<Vertex, PortGroup> origVertex2replacePortGroup;
     private Map<Vertex, Edge> hyperEdges;
     private Map<Edge, Vertex> hyperEdgeParts;
     private Map<Vertex, Edge> dummyNodesLongEdges;
@@ -170,16 +173,15 @@ public class SugiyamaLayouter implements PralineLayouter {
     public void assignLayers () {
         LayerAssignment la = new LayerAssignment(this);
         nodeToRank = la.networkSimplex();
+        PortSideAssignment pa = new PortSideAssignment(this);
+        pa.assignPortsToVertexSides();
         createRankToNodes();
         hasAssignedLayers = true;
     }
 
     public void createDummyNodes() {
-        //create new empty order
-        this.orders = new SortingOrder();
-
         DummyNodeCreation dnc = new DummyNodeCreation(this);
-        DummyCreationResult dummyNodeData = dnc.createDummyNodes(orders);
+        DummyCreationResult dummyNodeData = dnc.createDummyNodes();
         this.dummyNodesLongEdges = dummyNodeData.getDummyNodesLongEdges();
         this.dummyNodesSelfLoops = dummyNodeData.getDummyNodesSelfLoops();
         this.dummyTurningNodes = dummyNodeData.getDummyTurningNodes();
@@ -221,6 +223,17 @@ public class SugiyamaLayouter implements PralineLayouter {
         dummyPortsForLabelPadding = np.placeNodes();
     }
 
+    /**
+     * only needed if {@link SugiyamaLayouter#nodePositioning()} is not used.
+     */
+    public void nodePadding () {
+        NodePlacement np = new NodePlacement(this, orders, drawInfo);
+        np.initialize();
+        np.initializeStructure();
+        dummyPortsForLabelPadding = np.dummyPortsForWidth();
+        np.reTransformStructure(true);
+    }
+
     public void edgeRouting () {
         EdgeRouting er = new EdgeRouting(this, orders, drawInfo);
         er.routeEdges();
@@ -241,8 +254,9 @@ public class SugiyamaLayouter implements PralineLayouter {
      */
     public void restoreOriginalElements() {
         DrawingPreparation dp = new DrawingPreparation(this);
-        dp.initialize(drawInfo, orders, new LinkedHashMap<>(), new ArrayList<>());
-        dp.restoreOriginalElements();
+        dp.initialize(drawInfo, orders, dummyPortsForLabelPadding, dummyPortsForNodesWithoutPort);
+        dp.restoreOriginalElements(true);
+        dp.tightenNodes();
     }
 
     public void drawResult (String path) {
@@ -258,6 +272,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     private void initialize() {
         plugs = new LinkedHashMap<>();
         vertexGroups = new LinkedHashMap<>();
+        origVertex2replacePortGroup = new LinkedHashMap<>();
         hyperEdges = new LinkedHashMap<>();
         hyperEdgeParts = new LinkedHashMap<>();
         dummyNodesLongEdges = new LinkedHashMap<>();
@@ -550,36 +565,26 @@ public class SugiyamaLayouter implements PralineLayouter {
         return hasAssignedLayers;
     }
 
-    public String[] getNodeName (Vertex node) {
-        String[] nodeName;
+    public List<String> getNodeName (Vertex node) {
+        List<String> nodeNames = new ArrayList<>();
         // todo: implement other cases
         if (isDummy(node)) {
-            nodeName = new String[1];
-            nodeName[0] = "";
+            nodeNames.add("");
         } else if (isPlug(node)) {
-            if (plugs.get(node).getContainedVertices().size() == 2) {
-                nodeName = new String[node.getLabelManager().getLabels().size()];
-                for (int i = 0; i < nodeName.length; i++) {
-                    nodeName[i] = node.getLabelManager().getLabels().get(i).toString();
-                }
-            } else {
-                nodeName = new String[node.getLabelManager().getLabels().size()];
-                for (int i = 0; i < nodeName.length; i++) {
-                    nodeName[i] = node.getLabelManager().getLabels().get(i).toString();
+            List<Vertex> originalVertices = plugs.get(node).getContainedVertices();
+            for (Vertex originalVertex : originalVertices) {
+                for (Label label : originalVertex.getLabelManager().getLabels()) {
+                    nodeNames.add(label.toString());
                 }
             }
         } else if (vertexGroups.keySet().contains(node)) {
-            nodeName = new String[node.getLabelManager().getLabels().size()];
-            for (int i = 0; i < nodeName.length; i++) {
-                nodeName[i] = node.getLabelManager().getLabels().get(i).toString();
-            }
+            //TODO
         } else {
-            nodeName = new String[node.getLabelManager().getLabels().size()];
-            for (int i = 0; i < nodeName.length; i++) {
-                nodeName[i] = node.getLabelManager().getLabels().get(i).toString();
+            for (Label label : node.getLabelManager().getLabels()) {
+                nodeNames.add(label.toString());
             }
         }
-        return nodeName;
+        return nodeNames;
     }
 
     //TODO: re-visit later
@@ -621,6 +626,14 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public Map<Vertex, VertexGroup> getVertexGroups() {
         return vertexGroups;
+    }
+
+    public Map<Vertex, PortGroup> getOrigVertex2replacePortGroup() {
+        return origVertex2replacePortGroup;
+    }
+
+    public void setOrigVertex2replacePortGroup(Map<Vertex, PortGroup> origVertex2replacePortGroup) {
+        this.origVertex2replacePortGroup = origVertex2replacePortGroup;
     }
 
     public Map<Vertex, Edge> getHyperEdges() {

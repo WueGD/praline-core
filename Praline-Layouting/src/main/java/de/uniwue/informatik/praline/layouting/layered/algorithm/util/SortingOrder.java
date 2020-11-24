@@ -60,6 +60,78 @@ public class SortingOrder {
         }
     }
 
+    /**
+     * Changes the order of {@link PortComposition}s in {@link Vertex#getPortCompositions()} and
+     * {@link PortGroup#getPortCompositions()} such that they are the same as in the current
+     * {@link SortingOrder#getTopPortOrder()} and {@link SortingOrder#getBottomPortOrder()}.
+     * It starts with the top ports from left to right, followed by the bottom ports from left to right
+     */
+    public void transferPortOrderingToPortCompositionLists() {
+        for (List<Vertex> layer : nodeOrder) {
+            for (Vertex node : layer) {
+                transferPortOrderingToPortCompositionLists(node, null);
+            }
+        }
+    }
+
+    private void transferPortOrderingToPortCompositionLists(Vertex node, PortGroup portGroup) {
+        Set<PortComposition> unassigned = new LinkedHashSet<>(
+                portGroup == null ? node.getPortCompositions() : portGroup.getPortCompositions());
+        List<PortComposition> newOrder = new ArrayList<>(
+                portGroup == null ? node.getPortCompositions().size() : portGroup.getPortCompositions().size());
+
+        for (Port port : topPortOrder.get(node)) {
+            transferPortOrderingToPortCompositionLists(node, portGroup, unassigned, newOrder, port);
+        }
+        for (Port port : bottomPortOrder.get(node)) {
+            transferPortOrderingToPortCompositionLists(node, portGroup, unassigned, newOrder, port);
+        }
+
+        if (portGroup == null) {
+            //remove them all
+            for (PortComposition portComposition : newOrder) {
+                node.removePortComposition(portComposition);
+            }
+            if (!node.getPorts().isEmpty()) {
+                System.out.println("Warning! Tried to sort ports at " + node + " acc. to SortingOrder, but not all " +
+                        "port have been assigned.");
+            }
+            //and then re-add them in our desired order
+            for (PortComposition portComposition : newOrder) {
+                node.addPortComposition(portComposition);
+            }
+        }
+        else {
+            //remove them all
+            for (PortComposition portComposition : newOrder) {
+                portGroup.removePortComposition(portComposition);
+            }
+            if (!PortUtils.getPortsRecursively(portGroup).isEmpty()) {
+                System.out.println("Warning! Tried to sort ports at " + node + " acc. to SortingOrder, but not all " +
+                        "port have been assigned. Failed in port group " + portGroup);
+            }
+            //and then re-add them in our desired order
+            for (PortComposition portComposition : newOrder) {
+                portGroup.addPortComposition(portComposition);
+            }
+        }
+    }
+
+    private void transferPortOrderingToPortCompositionLists(Vertex node, PortGroup portGroup,
+                                                            Set<PortComposition> unassigned,
+                                                            List<PortComposition> newOrder, Port port) {
+        PortComposition topMostAncestor = PortUtils.getTopMostChildContainingThisPort(portGroup, port);
+        if (unassigned.contains(topMostAncestor)) {
+            newOrder.add(topMostAncestor);
+            unassigned.remove(topMostAncestor);
+            if (topMostAncestor instanceof PortGroup) {
+                transferPortOrderingToPortCompositionLists(node, (PortGroup) topMostAncestor);
+            }
+        } else if (topMostAncestor != null && !newOrder.get(newOrder.size() - 1).equals(topMostAncestor)) {
+//            System.out.println("Warning! Ordering of ports in SortingOrder of " + node + "violates the structure" +
+//                    " of port groups.");
+        }
+    }
 
     private static List<Port> shufflePortCompositions(Collection<PortComposition> portCompositions) {
         List<Port> order = new ArrayList<>();

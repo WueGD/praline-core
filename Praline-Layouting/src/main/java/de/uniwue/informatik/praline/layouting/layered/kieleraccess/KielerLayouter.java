@@ -2,11 +2,14 @@ package de.uniwue.informatik.praline.layouting.layered.kieleraccess;
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
+import de.uniwue.informatik.praline.datastructure.placements.Orientation;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
+import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.layouting.PralineLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 import de.uniwue.informatik.praline.layouting.layered.kieleraccess.util.ElkLayeredWithoutLayerRemoval;
@@ -64,6 +67,8 @@ public class KielerLayouter implements PralineLayouter {
         sugiyForInternalUse.assignDirections(directionMethod, numberOfIterationsFD);
 
         sugiyForInternalUse.assignLayers();
+
+        sugiyForInternalUse.nodePadding();
     }
 
 
@@ -79,7 +84,8 @@ public class KielerLayouter implements PralineLayouter {
         sugiyForInternalUse = sugiyWithPrecomputedDirectedGraph;
 
         if (!sugiyForInternalUse.hasAssignedLayers()) {
-            sugiyWithPrecomputedDirectedGraph.assignLayers();
+            sugiyForInternalUse.assignLayers();
+            sugiyForInternalUse.nodePadding();
         }
     }
 
@@ -131,7 +137,7 @@ public class KielerLayouter implements PralineLayouter {
 
         //set properties
         LayoutMetaDataService.getInstance().registerLayoutMetaDataProviders(new LayeredMetaDataProvider());
-        graph.setProperty(CoreOptions.DIRECTION, Direction.UP);
+        graph.setProperty(CoreOptions.DIRECTION, Direction.DOWN);
         graph.setProperty(CoreOptions.EDGE_ROUTING, EdgeRouting.ORTHOGONAL);
         graph.setProperty(CoreOptions.SPACING_EDGE_EDGE, drawInfo.getEdgeDistanceHorizontal());
         graph.setProperty(CoreOptions.SPACING_NODE_NODE,
@@ -267,10 +273,23 @@ public class KielerLayouter implements PralineLayouter {
     private ElkNode transformPralineGraph2ElkGraph(Graph pralineGraph) {
         ElkGraphFactory elkGraphFactory = new ElkGraphFactoryImpl();
         ElkNode wholeGraph = elkGraphFactory.createElkNode();
+        //fix port pairings in praline graph
+        int iterationsOfPortPairRepairing = 2;
+        for (Vertex pralinePlug : sugiyForInternalUse.getPlugs().keySet()) {
+            for (int i = 0; i < iterationsOfPortPairRepairing; i++) {
+                CrossingMinimization.repairPortPairings(sugiyForInternalUse, pralinePlug,
+                        sugiyForInternalUse.getOrders().getBottomPortOrder(),
+                        sugiyForInternalUse.getOrders().getTopPortOrder(), false,
+                        i == iterationsOfPortPairRepairing - 1);
+            }
+        }
+        //transfer the just found port ordering to the lists of vertices and port groups
+        sugiyForInternalUse.getOrders().transferPortOrderingToPortCompositionLists();
         //create vertices and ports
         vertices = new LinkedHashMap<>(pralineGraph.getVertices().size());
         reverseVertices = new LinkedHashMap<>(pralineGraph.getVertices().size());
         ports = new LinkedHashMap<>();
+        //todo: do we need these variables?
         LinkedHashMap<ElkNode, LinkedHashSet<ElkPort>> pairedPorts = new LinkedHashMap<>();
         LinkedHashMap<ElkPort, ElkPort> portPairings = new LinkedHashMap<>();
         edges = new LinkedHashMap<>(pralineGraph.getEdges().size());
@@ -283,80 +302,81 @@ public class KielerLayouter implements PralineLayouter {
                 vertex.setHeight(((Rectangle) pralineVertexShape).getHeight());
             }
             else {
-                vertex.setHeight(drawInfo.getVertexHeight());
+                vertex.setHeight(drawInfo.getVertexHeight() * (double) getNumberOfStackedVertices(pralineVertex));
             }
             if (pralineVertexShape instanceof Rectangle
                     && !Double.isNaN(((Rectangle) pralineVertexShape).getWidth())) {
                 vertex.setWidth(((Rectangle) pralineVertexShape).getWidth());
             }
             else {
-                vertex.setWidth(drawInfo.getMinVertexWidth(pralineVertex));
+                int numberOfPorts = Math.max(sugiyForInternalUse.getOrders().getTopPortOrder().get(pralineVertex).size(),
+                        sugiyForInternalUse.getOrders().getBottomPortOrder().get(pralineVertex).size());
+                vertex.setWidth(Math.max(drawInfo.getMinVertexWidth(pralineVertex),
+                        numberOfPorts * (drawInfo.getPortWidth() + drawInfo.getPortSpacing())
+                                + drawInfo.getPortSpacing()));
             }
             vertices.put(pralineVertex, vertex);
             reverseVertices.put(vertex, pralineVertex);
 
-            //go carefully through each port composition and fix the complete order if there are constraints
-            Collection<ElkPort> portsOfThisVertex = getPortsInOrder(pralineVertex.getPortCompositions(), ports,
-                    elkGraphFactory);
+            //create elk ports for each praline port (in order) and check which port constrained level (fixed side or
+            // fixed order) we must use
+            Collection<ElkPort> portsOfThisVertex = getPortsInOrder(pralineVertex, ports, elkGraphFactory);
             vertex.getPorts().addAll(portsOfThisVertex);
-            if (List.class.isAssignableFrom(portsOfThisVertex.getClass())) {
+            if (sugiyForInternalUse.isPlug(pralineVertex) || fixOrder(pralineVertex.getPortCompositions())) {
                 vertex.setProperty(LayeredOptions.PORT_CONSTRAINTS, PortConstraints.FIXED_ORDER);
             }
             else {
-                //if it contains a group, fix at least sides
-                for (PortComposition portComposition : pralineVertex.getPortCompositions()) {
-                    if (portComposition instanceof PortGroup) {
-                        vertex.setProperty(LayeredOptions.PORT_CONSTRAINTS, PortConstraints.FIXED_SIDE);
-                    }
-                }
+                vertex.setProperty(LayeredOptions.PORT_CONSTRAINTS, PortConstraints.FIXED_SIDE);
             }
 
             //find port pairings
-            pairedPorts.put(vertex, new LinkedHashSet<>());
+            LinkedHashSet<ElkPort> pairedPortsOfThisNode = new LinkedHashSet<>();
             for (Port pralinePort : pralineVertex.getPorts()) {
                 if (sugiyForInternalUse.isPaired(pralinePort)) {
-                    pairedPorts.get(vertex).add(ports.get(pralinePort));
+                    pairedPortsOfThisNode.add(ports.get(pralinePort));
                     portPairings.put(ports.get(pralinePort), ports.get(sugiyForInternalUse.getPairedPort(pralinePort)));
                 }
             }
+            pairedPorts.put(vertex, pairedPortsOfThisNode);
         }
+        //todo: have straight port pairings (index of ports in a pairing exactly opposite, maybe insert more dummy ports
         //fix port pairings
         //push them to the very left of the north and the south side of a vertex
-        for (ElkNode vertex : vertices.values()) {
-            LinkedHashSet<ElkPort> pairedPortsOfVertex = pairedPorts.get(vertex);
-            if (!pairedPortsOfVertex.isEmpty()) {
-                vertex.setProperty(LayeredOptions.PORT_CONSTRAINTS, PortConstraints.FIXED_ORDER);
-                LinkedList<ElkPort> northPorts = new LinkedList<>();
-                LinkedList<ElkPort> southPorts = new LinkedList<>();
-                PortSide currentPortSide = PortSide.NORTH;
-                List<ElkPort> currentPortList = northPorts;
-                for (ElkPort port : vertex.getPorts()) {
-                    if (pairedPortsOfVertex.contains(port)) {
-                        if (port.getProperty(CoreOptions.PORT_SIDE) == PortSide.SOUTH) {
-                            currentPortSide = PortSide.SOUTH;
-                            currentPortList = southPorts;
-                        }
-                        else {
-                            //value is not set and this should be on the north side & the paired port on the south side
-                            port.setProperty(CoreOptions.PORT_SIDE, PortSide.NORTH);
-                            ElkPort pairedPort = portPairings.get(port);
-                            pairedPort.setProperty(CoreOptions.PORT_SIDE, PortSide.SOUTH);
-                            northPorts.addFirst(port);
-                            southPorts.addFirst(pairedPort);
-                        }
-                    }
-                    else {
-                        port.setProperty(CoreOptions.PORT_SIDE, currentPortSide);
-                        currentPortList.add(port);
-                    }
-                }
-                vertex.getPorts().clear();
-                vertex.getPorts().addAll(northPorts);
-                Collections.reverse(southPorts);
-                vertex.getPorts().addAll(southPorts);
-            }
-
-        }
+//        for (ElkNode vertex : vertices.values()) {
+//            LinkedHashSet<ElkPort> pairedPortsOfVertex = pairedPorts.get(vertex);
+//            if (!pairedPortsOfVertex.isEmpty()) {
+//                vertex.setProperty(LayeredOptions.PORT_CONSTRAINTS, PortConstraints.FIXED_ORDER);
+//                LinkedList<ElkPort> northPorts = new LinkedList<>();
+//                LinkedList<ElkPort> southPorts = new LinkedList<>();
+//                PortSide currentPortSide = PortSide.NORTH;
+//                List<ElkPort> currentPortList = northPorts;
+//                for (ElkPort port : vertex.getPorts()) {
+//                    if (pairedPortsOfVertex.contains(port)) {
+//                        if (port.getProperty(CoreOptions.PORT_SIDE) == PortSide.SOUTH) {
+//                            currentPortSide = PortSide.SOUTH;
+//                            currentPortList = southPorts;
+//                        }
+//                        else {
+//                            //value is not set and this should be on the north side & the paired port on the south side
+//                            port.setProperty(CoreOptions.PORT_SIDE, PortSide.NORTH);
+//                            ElkPort pairedPort = portPairings.get(port);
+//                            pairedPort.setProperty(CoreOptions.PORT_SIDE, PortSide.SOUTH);
+//                            northPorts.addFirst(port);
+//                            southPorts.addFirst(pairedPort);
+//                        }
+//                    }
+//                    else {
+//                        port.setProperty(CoreOptions.PORT_SIDE, currentPortSide);
+//                        currentPortList.add(port);
+//                    }
+//                }
+//                vertex.getPorts().clear();
+//                vertex.getPorts().addAll(northPorts);
+//                Collections.reverse(southPorts);
+//                vertex.getPorts().addAll(southPorts);
+//            }
+//
+//        }
 
         //create edges
         for (Edge pralineEdge : pralineGraph.getEdges()) {
@@ -374,53 +394,117 @@ public class KielerLayouter implements PralineLayouter {
             edges.put(pralineEdge, edge);
         }
 
+        //todo: add self loops
+
         return wholeGraph;
     }
 
-    /**
-     *
-     * @param portCompositions
-     * @param ports
-     * @return
-     *      {@link List} if it is ordered or {@link Set} if it is unordered
-     */
-    private Collection<ElkPort> getPortsInOrder(List<PortComposition> portCompositions,
-                                                LinkedHashMap<Port, ElkPort> ports,
-                                                ElkGraphFactory elkGraphFactory) {
-        boolean fixOrder = false;
+    private int getNumberOfStackedVertices(Vertex pralineVertex) {
+        int numberOfStackedVertices = 1;
+        if (sugiyForInternalUse.isPlug(pralineVertex)) {
+            numberOfStackedVertices = 2;
+        }
+        else if (sugiyForInternalUse.getVertexGroups().containsKey(pralineVertex)) {
+            numberOfStackedVertices = 2;
+            //if it is a device connector vertex with device connectors on both sides and a device in the
+            // middle, we have 3 rows of vertices stacked on each other
+            if (!sugiyForInternalUse.getOrders().getBottomPortOrder().get(pralineVertex).isEmpty() &&
+                    !sugiyForInternalUse.getOrders().getTopPortOrder().get(pralineVertex).isEmpty()) {
+                numberOfStackedVertices = 3;
+            }
+        }
+        return numberOfStackedVertices;
+    }
 
-        ArrayList<ElkPort> portList = new ArrayList<>();
+    private boolean fixOrder(List<PortComposition> portCompositions) {
+        int elementsNorthSide = 0;
+        int elementsSouthSide = 0;
+        boolean hasPortGroupsWithPorts = false;
         for (PortComposition portComposition : portCompositions) {
             if (portComposition instanceof PortGroup) {
-                //if this element has > 1 children and either is ordered or we have on the current level more than one
-                // element, i.e. the multiple children of this port composition have uncles and aunts, then
-                // the order of ports matters and we set it to fixed
-                if (((PortGroup) portComposition).getPortCompositions().size() > 1 &&
-                        (((PortGroup) portComposition).isOrdered() || portCompositions.size() > 1)) {
-                    fixOrder = true;
+                //if a child as order set to fixed and has in turn more than 1 children, then we must fix the order
+                if (((PortGroup) portComposition).isOrdered() &&
+                        ((PortGroup) portComposition).getPortCompositions().size() > 1) {
+                    return true;
                 }
-                Collection<ElkPort> subPorts =
-                        getPortsInOrder(((PortGroup) portComposition).getPortCompositions(), ports, elkGraphFactory);
-                //if the children  say that the order matters (because of their children or something below), then we
-                // must also fix the order of the above level
-                if (List.class.isAssignableFrom(subPorts.getClass())) {
-                    fixOrder = true;
+                //check contained port compositions recursively
+                if (fixOrder(((PortGroup) portComposition).getPortCompositions())) {
+                    return true;
                 }
-                portList.addAll(subPorts);
+                //otherwise we have look if it has ports on the north or the south side and count them
+                List<Port> containedPorts = PortUtils.getPortsRecursively(portComposition);
+                if (!containedPorts.isEmpty()) {
+                    hasPortGroupsWithPorts = true;
+                    if (containedPorts.get(0).getOrientationAtVertex() == Orientation.NORTH) {
+                        ++elementsNorthSide;
+                    }
+                    else {
+                        ++elementsSouthSide;
+                    }
+                }
             }
             else if (portComposition instanceof Port) {
-                ElkPort port = elkGraphFactory.createElkPort();
-                port.setWidth(drawInfo.getPortWidth());
-                port.setHeight(drawInfo.getPortHeight());
-                port.setProperty(CoreOptions.PORT_SIDE, PortSide.NORTH);
-                ports.put((Port) portComposition, port);
-                portList.add(port);
+                if (((Port) portComposition).getOrientationAtVertex() == Orientation.NORTH) {
+                    ++elementsNorthSide;
+                }
+                else if (((Port) portComposition).getOrientationAtVertex() == Orientation.SOUTH) {
+                    ++elementsSouthSide;
+                }
+                else {
+                    System.out.println("Warning! Port " + portComposition + " of vertex " + portComposition.getVertex()
+                            + " is neither assigned to the top nor to the bottom side of its vertex. Noticed when"
+                            + " transforming to KIELER layout.");
+                }
             }
         }
-
-        if (!fixOrder) {
-            return new LinkedHashSet<>(portList);
+        //if we have more than 1 element on one side and these are not only ports, we must fix the total order
+        if (hasPortGroupsWithPorts && (elementsNorthSide > 1 || elementsSouthSide > 1)) {
+            return true;
         }
+
+        //otherwise it is enough to set the port constraint to fixed side (but free on each side)
+        return false;
+    }
+
+
+    /**
+     * first returns the bottom ports, then the top ports.
+     * Note that North and South is switched between praline notation and kieler notation!
+     * (though in the praline algorithm we rather use top and bottom instead of North and South)
+     *
+     * @param pralineVertex
+     * @param ports
+     * @param elkGraphFactory
+     * @return
+     */
+    private Collection<ElkPort> getPortsInOrder(Vertex pralineVertex, LinkedHashMap<Port, ElkPort> ports,
+                                                ElkGraphFactory elkGraphFactory) {
+        ArrayList<ElkPort> portList = new ArrayList<>();
+
+        for (Port pralinePort : sugiyForInternalUse.getOrders().getBottomPortOrder().get(pralineVertex)) {
+            //would be Orientation.SOUTH in praline data structure
+            createPort(ports, elkGraphFactory, portList, pralinePort, PortSide.NORTH);
+        }
+        //top ports in reverse order
+        LinkedList<Port> topPorts =
+                new LinkedList<>(sugiyForInternalUse.getOrders().getTopPortOrder().get(pralineVertex));
+        Iterator<Port> portIterator = topPorts.descendingIterator();
+        while (portIterator.hasNext()) {
+            Port pralinePort = portIterator.next();
+            //would be Orientation.NORTH in praline data structure
+            createPort(ports, elkGraphFactory, portList, pralinePort, PortSide.SOUTH);
+        }
+
         return portList;
+    }
+
+    private void createPort(LinkedHashMap<Port, ElkPort> ports, ElkGraphFactory elkGraphFactory,
+                            ArrayList<ElkPort> portList, Port pralinePort, PortSide portSi) {
+        ElkPort port = elkGraphFactory.createElkPort();
+        port.setWidth(drawInfo.getPortWidth());
+        port.setHeight(drawInfo.getPortHeight());
+        port.setProperty(CoreOptions.PORT_SIDE, portSi);
+        ports.put(pralinePort, port);
+        portList.add(port);
     }
 }

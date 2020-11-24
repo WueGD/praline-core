@@ -25,7 +25,7 @@ public class EdgeRouting {
     }
 
     public void routeEdges () {
-        initialise(sortingOrder);
+        initialize(sortingOrder);
         double shiftUpValue = 0;
         // for all ranks
         for (int rank = 0; rank < (sortingOrder.getNodeOrder().size() - 1); rank++) {
@@ -549,7 +549,7 @@ public class EdgeRouting {
         }
     }
 
-    private void initialise (SortingOrder sortingOrder) {
+    private void initialize (SortingOrder sortingOrder) {
         this.sortingOrder = sortingOrder;
     }
 
