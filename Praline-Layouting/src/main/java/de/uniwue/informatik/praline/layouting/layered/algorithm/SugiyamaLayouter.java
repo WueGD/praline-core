@@ -668,6 +668,10 @@ public class SugiyamaLayouter implements PralineLayouter {
         return dummyPortGroupsForEdgeBundles;
     }
 
+    public Map<Vertex, Set<Port>> getDummyPortsForLabelPadding() {
+        return dummyPortsForLabelPadding;
+    }
+
     public Map<PortPairing, PortPairing> getReplacedPortPairings() {
         return replacedPortPairings;
     }

@@ -1054,10 +1054,10 @@ public class DrawingPreparation {
 
     private Point2D.Double findSegmentPointAt(Rectangle portRectangle, Set<Line2D.Double> allSegments) {
         for (Line2D.Double segment : allSegments) {
-            if (portRectangle.intersectsLine(new Line2D.Double(segment.getP1(), segment.getP1()))) {
+            if (portRectangle.containsInsideOrOnBoundary((Point2D.Double) segment.getP1())) {
                 return (Point2D.Double) segment.getP1();
             }
-            if (portRectangle.intersectsLine(new Line2D.Double(segment.getP2(), segment.getP2()))) {
+            if (portRectangle.containsInsideOrOnBoundary((Point2D.Double) segment.getP2())) {
                 return (Point2D.Double) segment.getP2();
             }
         }

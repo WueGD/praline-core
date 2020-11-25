@@ -54,7 +54,7 @@ public class DirectionAssignment {
         for (int i = 0; i < numberOfIterations; i++) {
             // create new Jung graph
             UndirectedSparseGraph<Long, Long> junggraph = new UndirectedSparseGraph<>();
-            Map<Vertex, Long> nodeToLong = new HashMap<>();
+            Map<Vertex, Long> nodeToLong = new LinkedHashMap<>();
             long counter = 0;
             // add vertices and edges from original graph to the Jung graph
             for (Vertex node : sugy.getGraph().getVertices()) {

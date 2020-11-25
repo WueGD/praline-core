@@ -58,8 +58,6 @@ public class MainDrawKielerPlan {
 
     private static final DirectionMethod DIRECTION_METHOD = DirectionMethod.FORCE;
 
-    private static final CrossingMinimizationMethod CROSSING_MINIMIZATION_METHOD = CrossingMinimizationMethod.PORTS;
-
     private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 1; //5;
 
     private static final int NUMBER_OF_FORCE_DIRECTED_ITERATIONS = 1; //10;

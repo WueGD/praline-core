@@ -1,6 +1,7 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction;
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
+import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.ConnectedComponentClusterer;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
@@ -693,7 +694,7 @@ public class CrossingMinimization {
                 int iterations = 4;
                 for (int i = 0; i < iterations; i++) {
                     repairPortPairings(sugy, node, currentBPortOrder, currentTPortOrder,
-                            ((upwards ? 0 : 1) + i) % 2 == 0, isFinalSorting && i == iterations - 1);
+                            ((upwards ? 0 : 1) + i) % 2 == 0, isFinalSorting && i == iterations - 1, true, false, null);
                 }
             }
             if (updateCurrentValues) {
@@ -764,9 +765,30 @@ public class CrossingMinimization {
         }
     }
 
+    /**
+     * @param sugy
+     * @param node
+     * @param currentBPortOrder
+     * @param currentTPortOrder
+     * @param preferredSwapSideTop
+     * @param isFinalSorting
+     *          If true port groups are not swapped (as this may result in inconsistent states) and only if true, text
+     *          output (warnings) is produced.
+     * @param allowForceSwapping
+     *          sometimes we need to violate port group constraints to fulfil port pairing constraints. Set this to
+     *          true to rather violate port groups constraints for accomplishing port pairing constraints.
+     *          The default is true.
+     * @param portsNeedAbsoluteSameIndex
+     *          if true, the paired ports need the same index among all ports on the top/bottom side, otherwise only
+     * @param dummyPortsForAbsoluteIndex
+     *          if portsNeedAbsoluteSameIndex, it will try to reach the same index by inserting dummy ports.
+     *          This can be set to null (and that's the default).
+     */
     public static void repairPortPairings(SugiyamaLayouter sugy, Vertex node, Map<Vertex, List<Port>> currentBPortOrder,
                                           Map<Vertex, List<Port>> currentTPortOrder, boolean preferredSwapSideTop,
-                                          boolean isFinalSorting) {
+                                          boolean isFinalSorting, boolean allowForceSwapping,
+                                          boolean portsNeedAbsoluteSameIndex,
+                                          Collection<Port> dummyPortsForAbsoluteIndex) {
         List<Port> bottomOrder = currentBPortOrder.get(node);
         List<Port> topOrder = currentTPortOrder.get(node);
 
@@ -786,11 +808,15 @@ public class CrossingMinimization {
         }
 
         //find orderings purely of port pairing ports
-        List<Port> bottomPairingOrder = extractOrderingOfPairedPorts(bottomOrder, allPairedPorts);
-        List<Port> topPairingOrder = extractOrderingOfPairedPorts(topOrder, allPairedPorts);
+        List<Port> bottomPairingOrder = portsNeedAbsoluteSameIndex ? bottomOrder :
+                extractOrderingOfPairedPorts(bottomOrder, allPairedPorts);
+        List<Port> topPairingOrder = portsNeedAbsoluteSameIndex ? topOrder :
+                extractOrderingOfPairedPorts(topOrder, allPairedPorts);
 
         List<Port> firstOrderPairedPorts = preferredSwapSideTop ? topPairingOrder : bottomPairingOrder;
         List<Port> secondOrderPairedPorts = preferredSwapSideTop ? bottomPairingOrder : topPairingOrder;
+
+        int dummyPortCounter = 0; //only used for dummyPortsForAbsoluteIndex; see javadoc of this method
 
         for (int i = 0; i < allPortPairings.size(); i++) {
             Pair<Port> portPairing = allPortPairings.get(i);
@@ -817,7 +843,7 @@ public class CrossingMinimization {
 
                 if (indexFirstPort < indexSecondPort) {
                     boolean hasChanged = swapIfPossible(firstOrder, firstPort, firstOrderPairedPorts, indexFirstPort,
-                           false, !isFinalSorting, forceSwapping, allPairedPorts);
+                           false, !isFinalSorting, forceSwapping, allPairedPorts, portsNeedAbsoluteSameIndex);
                     if (hasChanged) {
                         forceSwapping = false;
                         if (preferredSwapSideTop) {
@@ -829,7 +855,7 @@ public class CrossingMinimization {
                         //for the second side we swap only to the right and we do not swap port groups to not destroy
                         // previously made arrangements on the left
                         hasChanged = swapIfPossible(secondOrder, secondPort, secondOrderPairedPorts, indexSecondPort,
-                                true, false, forceSwapping, allPairedPorts);
+                                true, false, forceSwapping, allPairedPorts, portsNeedAbsoluteSameIndex);
                         if (hasChanged) {
                             forceSwapping = false;
                             if (preferredSwapSideTop) {
@@ -840,14 +866,27 @@ public class CrossingMinimization {
                         } else {
                             //we cannot improve the current situation any more -> force swapping and possibly destroy
                             // the order within a port group
-                            forceSwapping = true;
+                            forceSwapping = allowForceSwapping;
+                            //we may also insert dummy vertices if the absolute order matters
+                            if (!forceSwapping && portsNeedAbsoluteSameIndex && dummyPortsForAbsoluteIndex != null) {
+                                while (indexFirstPort < indexSecondPort) {
+                                    dummyPortCounter = addDummyPort(firstPort, indexFirstPort, false, firstOrder,
+                                            dummyPortCounter, dummyPortsForAbsoluteIndex);
+                                    ++indexFirstPort;
+                                }
+                                if (preferredSwapSideTop) {
+                                    indexTop = topPairingOrder.indexOf(topPort);
+                                } else {
+                                    indexBottom = bottomPairingOrder.indexOf(bottomPort);
+                                }
+                            }
                         }
                     }
                 } else { //indexFirstPort > indexSecondPort
                     boolean hasChanged = false;
                     if (!isFinalSorting) {
                         hasChanged = swapIfPossible(firstOrder, firstPort, firstOrderPairedPorts, indexFirstPort,
-                                true, !isFinalSorting, forceSwapping, allPairedPorts);
+                                true, !isFinalSorting, forceSwapping, allPairedPorts, portsNeedAbsoluteSameIndex);
                     }
                     if (hasChanged) {
                         forceSwapping = false;
@@ -858,7 +897,7 @@ public class CrossingMinimization {
                         }
                     } else {
                         hasChanged = swapIfPossible(secondOrder, secondPort, secondOrderPairedPorts, indexSecondPort,
-                                false, false, forceSwapping, allPairedPorts);
+                                false, false, forceSwapping, allPairedPorts, portsNeedAbsoluteSameIndex);
                         if (hasChanged) {
                             forceSwapping = false;
                             if (preferredSwapSideTop) {
@@ -869,15 +908,40 @@ public class CrossingMinimization {
                         } else {
                             //we cannot improve the current situation any more -> force swapping and possibly destroy
                             // the order within a port group
-                            forceSwapping = true;
+                            forceSwapping = allowForceSwapping;
+                            //we may also insert dummy vertices if the absolute order matters
+                            if (!forceSwapping && portsNeedAbsoluteSameIndex && dummyPortsForAbsoluteIndex != null) {
+                                while (indexSecondPort < indexFirstPort) {
+                                    dummyPortCounter = addDummyPort(secondPort, indexSecondPort, false, secondOrder,
+                                            dummyPortCounter, dummyPortsForAbsoluteIndex);
+                                    ++indexSecondPort;
+                                }
+                                if (preferredSwapSideTop) {
+                                    indexBottom = bottomPairingOrder.indexOf(bottomPort);
+                                } else {
+                                    indexTop = topPairingOrder.indexOf(topPort);
+                                }
+                            }
                         }
                     }
                 }
             }
         }
 
+        //we may also insert dummy vertices to have the same amount of ports on both sides if the absolute order matters
+        if (portsNeedAbsoluteSameIndex && dummyPortsForAbsoluteIndex != null) {
+            while (bottomOrder.size() < topOrder.size()) {
+                dummyPortCounter = addDummyPort(bottomOrder.get(bottomOrder.size() - 1), bottomOrder.size() - 1,
+                        true, bottomOrder, dummyPortCounter, dummyPortsForAbsoluteIndex);
+            }
+            while (topOrder.size() < bottomOrder.size()) {
+                dummyPortCounter = addDummyPort(topOrder.get(topOrder.size() - 1), topOrder.size() - 1,
+                        true, topOrder, dummyPortCounter, dummyPortsForAbsoluteIndex);
+            }
+        }
+
         //check success
-        if (isFinalSorting) {
+        if (isFinalSorting && !portsNeedAbsoluteSameIndex) {
             //check port pairings
             boolean portParingsValid = true;
             for (Pair<Port> portPairing : allPortPairings) {
@@ -904,6 +968,22 @@ public class CrossingMinimization {
         }
     }
 
+    private static int addDummyPort(Port pairedPort, int indexPairedPort, boolean addAfter, List<Port> portOrdering,
+                                    int dummyPortCounter, Collection<Port> dummyPortsForAbsoluteIndex) {
+        Port dummyPort = new Port();
+        dummyPort.getLabelManager().addLabel(new TextLabel(
+                "dummyPortForPairings_" + dummyPortCounter++));
+        dummyPortsForAbsoluteIndex.add(dummyPort);
+        if (pairedPort.getPortGroup() != null) {
+            pairedPort.getPortGroup().addPortComposition(dummyPort);
+        }
+        else {
+            pairedPort.getVertex().addPortComposition(dummyPort);
+        }
+        portOrdering.add(indexPairedPort + (addAfter ? 1 : 0), dummyPort);
+        return dummyPortCounter;
+    }
+
     private static List<Port> extractOrderingOfPairedPorts(List<Port> orderingOfAllPorts, Set<Port> allPairedPorts) {
         List<Port> orderOfPairedPorts = new ArrayList<>(allPairedPorts.size() / 2);
         return updateOrderingOfPairedPorts(orderOfPairedPorts, orderingOfAllPorts, allPairedPorts);
@@ -922,13 +1002,15 @@ public class CrossingMinimization {
 
     private static boolean swapIfPossible(List<Port> orderedPorts, Port consideredPort, List<Port> orderOfPairedPorts,
                                           int indexWithinPairedPorts, boolean swapLeft, boolean swapPortGroups,
-                                          boolean forceSwapping, Set<Port> allPairedPorts) {
+                                          boolean forceSwapping, Set<Port> allPairedPorts,
+                                          boolean portsNeedAbsoluteSameIndex) {
         int indexConsideredPort = orderedPorts.indexOf(consideredPort);
         if (swapLeft) {
             int prevIndexPairedPort = indexWithinPairedPorts == 0 ? -1 :
                     orderedPorts.indexOf(orderOfPairedPorts.get(indexWithinPairedPorts - 1));
             //second condition to not make new crossings with previous port parings (only when swapping left)
-            if (canSwapLeft(indexConsideredPort, orderedPorts)) {// && prevIndexPairedPort != indexConsideredPort - 1) {
+            if (canSwapLeft(indexConsideredPort, orderedPorts) && !allPairedPorts.contains(
+                    orderedPorts.get(indexConsideredPort - 1))) {// && prevIndexPairedPort != indexConsideredPort - 1) {
                 swapLeft(indexConsideredPort, orderedPorts);
                 //check if the swap on the larger list (including non-paired ports) effected also a swap of the list
                 // where only paired ports are contained
@@ -958,7 +1040,9 @@ public class CrossingMinimization {
             //we don't need the check nextIndexPairedPort != index + 1 because if we make new crossings
             // this way, they will be removed in the next steps of the for loop when the next port pairings
             // are considered
-            if (canSwapRight(indexConsideredPort, orderedPorts)) {
+            // -- unless we are sorting for precise indices
+            if (canSwapRight(indexConsideredPort, orderedPorts) && (!portsNeedAbsoluteSameIndex ||
+                    !allPairedPorts.contains(orderedPorts.get(indexConsideredPort + 1)))) {
                 swapRight(indexConsideredPort, orderedPorts);
                 //check if the swap on the larger list (including non-paired ports) effected also a swap of the list
                 // where only paired ports are contained

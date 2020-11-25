@@ -118,7 +118,6 @@ public class KielerLayouter implements PralineLayouter {
 
     public void generateSVG(String path) {
         sugiyForInternalUse.drawResult(path);
-        System.out.println("wrote file to " + path);
     }
 
     private Graph getStoredPralineGraph() {
@@ -276,11 +275,19 @@ public class KielerLayouter implements PralineLayouter {
         //fix port pairings in praline graph
         int iterationsOfPortPairRepairing = 2;
         for (Vertex pralinePlug : sugiyForInternalUse.getPlugs().keySet()) {
-            for (int i = 0; i < iterationsOfPortPairRepairing; i++) {
+            //in the first iterationsOfPortPairRepairing we use the "normal" port pairing repair algorithm to just
+            // have the port pairings separated from each other
+            //in the last run, we want to have the corresponding ports on both sides have *exactly* the same index
+            // among the ordering of *all* ports of their vertex side. We need this to make kieler place these ports
+            // (of a port pairing) on the same vertical line.
+            for (int i = 0; i < iterationsOfPortPairRepairing + 1; i++) {
+                sugiyForInternalUse.getDummyPortsForLabelPadding().putIfAbsent(pralinePlug, new LinkedHashSet<>());
+                Set<Port> dummyPorts = sugiyForInternalUse.getDummyPortsForLabelPadding().get(pralinePlug);
                 CrossingMinimization.repairPortPairings(sugiyForInternalUse, pralinePlug,
                         sugiyForInternalUse.getOrders().getBottomPortOrder(),
                         sugiyForInternalUse.getOrders().getTopPortOrder(), false,
-                        i == iterationsOfPortPairRepairing - 1);
+                        i >= iterationsOfPortPairRepairing - 1, i < iterationsOfPortPairRepairing,
+                        i == iterationsOfPortPairRepairing, i == iterationsOfPortPairRepairing ? dummyPorts : null);
             }
         }
         //transfer the just found port ordering to the lists of vertices and port groups
@@ -289,9 +296,6 @@ public class KielerLayouter implements PralineLayouter {
         vertices = new LinkedHashMap<>(pralineGraph.getVertices().size());
         reverseVertices = new LinkedHashMap<>(pralineGraph.getVertices().size());
         ports = new LinkedHashMap<>();
-        //todo: do we need these variables?
-        LinkedHashMap<ElkNode, LinkedHashSet<ElkPort>> pairedPorts = new LinkedHashMap<>();
-        LinkedHashMap<ElkPort, ElkPort> portPairings = new LinkedHashMap<>();
         edges = new LinkedHashMap<>(pralineGraph.getEdges().size());
         for (Vertex pralineVertex : pralineGraph.getVertices()) {
             ElkNode vertex = elkGraphFactory.createElkNode();
@@ -328,55 +332,7 @@ public class KielerLayouter implements PralineLayouter {
             else {
                 vertex.setProperty(LayeredOptions.PORT_CONSTRAINTS, PortConstraints.FIXED_SIDE);
             }
-
-            //find port pairings
-            LinkedHashSet<ElkPort> pairedPortsOfThisNode = new LinkedHashSet<>();
-            for (Port pralinePort : pralineVertex.getPorts()) {
-                if (sugiyForInternalUse.isPaired(pralinePort)) {
-                    pairedPortsOfThisNode.add(ports.get(pralinePort));
-                    portPairings.put(ports.get(pralinePort), ports.get(sugiyForInternalUse.getPairedPort(pralinePort)));
-                }
-            }
-            pairedPorts.put(vertex, pairedPortsOfThisNode);
         }
-        //todo: have straight port pairings (index of ports in a pairing exactly opposite, maybe insert more dummy ports
-        //fix port pairings
-        //push them to the very left of the north and the south side of a vertex
-//        for (ElkNode vertex : vertices.values()) {
-//            LinkedHashSet<ElkPort> pairedPortsOfVertex = pairedPorts.get(vertex);
-//            if (!pairedPortsOfVertex.isEmpty()) {
-//                vertex.setProperty(LayeredOptions.PORT_CONSTRAINTS, PortConstraints.FIXED_ORDER);
-//                LinkedList<ElkPort> northPorts = new LinkedList<>();
-//                LinkedList<ElkPort> southPorts = new LinkedList<>();
-//                PortSide currentPortSide = PortSide.NORTH;
-//                List<ElkPort> currentPortList = northPorts;
-//                for (ElkPort port : vertex.getPorts()) {
-//                    if (pairedPortsOfVertex.contains(port)) {
-//                        if (port.getProperty(CoreOptions.PORT_SIDE) == PortSide.SOUTH) {
-//                            currentPortSide = PortSide.SOUTH;
-//                            currentPortList = southPorts;
-//                        }
-//                        else {
-//                            //value is not set and this should be on the north side & the paired port on the south side
-//                            port.setProperty(CoreOptions.PORT_SIDE, PortSide.NORTH);
-//                            ElkPort pairedPort = portPairings.get(port);
-//                            pairedPort.setProperty(CoreOptions.PORT_SIDE, PortSide.SOUTH);
-//                            northPorts.addFirst(port);
-//                            southPorts.addFirst(pairedPort);
-//                        }
-//                    }
-//                    else {
-//                        port.setProperty(CoreOptions.PORT_SIDE, currentPortSide);
-//                        currentPortList.add(port);
-//                    }
-//                }
-//                vertex.getPorts().clear();
-//                vertex.getPorts().addAll(northPorts);
-//                Collections.reverse(southPorts);
-//                vertex.getPorts().addAll(southPorts);
-//            }
-//
-//        }
 
         //re-add self loops
         for (Vertex nodeWithLoop : sugiyForInternalUse.getLoopEdges().keySet()) {
