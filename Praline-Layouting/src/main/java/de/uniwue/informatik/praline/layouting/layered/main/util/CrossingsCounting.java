@@ -6,6 +6,7 @@ import de.uniwue.informatik.praline.datastructure.graphs.Port;
 import de.uniwue.informatik.praline.datastructure.paths.Path;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
+import de.uniwue.informatik.praline.datastructure.utils.ArithmeticOperation;
 
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
@@ -17,7 +18,7 @@ public class CrossingsCounting {
         //first find all segments
         ArrayList<Line2D.Double> allSegments = new ArrayList<>();
         Map<Line2D.Double, Collection<Line2D.Double>> adjacentSegments = new LinkedHashMap<>();
-        Map<Line2D.Double, Port> segment2Port = new LinkedHashMap<>();
+        Map<Line2D.Double, List<Port>> segment2Port = new LinkedHashMap<>();
         Map<Line2D.Double, Edge> segment2Edge = new LinkedHashMap<>();
         Map<Line2D.Double, Collection<Point2D.Double>> pathEndingSegment2EndPoints = new LinkedHashMap<>();
         for (Edge edge : graph.getEdges()) {
@@ -70,10 +71,12 @@ public class CrossingsCounting {
                 Line2D.Double segment1 = allSegments.get(j);
                 if (!adjacentSegments.containsKey(segment0) || !adjacentSegments.get(segment0).contains(segment1)) {
                     if (!segment2Port.containsKey(segment0) || !segment2Port.containsKey(segment1) ||
-                            !segment2Port.get(segment0).equals(segment2Port.get(segment1))) {
+                            !haveCommonPort(segment2Port.get(segment0), segment2Port.get(segment1))) {
                         if (segment2Edge.get(segment0) != segment2Edge.get(segment1) ||
                                 !containsEndingPoint(segment0, segment1, pathEndingSegment2EndPoints)) {
-                            counter += segment0.intersectsLine(segment1) ? 1 : 0;
+                            if (segment0.intersectsLine(segment1)) {
+                                ++counter;
+                            }
                         }
                     }
                 }
@@ -82,6 +85,17 @@ public class CrossingsCounting {
 
 
         return counter;
+    }
+
+    private static boolean haveCommonPort(List<Port> ports0, List<Port> ports1) {
+        for (Port port0 : ports0) {
+            for (Port port1 : ports1) {
+                if (port0.equals(port1)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -98,8 +112,7 @@ public class CrossingsCounting {
 
         Collection<Point2D.Double> endPoints0 = pathEndingSegment2EndPoints.get(segment0);
         Collection<Point2D.Double> endPoints1 = pathEndingSegment2EndPoints.get(segment1);
-        boolean returnValue = false;
-        returnValue |= containsEndingPoints(segment0, endPoints1);
+        boolean returnValue = containsEndingPoints(segment0, endPoints1);
         returnValue |= containsEndingPoints(segment1, endPoints0);
         return returnValue;
     }
@@ -107,7 +120,7 @@ public class CrossingsCounting {
     private static boolean containsEndingPoints(Line2D.Double segment, Collection<Point2D.Double> endPoints) {
         if (endPoints != null) {
             for (Point2D.Double endPoint : endPoints) {
-                if (segment.ptSegDist(endPoint) == 0) {
+                if (ArithmeticOperation.precisionEqual(segment.ptSegDist(endPoint), 0)) {
                     return true;
                 }
             }
@@ -123,7 +136,8 @@ public class CrossingsCounting {
                     Line2D.Double seg0 = allSegmentsOfThisEdge.get(i);
                     Line2D.Double seg1 = allSegmentsOfThisEdge.get(j);
 
-                    if (seg0.ptSegDist(seg1.getP1()) == 0 && seg0.ptSegDist(seg1.getP2()) == 0) {
+                    if (ArithmeticOperation.precisionEqual(seg0.ptSegDist(seg1.getP1()), 0)
+                            && ArithmeticOperation.precisionEqual(seg0.ptSegDist(seg1.getP2()), 0)) {
                         //if they are identical, remove only if i < j (not to remove both
                         //otherwise seg1 is strictly contained -> we remove it
                         if (i < j || !((seg0.getP1().equals(seg1.getP1()) && seg0.getP1().equals(seg1.getP1()))
@@ -143,17 +157,17 @@ public class CrossingsCounting {
         Collection<Line2D.Double> segmentsEndingAtPrevPoint =
                 outsideEndPointsOfPaths.computeIfAbsent(prevPoint, k -> new ArrayList<>());
         for (Line2D.Double adjacentSegment : segmentsEndingAtPrevPoint) {
-            adjacentSegments.computeIfAbsent(adjacentSegment,
-                    k -> new ArrayList<>()).add(curSegment);
+            adjacentSegments.computeIfAbsent(adjacentSegment, k -> new ArrayList<>()).add(curSegment);
         }
         segmentsEndingAtPrevPoint.add(curSegment);
     }
 
-    private static void registerPortAtSegment(Map<Line2D.Double, Port> segment2Port, List<Port> ports,
+    private static void registerPortAtSegment(Map<Line2D.Double, List<Port>> segment2Port, List<Port> ports,
                                               Point2D.Double endPoint, Line2D.Double segment) {
         for (Port port : ports) {
             if (((Rectangle) port.getShape()).liesOnBoundary(endPoint)) {
-                segment2Port.put(segment, port);
+                segment2Port.putIfAbsent(segment, new ArrayList<>(1));
+                segment2Port.get(segment).add(port);
             }
         }
     }

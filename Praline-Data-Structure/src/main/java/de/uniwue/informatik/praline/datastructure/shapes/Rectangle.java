@@ -3,6 +3,7 @@ package de.uniwue.informatik.praline.datastructure.shapes;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import de.uniwue.informatik.praline.datastructure.utils.ArithmeticOperation;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -17,13 +18,6 @@ import java.util.Objects;
  */
 @JsonPropertyOrder({ "xposition", "yposition", "width", "height", "color" })
 public class Rectangle extends Rectangle2D.Double implements Shape {
-
-    /*==========
-     * Constants
-     *==========*/
-
-    public static final double ARITHMETIC_PRECISION = 0.000001;
-
 
     /*==========
      * Instance variables
@@ -107,12 +101,14 @@ public class Rectangle extends Rectangle2D.Double implements Shape {
      *==========*/
 
     public boolean liesOnBoundary(Point2D.Double point) {
-        if ((precisionEqual(point.x, this.x) || precisionEqual(point.x, this.x + this.width))
-                && precisionInRange(point.y, this.y, this.y + this.height)) {
+        if ((ArithmeticOperation.precisionEqual(point.x, this.x) ||
+                ArithmeticOperation.precisionEqual(point.x, this.x + this.width))
+                && ArithmeticOperation.precisionInRange(point.y, this.y, this.y + this.height)) {
             return true;
         }
-        if ((precisionEqual(point.y, this.y) || precisionEqual(point.y, this.y + this.height))
-                && precisionInRange(point.x, this.x, this.x + this.width)) {
+        if ((ArithmeticOperation.precisionEqual(point.y, this.y) ||
+                ArithmeticOperation.precisionEqual(point.y, this.y + this.height))
+                && ArithmeticOperation.precisionInRange(point.x, this.x, this.x + this.width)) {
             return true;
         }
         return false;
@@ -120,14 +116,6 @@ public class Rectangle extends Rectangle2D.Double implements Shape {
 
     public boolean containsInsideOrOnBoundary(Point2D.Double point) {
         return liesOnBoundary(point) || contains(point);
-    }
-
-    private static boolean precisionEqual(double val0, double val1) {
-        return precisionInRange(val0, val1, val1);
-    }
-
-    private static boolean precisionInRange(double value, double rangeStart, double rangeEnd) {
-        return rangeStart - ARITHMETIC_PRECISION <= value && value <= rangeEnd + ARITHMETIC_PRECISION;
     }
 
     /*==========

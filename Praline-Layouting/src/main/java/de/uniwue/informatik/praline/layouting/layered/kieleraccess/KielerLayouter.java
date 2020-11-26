@@ -263,7 +263,9 @@ public class KielerLayouter implements PralineLayouter {
 
     private static List<Point2D.Double> transformElkBendPoints2ListPoint2dDouble(EList<ElkBendPoint> points) {
         List<Point2D.Double> list = new ArrayList<>(points.size());
-        for (ElkBendPoint point : points) {
+        //skip first and last point
+        for (int i = 1; i < points.size() - 1; i++) {
+            ElkBendPoint point = points.get(i);
             list.add(new Point2D.Double(point.getX(), point.getY()));
         }
         return list;

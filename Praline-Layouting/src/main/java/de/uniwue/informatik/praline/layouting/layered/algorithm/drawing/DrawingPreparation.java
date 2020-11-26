@@ -5,6 +5,7 @@ import de.uniwue.informatik.praline.datastructure.paths.Path;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
+import de.uniwue.informatik.praline.datastructure.utils.ArithmeticOperation;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
@@ -672,7 +673,7 @@ public class DrawingPreparation {
                     }
                     if (pointAtPort != null) {
                         newForeLastPoint.x = pointAtPort.x;
-                        newForeLastPoint.y = pointAtPort.y +
+                        newForeLastPoint.y = pointAtPort.y + (diableShifting ? 0.75 : 1.0) *
                                 drawInfo.getEdgeDistanceVertical() * (foreLastPoint.y > pointAtPort.y ? 1.0 : -1.0);
                         if (pointAtPort == startPoint) {
                             ((PolygonalPath) path).getBendPoints().add(0, newForeLastPoint);
@@ -960,10 +961,10 @@ public class DrawingPreparation {
         List<Point2D.Double> bendsFirstPath = new ArrayList<>(((PolygonalPath) firstPath).getTerminalAndBendPoints());
         List<Point2D.Double> bendsLastPath = new ArrayList<>(((PolygonalPath) lastPath).getTerminalAndBendPoints());
 
-        if (bendsFirstPath.get(0).distance(minX, y) == 0) {
+        if (ArithmeticOperation.precisionEqual(bendsFirstPath.get(0), new Point2D.Double(minX, y))) {
             Collections.reverse(bendsFirstPath);
         }
-        if (bendsLastPath.get(0).distance(maxX, y) > 0) {
+        if (!ArithmeticOperation.precisionEqual(bendsLastPath.get(0), new Point2D.Double(maxX, y))) {
             Collections.reverse(bendsLastPath);
         }
 
@@ -1002,6 +1003,8 @@ public class DrawingPreparation {
         for (Path path : edge.getPaths()) {
             allSegments.addAll(((PolygonalPath) path).getSegments());
         }
+        //remove all points that are saved as a segment
+        removePointsInSegments(allSegments);
         //now re-construct whole paths beginning from the start port
         Port startPort = edge.getPorts().get(0);
         Port endPort = edge.getPorts().get(1);
@@ -1027,6 +1030,14 @@ public class DrawingPreparation {
         //add new path and remove all old ones
         edge.removeAllPaths();
         edge.addPath(newPath);
+    }
+
+    private void removePointsInSegments(Set<Line2D.Double> segments) {
+        for (Line2D.Double segment : new ArrayList<>(segments)) {
+            if (segment.getP1().equals(segment.getP2())) {
+                segments.remove(segment);
+            }
+        }
     }
 
     private boolean areOnALine(Point2D.Double prevPoint, Point2D.Double curPoint, Point2D.Double nextPoint) {
