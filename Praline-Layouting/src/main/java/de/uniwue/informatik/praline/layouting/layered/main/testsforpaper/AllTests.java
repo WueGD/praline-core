@@ -30,7 +30,9 @@ public class AllTests {
             {
 //                    "generated_2020-06-04_18-39-49",
 //                    "generated_2020-08-20_04-42-39",
-                    "lc-praline-package-2020-05-18"
+//                    "lc-praline-package-2020-05-18"
+                    "praline-package-2020-05-18"
+//                    "praline-readable-2020-09-04"
             };
     private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
     private static final String PATH_RESULTS =
@@ -41,13 +43,13 @@ public class AllTests {
 
     private static final Test[] CURRENT_TESTS =
             {
-                    Test.DIRECTION_ASSIGNMENT_PHASE,
+//                    Test.DIRECTION_ASSIGNMENT_PHASE,
                     Test.CROSSING_MINIMIZATION_PHASE
             };
 
-    private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 5; //10; //50 //200
+    private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 1; //5; //10; //50 //200
 
-    private static final int NUMBER_OF_CROSSING_REDUCTION_ITERATIONS = 10; //5; //50
+    private static final int NUMBER_OF_CROSSING_REDUCTION_ITERATIONS = 3; //10; //5; //50
 
 
 
@@ -76,8 +78,8 @@ public class AllTests {
                     return Arrays.asList(namesArray(DirectionMethod.values()));
                 case CROSSING_MINIMIZATION_PHASE:
                     ArrayList<String> methods = new ArrayList<>();
-                    String[] movePortsToTurningDummies = {"-noMove"}; //{"-noMove", "-move"};
-                    String[] placeTurningDummiesCloseToVertex = {"-noPlaceTurnings"}; //{"-noPlaceTurnings", "-placeTurnings"};
+                    String[] movePortsToTurningDummies = {"-noMove", "-move"}; //{"-noMove"};
+                    String[] placeTurningDummiesCloseToVertex = {"-noPlaceTurnings", "-placeTurnings"}; //{"-noPlaceTurnings"};
                     for (CrossingMinimizationMethod cmm : CrossingMinimizationMethod.values()) {
                         for (String m : movePortsToTurningDummies) {
                             for (String ptd : placeTurningDummiesCloseToVertex) {
@@ -265,8 +267,6 @@ public class AllTests {
                     //save number of dummy nodes
                     criterion2method2values.get(Criterion.NUMBER_OF_DUMMY_VERTICES).get(method).add(0); //for kieler
                     // we don't know and we also don't care so much about dummy vertices
-                    //save number of crossings
-                    criterion2method2values.get(Criterion.NUMBER_OF_CROSSINGS).get(method).add(kielerLayouter.getNumberOfCrossings());
 
 //                    System.out.println("kieler_draw: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
                 }
@@ -305,12 +305,12 @@ public class AllTests {
                     sugiy.prepareDrawing();
 
 //                    System.out.println("er: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
-
-                    //save number of crossings
-                    criterion2method2values.get(Criterion.NUMBER_OF_CROSSINGS).get(method).add(CrossingsCounting.countNumberOfCrossings(graph));
                 }
 
                 long endTime = mxBean.getThreadCpuTime(Thread.currentThread().getId());
+
+                //save number of crossings
+                criterion2method2values.get(Criterion.NUMBER_OF_CROSSINGS).get(method).add(CrossingsCounting.countNumberOfCrossings(graph));
 
                 //save cpu time in ms (we divide by a million to have milliseconds instead of nanoseconds)
                 criterion2method2values.get(Criterion.CPU_TIME).get(method).add((int) ((endTime - startTime) / 1000000l));
