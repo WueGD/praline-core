@@ -13,7 +13,6 @@ import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreductio
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 import de.uniwue.informatik.praline.layouting.layered.kieleraccess.util.ElkLayeredWithoutLayerRemoval;
-import de.uniwue.informatik.praline.layouting.layered.kieleraccess.util.OrthogonalCrossingsAnalysis;
 import org.eclipse.elk.alg.layered.graph.LGraph;
 import org.eclipse.elk.alg.layered.graph.LNode;
 import org.eclipse.elk.alg.layered.graph.Layer;
@@ -39,7 +38,6 @@ public class KielerLayouter implements PralineLayouter {
     private LinkedHashMap<ElkNode, Vertex> reverseVertices;
     private LinkedHashMap<Port, ElkPort> ports;
     private LinkedHashMap<Edge, ElkEdge> edges;
-    private int numberOfCrossings = -1;
     private List<List<LNode>> lGraphLayers;
 
     public KielerLayouter(Graph graph) {
@@ -124,11 +122,6 @@ public class KielerLayouter implements PralineLayouter {
         return sugiyForInternalUse.getGraph();
     }
 
-    public int getNumberOfCrossings() {
-        return numberOfCrossings;
-    }
-
-
     private ElkNode computeLayeredDrawing() {
         //transform praline to ElkLayout
         Graph pralineGraph = sugiyForInternalUse.getGraph();
@@ -158,10 +151,6 @@ public class KielerLayouter implements PralineLayouter {
 
         //re-transform
         elkGraphTransformer.applyLayout(lGraph);
-
-        //count crossings
-        OrthogonalCrossingsAnalysis orthogonalCrossingsAnalysis = new OrthogonalCrossingsAnalysis();
-        this.numberOfCrossings = orthogonalCrossingsAnalysis.countCrossings(graph);
 
         return graph;
     }
