@@ -18,18 +18,20 @@ public class CsvDataExtraction {
     private static final String DATA_PATH =
             "Praline-Layouting/results/" +
 //                    "paper-all-tests-2020-06-10_06-18-04";
-                    "paper-all-tests-2020-08-20_16-01-53";
+//                    "paper-all-tests-2020-08-20_16-01-53";
+                    "2020-11-26_04-07-39";
 
     private static final String[] DATA_DIRS =
             {
 //                    "DA_lc-praline-package-2020-05-18",
 //                    "DA_generated_2020-08-20_04-42-39",
-                    "CM_lc-praline-package-2020-05-18",
-                    "CM_generated_2020-08-20_04-42-39"
+//                    "CM_lc-praline-package-2020-05-18",
+//                    "CM_generated_2020-08-20_04-42-39"
+                    "CM_praline-package-2020-05-18"
             };
 
 
-    private static final boolean TABLE_CONTENT_OUTPUT = true; //otherwise better readable for humans
+    private static final boolean TABLE_CONTENT_OUTPUT = false; //otherwise better readable for humans
 
     private static final DecimalFormat OUTPUT_FORMAT_MEAN =
             new DecimalFormat("#.00", DecimalFormatSymbols.getInstance(Locale.US));
@@ -39,7 +41,7 @@ public class CsvDataExtraction {
             new DecimalFormat("#.0", DecimalFormatSymbols.getInstance(Locale.US));
     private static final DecimalFormat OUTPUT_PERCENT_FORMAT =
             new DecimalFormat("#", DecimalFormatSymbols.getInstance(Locale.US));
-    private static final String PERCENT_SYMBOL = ""; //" \\%"
+    private static final String PERCENT_SYMBOL = " \\%"; //"";
     private static final String INSTEAD_OF_LEADING_ZERO = "~";
     private static final boolean IGNORE_SD = true;
 
@@ -51,6 +53,7 @@ public class CsvDataExtraction {
     private static final String ENTRIES_RELATIVE_TO =
 //            "ran";
             "kieler";
+//            null;
 
     private static final Map<String, String> KNOWN_NAMES = new LinkedHashMap<>() {
         {
@@ -59,15 +62,15 @@ public class CsvDataExtraction {
             put("nodn", "\\ndv");
             put("ratio", "w:h");
             put("#vtcs", "vtcs");
-            put("ports-noMove-noPlaceTurnings", "ports");
-            put("mixed-noMove-noPlaceTurnings", "mixed");
-            put("nodes-noMove-noPlaceTurnings", "nodes");
+//            put("ports-noMove-noPlaceTurnings", "ports");
+//            put("mixed-noMove-noPlaceTurnings", "mixed");
+//            put("nodes-noMove-noPlaceTurnings", "nodes");
             put("ran", "rand");
         }
     };
 
     private static final List<String> IGNORE_FIELDS_CONTAINING_STRING =
-            Arrays.asList("#vtcs", "-move", "-placeTurnings", "-area", "-ratio");
+            Arrays.asList("#vtcs"); //, "-move", "-placeTurnings", "-area", "-ratio");
 
     public static void main(String[] args) {
         for (String dataDir : DATA_DIRS) {
@@ -146,7 +149,7 @@ public class CsvDataExtraction {
                 int bestValue = Integer.MAX_VALUE;
                 boolean hasReferenceValue = false;
                 for (String method : methods) {
-                    if (ENTRIES_RELATIVE_TO.equals(method)) {
+                    if (method.equals(ENTRIES_RELATIVE_TO)) {
                         referenceValue = candidates.get(method);
                         hasReferenceValue = true;
                     }
@@ -285,7 +288,7 @@ public class CsvDataExtraction {
     }
 
     private static String formatMean(double number, String method) {
-        String meanAsText = ENTRIES_RELATIVE_TO.equals(method) ?
+        String meanAsText = method.equals(ENTRIES_RELATIVE_TO) ?
                 OUTPUT_FORMAT_MEAN_RELATIVE_TO.format(number) : OUTPUT_FORMAT_MEAN.format(number);
         if (meanAsText.startsWith(".")) {
             meanAsText = INSTEAD_OF_LEADING_ZERO + meanAsText;
@@ -384,7 +387,7 @@ public class CsvDataExtraction {
             boolean hasReferenceValue = false;
             for (String method : newMethods) {
                 Integer entry = candidatesArea.get(method);
-                if (ENTRIES_RELATIVE_TO.equals(method)) {
+                if (method.equals(ENTRIES_RELATIVE_TO)) {
                     referenceArea = entry;
                     hasReferenceValue = true;
                 }
@@ -411,7 +414,7 @@ public class CsvDataExtraction {
             hasReferenceValue = false;
             for (String method : newMethods) {
                 Double entry = candidatesRatio.get(method);
-                if (ENTRIES_RELATIVE_TO.equals(method)) {
+                if (method.equals(ENTRIES_RELATIVE_TO)) {
                     referenceRatio = entry;
                     hasReferenceValue = true;
                 }

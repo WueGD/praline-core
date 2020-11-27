@@ -16,14 +16,16 @@ public class CsvDataToSingleCsvExtraction {
     private static final String DATA_PATH =
             "Praline-Layouting/results/" +
 //                    "paper-all-tests-2020-06-10_06-18-04";
-                    "paper-all-tests-2020-08-20_16-01-53";
+//                    "paper-all-tests-2020-08-20_16-01-53";
+                    "2020-11-26_04-07-39";
 
     private static final String[] DATA_DIRS =
             {
 //                    "DA_lc-praline-package-2020-05-18",
 //                    "DA_generated_2020-08-20_04-42-39",
-                    "CM_lc-praline-package-2020-05-18",
-                    "CM_generated_2020-08-20_04-42-39"
+//                    "CM_lc-praline-package-2020-05-18",
+//                    "CM_generated_2020-08-20_04-42-39"
+                    "CM_praline-package-2020-05-18"
             };
 
     private static final String TARGET_PATH =
@@ -32,28 +34,36 @@ public class CsvDataToSingleCsvExtraction {
 
     private static final String[] TARGET_FILE_PREFIX =
             {
-                    "ncr",
-                    "nbp"
+                    "noc",
+                    "nob",
+//                    "nodn",
+                    "time",
+                    "space"
             };
     private static final String[] TARGET_FILES =
             {
 //                    "DA_lc-praline-package-2020-05-18",
 //                    "DA_generated_2020-08-20_04-42-39",
-                    "CM_lc-praline-package-2020-05-18",
-                    "CM_generated_2020-08-20_04-42-39"
+//                    "CM_lc-praline-package-2020-05-18",
+//                    "CM_generated_2020-08-20_04-42-39"
+                    "CM_praline-package-2020-05-18"
             };
     private static final String TARGET_FILE_SUFFIX = ".csv";
 
     private static final String[] CONSIDER_FILES =
             {
                     "noc",
-                    "nob"
-            }; //"nodn", "time", "space"
+                    "nob",
+//                    "nodn",
+                    "time",
+                    "space"
+            };
 
     //set to an unkonwn value or null to have absolute values
     private static final String ENTRIES_RELATIVE_TO =
 //            "rand";
             "kieler";
+//            null;
 
     private static final List<String> UNNORMALIZED_ENTRIES = Arrays.asList(
             "vtcs"
@@ -62,15 +72,15 @@ public class CsvDataToSingleCsvExtraction {
     private static final Map<String, String> KNOWN_NAMES = new LinkedHashMap<>() {
         {
             put("#vtcs", "vtcs");
-            put("ports-noMove-noPlaceTurnings", "ports");
-            put("mixed-noMove-noPlaceTurnings", "mixed");
-            put("nodes-noMove-noPlaceTurnings", "nodes");
+//            put("ports-noMove-noPlaceTurnings", "ports");
+//            put("mixed-noMove-noPlaceTurnings", "mixed");
+//            put("nodes-noMove-noPlaceTurnings", "nodes");
             put("ran", "rand");
         }
     };
 
     private static final List<String> IGNORE_FIELDS_CONTAINING_STRING =
-            Arrays.asList("-move", "-placeTurnings", "-area", "-ratio");
+            Arrays.asList(); //"-move", "-placeTurnings", "-area", "-ratio");
 
     public static void main(String[] args) {
         File targetDir = new File(TARGET_PATH);
