@@ -221,7 +221,7 @@ public class NodePlacement {
                         newOrder.add(order.get(position));
                     } else if (!sugy.getDeviceVertices().contains(currentNode)) {
                         //we will handle device vertices in the end via the union node
-                        minWidth = sugy.getTextWidthForNode(currentNode);
+                        minWidth = sugy.getMinWidthForNode(currentNode);
                     }
                 } else if (order.get(position).getVertex().equals(currentNode)
                         || (sugy.getReplacedPorts().containsKey(order.get(position))
@@ -238,7 +238,7 @@ public class NodePlacement {
                     nodePosition = position;
                     currentWidth = (delta);
                     currentWidthUnionNode += (delta);
-                    minWidth = sugy.getTextWidthForNode(currentNode);
+                    minWidth = sugy.getMinWidthForNode(currentNode);
                 } else {
                     List<Port> nodeOrder = addDummyPortsAndGetNewOrder(order, currentWidth, minWidth,
                             currentUnionNode, currentNode, nodePosition, position);
@@ -257,7 +257,7 @@ public class NodePlacement {
                         }
                         if (deviceVertex != null) {
                             //TODO: currently we just padd to the right. Maybe make it symmetric later? (low priority)
-                            double minWidthUnionNode = sugy.getTextWidthForNode(deviceVertex);
+                            double minWidthUnionNode = sugy.getMinWidthForNode(deviceVertex);
                             while (currentWidthUnionNode < minWidthUnionNode) {
                                 Port p = new Port();
                                 createMainLabel(p);

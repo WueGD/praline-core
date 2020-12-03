@@ -107,11 +107,6 @@ public class DrawingInformation {
         this.showPortGroups = showPortGroups;
     }
 
-    public static double getStringMinimumHeight() {
-        return g2d.getFontMetrics().getStringBounds(
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz1234567890", DrawingInformation.g2d).getHeight();
-    }
-
     public double getMinVertexWidth(Vertex vertex) {
         String[] labelStrings = new String[vertex.getLabelManager().getLabels().size()];
 
@@ -120,15 +115,53 @@ public class DrawingInformation {
             labelStrings[i++] = label instanceof TextLabel ? ((TextLabel) label).getInputText() : "";
         }
 
-        return getMinVertexWidth(labelStrings);
+        double labelWidth = getMinLabelWidth(labelStrings);
+
+        double givenWidth = vertex.getShape() != null && vertex.getShape() instanceof Rectangle &&
+                ((de.uniwue.informatik.praline.datastructure.shapes.Rectangle) vertex.getShape()).getWidth() >= 0 ?
+                ((de.uniwue.informatik.praline.datastructure.shapes.Rectangle) vertex.getShape()).getWidth() :
+                getVertexMinimumWidth();
+
+        return Math.max(labelWidth, givenWidth);
     }
 
-    public double getMinVertexWidth(String[] labelStrings) {
-        double minWidth = vertexMinimumWidth;
+    private double getMinLabelWidth(String[] labelStrings) {
+        double minWidth = 0;
         for (String name : labelStrings) {
             minWidth = Math.max(minWidth, g2d.getFontMetrics().getStringBounds(name, g2d).getWidth());
         }
         return minWidth;
+    }
+
+    public double getVertexHeight(Vertex vertex) {
+        String[] labelStrings = new String[vertex.getLabelManager().getLabels().size()];
+
+        int i = 0;
+        for (Label label : vertex.getLabelManager().getLabels()) {
+            labelStrings[i++] = label instanceof TextLabel ? ((TextLabel) label).getInputText() : "";
+        }
+
+        double labelHeight = getMinLabelHeight(labelStrings);
+
+        double givenWidth = vertex.getShape() != null && vertex.getShape() instanceof Rectangle &&
+                ((de.uniwue.informatik.praline.datastructure.shapes.Rectangle) vertex.getShape()).getHeight() >= 0 ?
+                ((de.uniwue.informatik.praline.datastructure.shapes.Rectangle) vertex.getShape()).getHeight() :
+                getVertexHeight();
+
+        return Math.max(labelHeight, givenWidth);
+    }
+
+    private double getMinLabelHeight(String[] labelStrings) {
+        double minHeight = vertexMinimumWidth;
+        for (String name : labelStrings) {
+            minHeight = Math.max(minHeight, g2d.getFontMetrics().getStringBounds(name, g2d).getHeight());
+        }
+        return minHeight;
+    }
+
+    private static double getStringMinimumHeight() {
+        return g2d.getFontMetrics().getStringBounds(
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz1234567890", DrawingInformation.g2d).getHeight();
     }
 
     public double getBorderWidth() {

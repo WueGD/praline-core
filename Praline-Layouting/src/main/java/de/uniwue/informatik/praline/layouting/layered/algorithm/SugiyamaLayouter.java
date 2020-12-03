@@ -3,6 +3,7 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm;
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
+import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.io.output.svg.SVGDrawer;
 import de.uniwue.informatik.praline.layouting.PralineLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.PortSideAssignment;
@@ -569,36 +570,11 @@ public class SugiyamaLayouter implements PralineLayouter {
         return hasAssignedLayers;
     }
 
-    public List<String> getNodeName (Vertex node) {
-        List<String> nodeNames = new ArrayList<>();
-        // todo: implement other cases
+    public double getMinWidthForNode(Vertex node) {
         if (isDummy(node)) {
-            nodeNames.add("");
-        } else if (isPlug(node)) {
-            List<Vertex> originalVertices = plugs.get(node).getContainedVertices();
-            for (Vertex originalVertex : originalVertices) {
-                for (Label label : originalVertex.getLabelManager().getLabels()) {
-                    nodeNames.add(label.toString());
-                }
-            }
-        } else if (vertexGroups.keySet().contains(node)) {
-            //TODO
-        } else {
-            for (Label label : node.getLabelManager().getLabels()) {
-                nodeNames.add(label.toString());
-            }
+            return 0;
         }
-        return nodeNames;
-    }
-    //TODO: re-visit later
-
-    public double getTextWidthForNode(Vertex node) {
-        double width = 0;
-        for (String label : getNodeName(node)) {
-            width = Math.max(width, DrawingInformation.g2d.getFontMetrics().getStringBounds(label,
-                    DrawingInformation.g2d).getWidth());
-        }
-        return width;
+        return drawInfo.getMinVertexWidth(node);
     }
 
     @Override

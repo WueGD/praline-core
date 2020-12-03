@@ -216,7 +216,7 @@ public class DrawingPreparation {
 
         double size = nodeShape.getWidth();
         double minSize = minR - maxL;
-        minSize = Math.max(minSize, (sugy.getTextWidthForNode(node) + (drawInfo.getBorderWidth() * 2)));
+        minSize = Math.max(minSize, (sugy.getMinWidthForNode(node) + (drawInfo.getBorderWidth() * 2)));
         Rectangle tightenedRectangle = nodeShape;
         if (minSize < size) {
             double dif = size - minSize;
