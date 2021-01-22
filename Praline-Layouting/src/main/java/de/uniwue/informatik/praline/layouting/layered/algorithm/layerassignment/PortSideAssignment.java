@@ -12,14 +12,11 @@ import java.util.*;
 public class PortSideAssignment {
 
     private SugiyamaLayouter sugy;
-    private SortingOrder orders;
 
     public PortSideAssignment (SugiyamaLayouter sugy) {
         this.sugy = sugy;
-        this.orders = sugy.getOrders();
-        if (this.orders == null) {
-            this.orders = new SortingOrder();
-            sugy.setOrders(this.orders);
+        if (sugy.getOrders() == null) {
+            sugy.setOrders(new SortingOrder());
         }
     }
 
@@ -76,10 +73,10 @@ public class PortSideAssignment {
             }
 
             List<Port> topPorts = PortUtils.getPortsRecursively(portCompositionsTop);
-            orders.getTopPortOrder().put(node, topPorts);
+            sugy.getOrders().getTopPortOrder().put(node, topPorts);
             setContainedPortsToVertexSide(topPorts, Orientation.NORTH);
             List<Port> bottomPorts = PortUtils.getPortsRecursively(portCompositionsBottom);
-            orders.getBottomPortOrder().put(node, bottomPorts);
+            sugy.getOrders().getBottomPortOrder().put(node, bottomPorts);
             setContainedPortsToVertexSide(bottomPorts, Orientation.SOUTH);
         }
     }

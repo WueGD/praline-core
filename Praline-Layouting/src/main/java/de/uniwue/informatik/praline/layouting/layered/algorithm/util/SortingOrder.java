@@ -19,7 +19,8 @@ public class SortingOrder {
     }
 
     public SortingOrder(SortingOrder copyOrder) {
-        this(copyOrder.getNodeOrder(), copyOrder.getTopPortOrder(), copyOrder.getBottomPortOrder());
+        this(new ArrayList<>(copyOrder.getNodeOrder()), copyMap(copyOrder.getTopPortOrder()),
+                copyMap(copyOrder.getBottomPortOrder()));
     }
 
     public SortingOrder(List<List<Vertex>> nodeOrder, Map<Vertex, List<Port>> topPortOrder,
@@ -150,5 +151,13 @@ public class SortingOrder {
                 shufflePortCompositionsRecursively(((PortGroup)portComposition).getPortCompositions(), order);
             }
         }
+    }
+
+    private static Map<Vertex, List<Port>> copyMap(Map<Vertex, List<Port>> topPortOrder) {
+        Map<Vertex, List<Port>> copyTopPortOrder = new LinkedHashMap<>();
+        for (Vertex node : topPortOrder.keySet()) {
+            copyTopPortOrder.put(node, new ArrayList<>(topPortOrder.get(node)));
+        }
+        return copyTopPortOrder;
     }
 }

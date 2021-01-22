@@ -111,25 +111,24 @@ public class GraphPreprocessor {
     }
 
     private void handleHyperEdges() {
-        int index1 = 0;
-        int index2 = 0;
+        int indexHE = -1;
 
         for (Edge edge : new ArrayList<>(sugy.getGraph().getEdges())) {
             if (edge.getPorts().size() > 2) {
                 //for hyperedges of degree >= 3 we add a central representative vertex which is adjacent with a
                 // "normal" degree 2 edge to all original end points of this hyperedge
                 Vertex representative = new Vertex();
-                createMainLabel(("EdgeRep_for_" + edge + "_#" + index1++), representative);
-                index2 = 0;
+                createMainLabel(("AddNode_HE_" + edge + "_#" + ++indexHE), representative);
+                int indexEdgePart = 0;
                 for (Port port : edge.getPorts()) {
                     Port p = new Port();
-                    createMainLabel(("HE_PortRep_for_" + port + "_#" + index1 + "-" + index2), p);
+                    createMainLabel(("PortRep_HE_#" + indexHE + "-" + indexEdgePart), p);
                     representative.addPortComposition(p);
                     List<Port> ps = new LinkedList<>();
                     ps.add(p);
                     ps.add(port);
                     Edge e = new Edge(ps);
-                    createMainLabel(("HE_AddEdge_#" + index1 + "-" + index2++), e);
+                    createMainLabel(("AddEdge_HE_#" + indexHE + "-" + indexEdgePart++), e);
                     sugy.getGraph().addEdge(e);
                     sugy.getHyperEdgeParts().put(e, representative);
                 }
@@ -167,8 +166,7 @@ public class GraphPreprocessor {
     }
 
     private void handleVertexGroups() {
-        int index1 = 0;
-        int index2 = 0;
+        int indexVG = -1;
         Set<VertexGroup> connectors = new LinkedHashSet<>();
         for (VertexGroup vertexGroup : sugy.getGraph().getVertexGroups()) {
             if (ImplicitCharacteristics.isConnector(vertexGroup, sugy.getGraph())) {
@@ -183,32 +181,21 @@ public class GraphPreprocessor {
 
         for (VertexGroup group : new ArrayList<>(sugy.getGraph().getVertexGroups())) {
             boolean stickTogether = false;
-            boolean hasPortPairings = false;
             Map<Port, Set<Port>> allPairings = new LinkedHashMap<>();
             if (group.getContainedVertices().size() == (group.getTouchingPairs().size() + 1)) {
                 stickTogether = true;
 
                 // fill allPairings
                 fillAllPairings(allPairings, group);
-
-//                // check for hasPortPairings
-//                // this is the case if in one allPairingsPortSet exist two ports with outgoing edges to notGroupNodes
-//                hasPortPairings = hasOutgoingPairings(allPairings, group);
-                //EDIT JZ 2020/09/24: we don't want to exclude ports without edges any more -> simpler check
-                hasPortPairings = !allPairings.isEmpty();
             }
 
-//            Map<Edge, Port> outgoingEdges = new LinkedHashMap<>();
             List<Vertex> groupVertices = group.getAllRecursivelyContainedVertices();
-//            fillOutgoingEdges(outgoingEdges, groupVertices);
             Vertex representative = new Vertex();
 
             // create main Label
-//            String idV = ("GroupRep_for_" + group + "_#" + index1++);
-            String idV = ("R#" + index1++);
-//            if (stickTogether) idV = ("PlugRep_for_" + groupLabelText + "_#" + (index1-1));
+            String idV = ("R#" + ++indexVG);
             createMainLabel(idV, representative);
-            index2 = 0;
+            int indexPort = 0;
 
             sugy.getGraph().addVertex(representative);
             Map<Port, Port> originalPort2representative = new LinkedHashMap<>();
@@ -220,8 +207,7 @@ public class GraphPreprocessor {
                         // hang the edges from the old to the new port
                         Port replacePort = new Port();
                         createMainLabel(
-                                ("VG_PortRep_for_" + port + "_#" + index1 +
-                                        "-" + index2), replacePort);
+                                ("PortRep_R#" + indexVG + "-" + indexPort++ + "_" + port), replacePort);
 
                         for (Edge edge : new ArrayList<>(port.getEdges())) {
                             edge.removePort(port);
@@ -300,27 +286,6 @@ public class GraphPreprocessor {
                 allPairings.get(port).addAll(allPairings.get(p0));
             }
         }
-    }
-
-    private boolean hasOutgoingPairings (Map<Port, Set<Port>> allPairings, VertexGroup group) {
-        for (Port port : allPairings.keySet()) {
-            int outEdges = 0;
-            for (Port pairedPort : allPairings.get(port)) {
-                boolean hasOutEdge = false;
-                for (Edge edge : pairedPort.getEdges()) {
-                    if (hasOutEdge) break;
-                    for (Port edgePort : edge.getPorts()) {
-                        if (!group.getContainedVertices().contains(edgePort.getVertex())) {
-                            outEdges++;
-                            hasOutEdge = true;
-                            break;
-                        }
-                    }
-                }
-                if (outEdges >= 2) return true;
-            }
-        }
-        return false;
     }
 
     private PortGroup keepPortGroupsRecursive (PortGroup superiorRepGroup, List<PortComposition> originalMembers, Map<Port, Port> portToRepresentative) {

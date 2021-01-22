@@ -85,14 +85,8 @@ public class MainDrawSinglePlan {
 
             SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
 
-            sugy.construct();
-            sugy.assignDirections(DIRECTION_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS);
-            sugy.assignLayers();
-            sugy.createDummyNodes();
-            sugy.crossingMinimization(CROSSING_MINIMIZATION_METHOD, NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
-            sugy.nodePositioning();
-            sugy.edgeRouting();
-            sugy.prepareDrawing();
+            sugy.computeLayout(DIRECTION_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS, CROSSING_MINIMIZATION_METHOD,
+                    NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
 
             int crossings = CrossingsCounting.countNumberOfCrossings(graph);
             System.out.println("Computed drawing with " + crossings + " crossings " +

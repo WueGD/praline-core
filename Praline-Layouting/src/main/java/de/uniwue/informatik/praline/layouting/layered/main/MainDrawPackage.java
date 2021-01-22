@@ -5,6 +5,7 @@ import de.uniwue.informatik.praline.datastructure.utils.Serialization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
+import de.uniwue.informatik.praline.layouting.layered.main.util.CrossingsCounting;
 
 import java.io.File;
 import java.io.IOException;
@@ -105,17 +106,10 @@ public class MainDrawPackage {
 
             SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
 
-            sugy.construct();
-            sugy.assignDirections(DIRECTION_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS);
-            sugy.assignLayers();
-            sugy.createDummyNodes();
-            sugy.crossingMinimization(CROSSING_MINIMIZATION_METHOD, NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
+            sugy.computeLayout(DIRECTION_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS, CROSSING_MINIMIZATION_METHOD,
+                    NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
 
-            int numberOfCrossings = sugy.getNumberOfCrossings();
-
-            sugy.nodePositioning();
-            sugy.edgeRouting();
-            sugy.prepareDrawing();
+            int numberOfCrossings = CrossingsCounting.countNumberOfCrossings(sugy.getGraph());
 
             if (bestNumberOfCrossings > numberOfCrossings) {
                 bestNumberOfCrossings = numberOfCrossings;

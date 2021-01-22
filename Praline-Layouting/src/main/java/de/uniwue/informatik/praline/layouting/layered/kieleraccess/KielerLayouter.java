@@ -199,7 +199,7 @@ public class KielerLayouter implements PralineLayouter {
 
     private void analyzeOrderings() {
         //find node order
-        List<List<Vertex>> pralineNodeOrder = new ArrayList<>(lGraphLayers.size());
+        List<List<Vertex>> pralineNodeOrder = new ArrayList<>();
 
         for (List<LNode> lGraphLayer : lGraphLayers) {
             List<Vertex> pralineLayer = new ArrayList<>();

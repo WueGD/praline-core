@@ -275,7 +275,7 @@ public class AllTests {
 
 //                    System.out.println("al: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
 
-                    sugiy.createDummyNodes();
+//                    sugiy.createDummyNodes();
 
 //                    System.out.println("cd: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
 
@@ -283,12 +283,12 @@ public class AllTests {
                     criterion2method2values.get(Criterion.NUMBER_OF_DUMMY_VERTICES).get(method).add(sugiy.getNumberOfDummys());
 
                     if (currentTest.equals(Test.CROSSING_MINIMIZATION_PHASE)) {
-                        sugiy.crossingMinimization(CrossingMinimizationMethod.string2Enum(method),
+                        sugiy.createDummyNodesAndDoCrossingMinimization(CrossingMinimizationMethod.string2Enum(method),
                                 method.contains("-move"), method.contains("-placeTurnings"),
                                 NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
                     }
                     else {
-                        sugiy.crossingMinimization(CrossingMinimizationMethod.PORTS,
+                        sugiy.createDummyNodesAndDoCrossingMinimization(CrossingMinimizationMethod.PORTS,
                                 NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
                     }
 

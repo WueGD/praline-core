@@ -145,6 +145,13 @@ public class PortGroup implements PortComposition, ReferenceObject {
     }
 
     public void addPortComposition(int position, PortComposition pc) {
+        //remove it as direct child of a port group of a vertex if it was there before
+        if (pc.getPortGroup() != null) {
+            pc.getPortGroup().removePortComposition(pc);
+        }
+        else if (pc.getVertex() != null) {
+            pc.getVertex().removePortComposition(pc);
+        }
         portCompositions.add(position, pc);
         setVertexRecursivelyToAllPortCompositions(pc, this.getVertex());
         pc.setPortGroup(this);

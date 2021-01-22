@@ -189,6 +189,15 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject {
             return false;
         }
         //not yet contained -> add it
+
+        //but first remove it as direct child of a port group of a vertex if it was there before
+        if (pc.getPortGroup() != null) {
+            pc.getPortGroup().removePortComposition(pc);
+        }
+        else if (pc.getVertex() != null) {
+            pc.getVertex().removePortComposition(pc);
+        }
+
         portCompositions.add(pc);
         assignPortCompositionRecursivelyToVertex(pc, this);
 
