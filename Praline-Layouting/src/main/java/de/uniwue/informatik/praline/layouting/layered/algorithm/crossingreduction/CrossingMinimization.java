@@ -112,18 +112,18 @@ public class CrossingMinimization {
                     // 2.) keep its old position.
                     //
                     // In any case normalize these barycenters by the size of the previous layer
-                    //TODO: commented out for now, investigate this further later. These type of vertices seems to
+                    //TODO: commented out for now, investigate this further later. These type of vertices seem to
                     // have the largest effect on affecting many crossings
 //                    if (Double.isNaN(barycenter)) {
 //                        int rankNextSide = rank + (upwards ? 1 : -1);
 //                        List<SortingNode> adjacentNextLayer = rankNextSide < 0 || maxRank <= rankNextSide ?
 //                                Collections.emptyList() : getSortingNodeLayer(rankNextSide, upwards);
-//                        barycenter = getBarycenter(node, adjacentNextLayer)  / (double) (adjacentNextLayer.size() - 1)
+//                        barycenter = getBarycenter(node, adjacentNextLayer)  / (double) (adjacentNextLayer.size())
 //                                * (double) (adjacentPreviousLayer.size() - 1);
 
 
                         if (Double.isNaN(barycenter)) {
-                                barycenter = (double) currentLayer.indexOf(node) / (double) (currentLayer.size() - 1)
+                                barycenter = (double) currentLayer.indexOf(node) / (double) (currentLayer.size())
                                 * (double) (adjacentPreviousLayer.size() - 1);
                         }
 //                    }

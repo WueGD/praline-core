@@ -16,6 +16,7 @@ public class DummyNodeCreation {
     private Map<Vertex, Edge> dummyNodesLongEdges;
     private Map<Vertex, Edge> dummyNodesSelfLoops;
     private Map<Vertex, Vertex> dummyTurningNodes;
+    private Map<Port, Boolean> portOnWrongSideHasEdgeGoingOnTheLeftSideAroundNode;
     private Map<Vertex, Vertex> nodeToLowerDummyTurningPoint;
     private Map<Vertex, Vertex> nodeToUpperDummyTurningPoint;
     private Map<Port, Port> correspondingPortsAtDummy;
@@ -31,6 +32,7 @@ public class DummyNodeCreation {
         this.dummyNodesLongEdges = new LinkedHashMap<>();
         this.dummyNodesSelfLoops = new LinkedHashMap<>();
         this.dummyTurningNodes = new LinkedHashMap<>();
+        this.portOnWrongSideHasEdgeGoingOnTheLeftSideAroundNode = new LinkedHashMap<>();
         this.nodeToLowerDummyTurningPoint = new LinkedHashMap<>();
         this.nodeToUpperDummyTurningPoint = new LinkedHashMap<>();
         this.correspondingPortsAtDummy = new LinkedHashMap<>();
@@ -160,6 +162,13 @@ public class DummyNodeCreation {
         Vertex node = wrongSidePortGroup.getVertex();
         List<Port> topPortOrder = sugy.getOrders().getTopPortOrder().get(node);
         List<Port> bottomPortOrder = sugy.getOrders().getBottomPortOrder().get(node);
+        List<Port> oldWrongSidePortOrder = moveFromBottomToTop ? bottomPortOrder : topPortOrder;
+        List<Port> newCorrectSidePortOrder = moveFromBottomToTop ? topPortOrder : bottomPortOrder;
+        //determine if wrongSidePortGroup is on the left or the right side of its node and save this info
+        boolean isLeft = PortUtils.containsPortRecursively(wrongSidePortGroup, oldWrongSidePortOrder.get(0));
+        for (Port port : PortUtils.getPortsRecursively(wrongSidePortGroup)) {
+            this.portOnWrongSideHasEdgeGoingOnTheLeftSideAroundNode.put(port, isLeft);
+        }
         //remove dummy super group and transfer its children directly to the vertex
         PortGroup superGroup = wrongSidePortGroup.getPortGroup();
         PortUtils.movePortCompositionsToPortGroup(superGroup.getPortCompositions(), null);
@@ -171,9 +180,7 @@ public class DummyNodeCreation {
             } else {
                 oldContainer.addPortComposition(port);
             }
-            changeNodeSidePortList((Port) port,
-                    moveFromBottomToTop ? bottomPortOrder : topPortOrder,
-                    moveFromBottomToTop ? topPortOrder : bottomPortOrder);
+            changeNodeSidePortList((Port) port, oldWrongSidePortOrder, newCorrectSidePortOrder);
         }
         node.removePortComposition(superGroup);
         node.removePortComposition(wrongSidePortGroup);
@@ -483,56 +490,24 @@ public class DummyNodeCreation {
 
         // for each layer create a dummynode and connect it with an additional edge
         Vertex lowerNode = sugy.getStartNode(edge);
+        Vertex upperNode = sugy.getEndNode(edge);
         Port lowerPort = edge.getPorts().get(0);
         Port upperPort = edge.getPorts().get(1);
-        int layer;
         if (!lowerPort.getVertex().equals(lowerNode)) {
             lowerPort = edge.getPorts().get(1);
             upperPort = edge.getPorts().get(0);
         }
         lowerPort.removeEdge(edge);
 
-        for (layer = (sugy.getRank(lowerNode) + 1); layer < sugy.getRank(sugy.getEndNode(edge)); layer++) {
-            // create
-            Vertex dummy = new Vertex();
-            Port lowerDummyPort = new Port();
-            Port upperDummyPort = new Port();
-            LinkedList<Port> dummyList = new LinkedList<>();
-            dummyList.add(lowerDummyPort);
-            dummyList.add(lowerPort);
-            Edge dummyEdge = new Edge(dummyList);
-            sugy.assignDirection(dummyEdge, lowerNode, dummy);
-
-            // Label/ID
-            Label idn = new TextLabel("DummyV_" + edgeName + "_#" + layer);
-            Label idlp = new TextLabel("lDummyPort_" + edgeName + "_#" + layer);
-            Label idup = new TextLabel("uDummyPort_" + edgeName + "_#" + layer);
-            Label ide = new TextLabel("DummyE_" + edgeName + "_L_" + (layer-1) + "_to_L_" + layer);
-            dummy.getLabelManager().addLabel(idn);
-            dummy.getLabelManager().setMainLabel(idn);
-            lowerDummyPort.getLabelManager().addLabel(idlp);
-            lowerDummyPort.getLabelManager().setMainLabel(idlp);
-            upperDummyPort.getLabelManager().addLabel(idup);
-            upperDummyPort.getLabelManager().setMainLabel(idup);
-            dummyEdge.getLabelManager().addLabel(ide);
-            dummyEdge.getLabelManager().setMainLabel(ide);
-
-            dummy.addPortComposition(lowerDummyPort);
-            dummy.addPortComposition(upperDummyPort);
-            sugy.getGraph().addVertex(dummy);
-            sugy.getGraph().addEdge(dummyEdge);
-            dummyEdge2RealEdge.put(dummyEdge, edge);
-            lowerNode = dummy;
-            lowerPort = upperDummyPort;
-            dummyNodesLongEdges.put(dummy, refEdge);
-            sugy.getOrders().getNodeOrder().get(layer).add(dummy);
+        int layer;
+        for (layer = (sugy.getRank(lowerNode) + 1); layer < sugy.getRank(upperNode); layer++) {
+            lowerPort = createDummyNodeForLongEdge(edge, edgeName, refEdge, lowerNode, lowerPort,
+                    layer == sugy.getRank(upperNode) - 1 ? upperNode : null, layer);
+            lowerNode = lowerPort.getVertex();
         }
 
         // connect to endnode
-        LinkedList<Port> dummyList = new LinkedList<>();
-        dummyList.add(upperPort);
-        dummyList.add(lowerPort);
-        Edge dummyEdge = new Edge(dummyList);
+        Edge dummyEdge = new Edge(Arrays.asList(upperPort, lowerPort));
         sugy.assignDirection(dummyEdge, lowerNode, upperPort.getVertex());
 
         // Label/ID
@@ -545,5 +520,101 @@ public class DummyNodeCreation {
         sugy.getGraph().removeEdge(edge);
         upperPort.removeEdge(edge);
         sugy.removeDirection(edge);
+    }
+
+    /**
+     *
+     * @param edge
+     *      the edge that should be split and is currently in the graph
+     * @param edgeName
+     * @param refEdge
+     *      the same as edge if edge is an orginal one, or the corresponding original edge if edge is a dummy
+     * @param lowerNode
+     * @param lowerPort
+     * @param upperNode
+     *      this may be null and only needs to be set if this is the last dummy vertex (uppermost) of this edge to be
+     *      created (and if this upperNode is a dummy turning node)
+     * @param layer
+     *
+     * @return
+     *      the upper port of the new dummy vertex. You can get this dummy vertex by applying .getVertex() to the
+     *      returned port. This returned upper port serves as lowerPort for the next edge part of the long edge
+     */
+    private Port createDummyNodeForLongEdge(Edge edge, String edgeName, Edge refEdge, Vertex lowerNode,
+                                            Port lowerPort, Vertex upperNode, int layer) {
+        // create
+        Vertex dummy = new Vertex();
+        Port lowerDummyPort = new Port();
+        Port upperDummyPort = new Port();
+        Edge dummyEdge = new Edge(Arrays.asList(lowerDummyPort, lowerPort));
+        sugy.assignDirection(dummyEdge, lowerNode, dummy);
+
+        // Label/ID
+        Label idn = new TextLabel("DummyV_" + edgeName + "_#" + layer);
+        Label idlp = new TextLabel("lDummyPort_" + edgeName + "_#" + layer);
+        Label idup = new TextLabel("uDummyPort_" + edgeName + "_#" + layer);
+        Label ide = new TextLabel("DummyE_" + edgeName + "_L_" + (layer-1) + "_to_L_" + layer);
+        dummy.getLabelManager().addLabel(idn);
+        dummy.getLabelManager().setMainLabel(idn);
+        lowerDummyPort.getLabelManager().addLabel(idlp);
+        lowerDummyPort.getLabelManager().setMainLabel(idlp);
+        upperDummyPort.getLabelManager().addLabel(idup);
+        upperDummyPort.getLabelManager().setMainLabel(idup);
+        dummyEdge.getLabelManager().addLabel(ide);
+        dummyEdge.getLabelManager().setMainLabel(ide);
+
+        dummy.addPortComposition(lowerDummyPort);
+        dummy.addPortComposition(upperDummyPort);
+        sugy.getGraph().addVertex(dummy);
+        sugy.getGraph().addEdge(dummyEdge);
+        dummyEdge2RealEdge.put(dummyEdge, edge);
+        dummyNodesLongEdges.put(dummy, refEdge);
+
+        //we have to insert it on the correct position of the node ordering.
+        //we only care if we are adjacent to a turning dummy
+        int insertionIndexFromBelow = -1;
+        int insertionIndexFromAbove = -1;
+        if (isLowerTurningDummy(lowerNode)) {
+            Vertex baseNode = dummyTurningNodes.get(lowerNode);
+            insertionIndexFromBelow = sugy.getOrders().getNodeOrder().get(layer).indexOf(baseNode)
+                    + (isOnTheLeftOfBaseNode(lowerNode) ? 0 : 1);
+        }
+        if (upperNode != null && isUpperTurningDummy(upperNode)) {
+            Vertex baseNode = dummyTurningNodes.get(upperNode);
+            insertionIndexFromAbove = sugy.getOrders().getNodeOrder().get(layer).indexOf(baseNode)
+                    + (isOnTheLeftOfBaseNode(upperNode) ? 0 : 1);
+        }
+        if (insertionIndexFromBelow < 0 && insertionIndexFromAbove < 0) {
+            sugy.getOrders().getNodeOrder().get(layer).add(dummy);
+        }
+        else {
+            sugy.getOrders().getNodeOrder().get(layer).add(Math.max(insertionIndexFromBelow, insertionIndexFromAbove)
+                    , dummy);
+        }
+
+        return upperDummyPort;
+    }
+
+    private boolean isUpperTurningDummy(Vertex node) {
+        Vertex baseNode = this.dummyTurningNodes.get(node);
+        return this.nodeToUpperDummyTurningPoint.containsKey(baseNode)
+                && this.nodeToUpperDummyTurningPoint.get(baseNode).equals(node);
+    }
+
+    private boolean isLowerTurningDummy(Vertex node) {
+        Vertex baseNode = this.dummyTurningNodes.get(node);
+        return this.nodeToLowerDummyTurningPoint.containsKey(baseNode)
+                && this.nodeToLowerDummyTurningPoint.get(baseNode).equals(node);
+    }
+
+    private boolean isOnTheLeftOfBaseNode(Vertex turningDummy) {
+        Vertex baseNode = this.dummyTurningNodes.get(turningDummy);
+        for (Port adjacentPort : PortUtils.getAdjacentPorts(turningDummy)) {
+            if (baseNode.getPorts().contains(adjacentPort)) {
+                return portOnWrongSideHasEdgeGoingOnTheLeftSideAroundNode.get(adjacentPort);
+            }
+        }
+        System.out.println("This line should never be printed (check in DummyNodeCreation.isOnTheLeftOfBaseNode())");
+        return false;
     }
 }
