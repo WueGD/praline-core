@@ -81,6 +81,16 @@ public class PolygonalPath extends Path {
         Collections.reverse(bendPoints);
     }
 
+    @Override
+    public void translate(double xOffset, double yOffset) {
+        translate(startPoint, xOffset, yOffset);
+        for (Point2D.Double bendPoint : bendPoints) {
+            translate(bendPoint, xOffset, yOffset);
+        }
+        translate(endPoint, xOffset, yOffset);
+    }
+
+
     /*==========
      * Getters & Setters
      *==========*/
@@ -158,6 +168,11 @@ public class PolygonalPath extends Path {
         reducedList.removeFirst();
         reducedList.removeLast();
         return reducedList;
+    }
+
+    private static void translate(Point2D.Double point, double xOffset, double yOffset) {
+        point.x += xOffset;
+        point.y += yOffset;
     }
 
 

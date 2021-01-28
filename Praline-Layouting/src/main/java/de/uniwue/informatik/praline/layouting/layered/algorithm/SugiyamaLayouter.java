@@ -1,9 +1,9 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm;
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
-import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.io.output.svg.SVGDrawer;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
+import de.uniwue.informatik.praline.io.output.util.DrawingUtils;
 import de.uniwue.informatik.praline.layouting.PralineLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
@@ -14,11 +14,13 @@ import de.uniwue.informatik.praline.layouting.layered.algorithm.edgerouting.Edge
 import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignment;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.PortSideAssignment;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.nodeplacement.NodePlacement;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.ConnectedComponentClusterer;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.DummyCreationResult;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.DummyNodeCreation;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.GraphPreprocessor;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 
+import java.awt.geom.Rectangle2D;
 import java.util.*;
 
 public class SugiyamaLayouter implements PralineLayouter {
@@ -29,8 +31,22 @@ public class SugiyamaLayouter implements PralineLayouter {
             CrossingMinimizationMethod.PORTS;
     public static final int DEFAULT_NUMBER_OF_CM_ITERATIONS = 5; //iterations for crossing minimization
 
+
+
     private Graph graph;
     private DrawingInformation drawInfo;
+
+    private boolean isSingleComponent;
+
+    /////////
+    //if it has multiple components use these substructures
+    /////////
+    private List<SugiyamaLayouter> componentLayouters;
+    private Graph combinedGraph;
+
+    /////////
+    //otherwise use these structures
+    /////////
     private Map<Vertex, VertexGroup> plugs;
     private Map<Vertex, VertexGroup> vertexGroups;
     private Map<Vertex, PortGroup> origVertex2replacePortGroup;
@@ -73,16 +89,39 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     public SugiyamaLayouter(Graph graph, DrawingInformation drawInfo) {
-        this.graph = graph;
+        this(graph, drawInfo, false);
+    }
 
-        initialize();
-        for (Vertex node : graph.getVertices()) {
-            if (node.getLabelManager().getLabels().get(0) instanceof TextLabel) {
-                drawInfo.setFont(((TextLabel) node.getLabelManager().getLabels().get(0)).getFont());
-                break;
+    private SugiyamaLayouter(Graph graph, DrawingInformation drawInfo, boolean isSingleComponent) {
+        this.graph = graph;
+        this.drawInfo = drawInfo;
+
+        //find components
+        List<Graph> components = null;
+        if (!isSingleComponent) {
+            ConnectedComponentClusterer clusterer = new ConnectedComponentClusterer(graph);
+            components = clusterer.getConnectedComponentsBySize();
+
+            if (components.size() == 1) {
+                isSingleComponent = true;
             }
         }
-        this.drawInfo = drawInfo;
+
+        //if it is a single component use this to draw the graph
+        if (isSingleComponent) {
+            initialize();
+        }
+        //otherwise create a new SugiyamaLayouter for each connected component
+        else {
+
+            componentLayouters = new ArrayList<>(components.size());
+
+            for (Graph component : components) {
+                componentLayouters.add(new SugiyamaLayouter(component, drawInfo, true));
+            }
+        }
+
+        this.isSingleComponent = isSingleComponent;
     }
 
     @Override
@@ -122,12 +161,26 @@ public class SugiyamaLayouter implements PralineLayouter {
     // save changes to resolve later
 
     public void construct() {
-        GraphPreprocessor graphPreprocessor = new GraphPreprocessor(this);
-        graphPreprocessor.construct();
+        if (isSingleComponent) {
+            GraphPreprocessor graphPreprocessor = new GraphPreprocessor(this);
+            graphPreprocessor.construct();
+        }
+        else {
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                componentLayouter.construct();
+            }
+        }
     }
 
     public void assignDirections (DirectionMethod method) {
-        assignDirections(method, 1);
+        if (isSingleComponent) {
+            assignDirections(method, 1);
+        }
+        else {
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                componentLayouter.assignDirections(method);
+            }
+        }
     }
 
     /**
@@ -139,42 +192,56 @@ public class SugiyamaLayouter implements PralineLayouter {
      *      If you use anything different from {@link DirectionMethod#FORCE}, then this value will be ignored.
      */
     public void assignDirections(DirectionMethod method, int numberOfIterationsForForceDirected) {
-        DirectionAssignment da = new DirectionAssignment();
-        switch (method) {
-            case FORCE:
-                da.forceDirected(this, numberOfIterationsForForceDirected);
-                break;
-            case BFS:
-                da.breadthFirstSearch(this);
-                break;
-            case RANDOM:
-                da.randomDirected(this);
-                break;
+        if (isSingleComponent) {
+            DirectionAssignment da = new DirectionAssignment();
+            switch (method) {
+                case FORCE:
+                    da.forceDirected(this, numberOfIterationsForForceDirected);
+                    break;
+                case BFS:
+                    da.breadthFirstSearch(this);
+                    break;
+                case RANDOM:
+                    da.randomDirected(this);
+                    break;
+            }
         }
-    }
-    public void copyDirections(SugiyamaLayouter otherSugiyamaLayouterWithSameGraph)  {
-        for (Edge edge : otherSugiyamaLayouterWithSameGraph.getGraph().getEdges()) {
-            this.assignDirection(edge, otherSugiyamaLayouterWithSameGraph.getStartNode(edge),
-                    otherSugiyamaLayouterWithSameGraph.getEndNode(edge));
-        }
-
-        //check that all edges got a direction
-        for (Edge edge : this.getGraph().getEdges()) {
-            if (!edgeToStart.containsKey(edge)) {
-                throw new NoSuchElementException("No edge direction found to copy. The input parameter " +
-                        "otherSugiyamaLayouterWithSameGraph has either not yet directions assigned or the graph is not "
-                        + "identical with the graph of this SugiyamaLayouter object.");
+        else {
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                componentLayouter.assignDirections(method, numberOfIterationsForForceDirected);
             }
         }
     }
+//    public void copyDirections(SugiyamaLayouter otherSugiyamaLayouterWithSameGraph)  {
+//        for (Edge edge : otherSugiyamaLayouterWithSameGraph.getGraph().getEdges()) {
+//            this.assignDirection(edge, otherSugiyamaLayouterWithSameGraph.getStartNode(edge),
+//                    otherSugiyamaLayouterWithSameGraph.getEndNode(edge));
+//        }
+//
+//        //check that all edges got a direction
+//        for (Edge edge : this.getGraph().getEdges()) {
+//            if (!edgeToStart.containsKey(edge)) {
+//                throw new NoSuchElementException("No edge direction found to copy. The input parameter " +
+//                        "otherSugiyamaLayouterWithSameGraph has either not yet directions assigned or the graph is not "
+//                        + "identical with the graph of this SugiyamaLayouter object.");
+//            }
+//        }
+//    }
 
     public void assignLayers() {
-        LayerAssignment la = new LayerAssignment(this);
-        nodeToRank = la.networkSimplex();
-        PortSideAssignment pa = new PortSideAssignment(this);
-        pa.assignPortsToVertexSides();
-        createRankToNodes();
-        hasAssignedLayers = true;
+        if (isSingleComponent) {
+            LayerAssignment la = new LayerAssignment(this);
+            nodeToRank = la.networkSimplex();
+            PortSideAssignment pa = new PortSideAssignment(this);
+            pa.assignPortsToVertexSides();
+            createRankToNodes();
+            hasAssignedLayers = true;
+        }
+        else {
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                componentLayouter.assignLayers();
+            }
+        }
     }
 
 //    public void createDummyNodes() {
@@ -192,75 +259,121 @@ public class SugiyamaLayouter implements PralineLayouter {
 //    }
 
     public void createDummyNodesAndDoCrossingMinimization(CrossingMinimizationMethod cmMethod, int numberOfIterations) {
-        createDummyNodesAndDoCrossingMinimization(cmMethod,
-                CrossingMinimization.DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE
-                , CrossingMinimization.DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX, numberOfIterations);
+        if (isSingleComponent) {
+            createDummyNodesAndDoCrossingMinimization(cmMethod,
+                    CrossingMinimization.DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE,
+                    CrossingMinimization.DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX, numberOfIterations);
+        }
+        else {
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                componentLayouter.createDummyNodesAndDoCrossingMinimization(cmMethod, numberOfIterations);
+            }
+        }
     }
 
     public void createDummyNodesAndDoCrossingMinimization(CrossingMinimizationMethod cmMethod,
                                                           boolean movePortsAdjToTurningDummiesToTheOutside,
                                                           boolean placeTurningDummiesNextToTheirVertex,
                                                           int numberOfIterations) {
-        //first crossing minimization phase with all ports on the side of its edge direction
-        DummyNodeCreation dnc = new DummyNodeCreation(this);
-        dnc.assignWrongSidePortsTemporaryToOtherSide();
-        dnc.createDummyNodesForEdges();
-        CrossingMinimization cm1 = new CrossingMinimization(this);
-        SortingOrder result = cm1.layerSweepWithBarycenterHeuristic(null, cmMethod, orders,
-                movePortsAdjToTurningDummiesToTheOutside, placeTurningDummiesNextToTheirVertex, false);
-        orders = result;
-        int crossings = countCrossings(result);
-        for (int i = 1; i < numberOfIterations; i++) {
-            result = cm1.layerSweepWithBarycenterHeuristic(null, cmMethod, orders,
+        if (isSingleComponent) {
+            //first crossing minimization phase with all ports on the side of its edge direction
+            DummyNodeCreation dnc = new DummyNodeCreation(this);
+            dnc.assignWrongSidePortsTemporaryToOtherSide();
+            dnc.createDummyNodesForEdges();
+            CrossingMinimization cm1 = new CrossingMinimization(this);
+            SortingOrder result = cm1.layerSweepWithBarycenterHeuristic(cmMethod, orders, true,
                     movePortsAdjToTurningDummiesToTheOutside, placeTurningDummiesNextToTheirVertex, false);
-            int crossingsNew = countCrossings(result);
-            if (crossingsNew < crossings) {
-                crossings = crossingsNew;
-                orders = result;
+            orders = result;
+            int crossings = countCrossings(result);
+            for (int i = 1; i < numberOfIterations; i++) {
+                result = cm1.layerSweepWithBarycenterHeuristic(cmMethod, orders, true,
+                        movePortsAdjToTurningDummiesToTheOutside, placeTurningDummiesNextToTheirVertex, false);
+                int crossingsNew = countCrossings(result);
+                if (crossingsNew < crossings) {
+                    crossings = crossingsNew;
+                    orders = result;
+                }
+            }
+            //second crossing minimization phase with all ports on their "real" side
+            dnc.undoAssigningPortsTemporaryToOtherSide();
+            DummyCreationResult dummyNodeData = dnc.createAllDummyNodes();
+            this.dummyNodesLongEdges = dummyNodeData.getDummyNodesLongEdges();
+            this.dummyNodesSelfLoops = dummyNodeData.getDummyNodesSelfLoops();
+            this.dummyTurningNodes = dummyNodeData.getDummyTurningNodes();
+            this.nodeToLowerDummyTurningPoint = dummyNodeData.getNodeToLowerDummyTurningPoint();
+            this.nodeToUpperDummyTurningPoint = dummyNodeData.getNodeToUpperDummyTurningPoint();
+            this.correspondingPortsAtDummy = dummyNodeData.getCorrespondingPortsAtDummy();
+            for (Edge edge : dummyNodeData.getDummyEdge2RealEdge().keySet()) {
+                this.dummyEdge2RealEdge.put(edge, dummyNodeData.getDummyEdge2RealEdge().get(edge));
+            }
+            CrossingMinimization cm2 = new CrossingMinimization(this);
+            orders = cm2.layerSweepWithBarycenterHeuristic(cmMethod, orders, false,
+                    movePortsAdjToTurningDummiesToTheOutside, placeTurningDummiesNextToTheirVertex, true);
+        }
+        else {
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                componentLayouter.createDummyNodesAndDoCrossingMinimization(cmMethod,
+                        movePortsAdjToTurningDummiesToTheOutside, placeTurningDummiesNextToTheirVertex,
+                        numberOfIterations);
             }
         }
-        //second crossing minimization phase with all ports on their "real" side
-        dnc.undoAssigningPortsTemporaryToOtherSide();
-        DummyCreationResult dummyNodeData = dnc.createAllDummyNodes();
-        this.dummyNodesLongEdges = dummyNodeData.getDummyNodesLongEdges();
-        this.dummyNodesSelfLoops = dummyNodeData.getDummyNodesSelfLoops();
-        this.dummyTurningNodes = dummyNodeData.getDummyTurningNodes();
-        this.nodeToLowerDummyTurningPoint = dummyNodeData.getNodeToLowerDummyTurningPoint();
-        this.nodeToUpperDummyTurningPoint = dummyNodeData.getNodeToUpperDummyTurningPoint();
-        this.correspondingPortsAtDummy = dummyNodeData.getCorrespondingPortsAtDummy();
-        for (Edge edge : dummyNodeData.getDummyEdge2RealEdge().keySet()) {
-            this.dummyEdge2RealEdge.put(edge, dummyNodeData.getDummyEdge2RealEdge().get(edge));
-        }
-        CrossingMinimization cm2 = new CrossingMinimization(this);
-        orders = cm2.layerSweepWithBarycenterHeuristic(orders.getNodeOrder(), cmMethod, orders,
-                movePortsAdjToTurningDummiesToTheOutside,
-                placeTurningDummiesNextToTheirVertex, true);
     }
 
     public void nodePositioning() {
-        NodePlacement np = new NodePlacement(this, orders, drawInfo);
-        dummyPortsForLabelPadding = np.placeNodes();
+        if (isSingleComponent) {
+            NodePlacement np = new NodePlacement(this, orders, drawInfo);
+            dummyPortsForLabelPadding = np.placeNodes();
+        }
+        else {
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                componentLayouter.nodePositioning();
+            }
+        }
     }
 
     /**
      * only needed if {@link SugiyamaLayouter#nodePositioning()} is not used.
      */
     public void nodePadding() {
-        NodePlacement np = new NodePlacement(this, orders, drawInfo);
-        np.initialize();
-        np.initializeStructure();
-        dummyPortsForLabelPadding = np.dummyPortsForWidth();
-        np.reTransformStructure(true);
+        if (isSingleComponent) {
+            NodePlacement np = new NodePlacement(this, orders, drawInfo);
+            np.initialize();
+            np.initializeStructure();
+            dummyPortsForLabelPadding = np.dummyPortsForWidth();
+            np.reTransformStructure(true);
+        }
+        else {
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                componentLayouter.nodePadding();
+            }
+        }
     }
 
     public void edgeRouting() {
-        EdgeRouting er = new EdgeRouting(this, orders, drawInfo);
-        er.routeEdges();
+        if (isSingleComponent) {
+            EdgeRouting er = new EdgeRouting(this, orders, drawInfo);
+            er.routeEdges();
+        }
+        else {
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                componentLayouter.edgeRouting();
+            }
+        }
     }
 
     public void prepareDrawing() {
-        DrawingPreparation dp = new DrawingPreparation(this);
-        dp.prepareDrawing(drawInfo, orders, dummyPortsForLabelPadding, dummyPortsForNodesWithoutPort);
+        if (isSingleComponent) {
+            DrawingPreparation dp = new DrawingPreparation(this);
+            dp.prepareDrawing(drawInfo, orders, dummyPortsForLabelPadding, dummyPortsForNodesWithoutPort);
+        }
+        else {
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                componentLayouter.prepareDrawing();
+            }
+
+            //combine drawings of separate layouters
+            unifyDrawings();
+        }
     }
 
     /**
@@ -272,10 +385,17 @@ public class SugiyamaLayouter implements PralineLayouter {
      * that use a {@link SugiyamaLayouter} only partially
      */
     public void restoreOriginalElements() {
-        DrawingPreparation dp = new DrawingPreparation(this);
-        dp.initialize(drawInfo, orders, dummyPortsForLabelPadding, dummyPortsForNodesWithoutPort);
-        dp.restoreOriginalElements(true);
-        dp.tightenNodes();
+        if (isSingleComponent) {
+            DrawingPreparation dp = new DrawingPreparation(this);
+            dp.initialize(drawInfo, orders, dummyPortsForLabelPadding, dummyPortsForNodesWithoutPort);
+            dp.restoreOriginalElements(true);
+            dp.tightenNodes();
+        }
+        else {
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                componentLayouter.restoreOriginalElements();
+            }
+        }
     }
 
     public void drawResult(String path) {
@@ -283,11 +403,11 @@ public class SugiyamaLayouter implements PralineLayouter {
         dr.draw(path, drawInfo);
     }
 
+
     ////////////////////////
     // additional methods //
     ////////////////////////
     // constructor //
-
     private void initialize() {
         plugs = new LinkedHashMap<>();
         vertexGroups = new LinkedHashMap<>();
@@ -314,7 +434,21 @@ public class SugiyamaLayouter implements PralineLayouter {
         nodeToOutgoingEdges = new LinkedHashMap<>();
         nodeToIncomingEdges = new LinkedHashMap<>();
     }
+
     // other steps //
+
+    private void unifyDrawings() {
+        double xOffset = 0;
+        for (SugiyamaLayouter componentLayouter : componentLayouters) {
+            //finde offset for all graphs and move objects
+            Rectangle2D drawingBounds = DrawingUtils.determineDrawingBounds(componentLayouter.getGraph(), drawInfo, 0);
+            xOffset -= drawingBounds.getX();
+            if (xOffset != 0) {
+                DrawingUtils.translate(componentLayouter.getGraph(), xOffset, 0);
+            }
+            xOffset += drawingBounds.getWidth() + drawingBounds.getX() + drawInfo.getEdgeDistanceHorizontal();
+        }
+    }
 
     private void createRankToNodes() {
         rankToNodes = new LinkedHashMap<>();
@@ -376,7 +510,17 @@ public class SugiyamaLayouter implements PralineLayouter {
     // public methods (getter, setter etc.) //
     //////////////////////////////////////////
     public Port getPairedPort(Port port) {
-        return keptPortPairings.get(port);
+        if (isSingleComponent) {
+            return keptPortPairings.get(port);
+        }
+        //go through all sublayouters otherwise; this is needed for kieler layouter
+        for (SugiyamaLayouter componentLayouter : componentLayouters) {
+            Port candidatePort = componentLayouter.getPairedPort(port);
+            if (candidatePort != null) {
+                return candidatePort;
+            }
+        }
+        return null;
     }
 
     public boolean isPaired(Port port) {
@@ -432,7 +576,17 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     public int getRank(Vertex node) {
-        if (nodeToRank.containsKey(node)) return nodeToRank.get(node);
+        if (isSingleComponent) {
+            if (nodeToRank.containsKey(node)) return nodeToRank.get(node);
+            return -1;
+        }
+        //go through all sublayouters otherwise; this is needed for kieler layouter
+        for (SugiyamaLayouter componentLayouter : componentLayouters) {
+            int candidateRank = componentLayouter.getRank(node);
+            if (candidateRank >= 0) {
+                return candidateRank;
+            }
+        }
         return -1;
     }
 
@@ -454,13 +608,56 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     public void changeRanksAccordingToSortingOrder() {
-        List<List<Vertex>> nodeOrder = orders.getNodeOrder();
-        for (int i = 0; i < nodeOrder.size(); i++) {
-            List<Vertex> layer = nodeOrder.get(i);
-            for (Vertex node : layer) {
-                setRank(node, i);
+        if (isSingleComponent) {
+            List<List<Vertex>> nodeOrder = orders.getNodeOrder();
+            for (int i = 0; i < nodeOrder.size(); i++) {
+                List<Vertex> layer = nodeOrder.get(i);
+                for (Vertex node : layer) {
+                    setRank(node, i);
+                }
             }
         }
+        else {
+            //split sorting order to several sub sorting orders and apply them to the sub layouts
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                SortingOrder componentOrders = getSubOrder(orders, componentLayouter.getGraph());
+                componentLayouter.setOrders(componentOrders);
+                componentLayouter.changeRanksAccordingToSortingOrder();
+            }
+        }
+    }
+
+    private SortingOrder getSubOrder(SortingOrder orders, Graph subGraph) {
+        SortingOrder subOrder = new SortingOrder(orders);
+        Set<Vertex> subVertices = new LinkedHashSet<>(subGraph.getVertices());
+        //remove vertices not in this graph from node order
+        for (List<Vertex> layer : subOrder.getNodeOrder()) {
+            for (int i = layer.size() - 1; i >= 0; i--) {
+                Vertex vertex = layer.get(i);
+                if (!subVertices.contains(vertex)) {
+                    layer.remove(vertex);
+                }
+            }
+        }
+        //remove empty layers at the end of the list
+        int rank = subOrder.getNodeOrder().size() - 1;
+        while (rank >= 0 && subOrder.getNodeOrder().get(rank).isEmpty()) {
+            subOrder.getNodeOrder().remove(rank);
+            --rank;
+        }
+        //remove vertices not in this graph from port order
+        for (Vertex vertex : new ArrayList<>(subOrder.getBottomPortOrder().keySet())) {
+            if (!subVertices.contains(vertex)) {
+                subOrder.getBottomPortOrder().remove(vertex);
+            }
+        }
+        for (Vertex vertex : new ArrayList<>(subOrder.getTopPortOrder().keySet())) {
+            if (!subVertices.contains(vertex)) {
+                subOrder.getTopPortOrder().remove(vertex);
+            }
+        }
+
+        return subOrder;
     }
 
     public Collection<Vertex> getAllNodesWithRank(int rank) {
@@ -547,6 +744,19 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     public Map<Vertex, Set<Edge>> getLoopEdges() {
+        if (isSingleComponent) {
+            return loopEdges;
+        }
+        //there is more than one component -> construct a new map from the maps of the components
+        //this is needed for the kieler layouter
+        if (loopEdges == null) {
+            loopEdges = new LinkedHashMap<>();
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                for (Map.Entry<Vertex, Set<Edge>> entry : componentLayouter.getLoopEdges().entrySet()) {
+                    loopEdges.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
         return loopEdges;
     }
 
@@ -571,11 +781,21 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     public List<Port> getPortsOfLoopEdge(Edge loopEdge) {
-        if (loopEdge2Ports.containsKey(loopEdge)) {
-            return Collections.unmodifiableList(loopEdge2Ports.get(loopEdge));
-        } else {
-            return Collections.unmodifiableList(new ArrayList<>());
+        if (isSingleComponent) {
+            if (loopEdge2Ports.containsKey(loopEdge)) {
+                return Collections.unmodifiableList(loopEdge2Ports.get(loopEdge));
+            } else {
+                return Collections.unmodifiableList(new ArrayList<>());
+            }
         }
+        //otherwise check component layouters; needed for kieler layouter
+        for (SugiyamaLayouter componentLayouter : componentLayouters) {
+            List<Port> candidatePortsOfLoopEdge = componentLayouter.getPortsOfLoopEdge(loopEdge);
+            if (!candidatePortsOfLoopEdge.isEmpty()) {
+                return candidatePortsOfLoopEdge;
+            }
+        }
+        return Collections.unmodifiableList(new ArrayList<>());
     }
 
     public boolean hasAssignedLayers() {
@@ -587,6 +807,25 @@ public class SugiyamaLayouter implements PralineLayouter {
             return 0;
         }
         return drawInfo.getMinVertexWidth(node);
+    }
+
+    //this method is used by kieler layouter
+    public Graph getGraphWithPreprocessedVertices() {
+        if (isSingleComponent) {
+            return getGraph();
+        }
+        //otherwise the preprocessing has been taken place in the sublayouters -> combine these graphs to one new graph
+        if (combinedGraph == null) {
+            combinedGraph = new Graph();
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                Graph componentGraph = componentLayouter.getGraph();
+                combinedGraph.addVertices(componentGraph.getVertices());
+                combinedGraph.addVertexGroups(componentGraph.getVertexGroups());
+                combinedGraph.addEdges(componentGraph.getEdges());
+                combinedGraph.addEdgeBundles(componentGraph.getEdgeBundles());
+            }
+        }
+        return combinedGraph;
     }
 
     @Override
@@ -605,6 +844,31 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     public SortingOrder getOrders() {
+        if (isSingleComponent) {
+            return orders;
+        }
+        //there is more than one component -> construct a new order from the orders of the components
+        //this is needed for the kieler layouter
+        if (orders == null) {
+            orders = new SortingOrder();
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                SortingOrder componentOrders = componentLayouter.orders;
+                //combine node orders
+                for (int i = 0; i < componentOrders.getNodeOrder().size(); i++) {
+                    if (orders.getNodeOrder().size() <= i) {
+                        orders.getNodeOrder().add(new ArrayList<>());
+                    }
+                    orders.getNodeOrder().get(i).addAll(componentOrders.getNodeOrder().get(i));
+                }
+                //combine port orders
+                for (Map.Entry<Vertex, List<Port>> entry : componentOrders.getBottomPortOrder().entrySet()) {
+                    orders.getBottomPortOrder().put(entry.getKey(), entry.getValue());
+                }
+                for (Map.Entry<Vertex, List<Port>> entry : componentOrders.getTopPortOrder().entrySet()) {
+                    orders.getTopPortOrder().put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
         return orders;
     }
 
@@ -613,10 +877,36 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     public Map<Vertex, VertexGroup> getPlugs() {
+        if (isSingleComponent) {
+            return plugs;
+        }
+        //there is more than one component -> construct a new map from the maps of the components
+        //this is needed for the kieler layouter
+        if (plugs == null) {
+            plugs = new LinkedHashMap<>();
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                for (Map.Entry<Vertex, VertexGroup> plugEntry : componentLayouter.getPlugs().entrySet()) {
+                    plugs.put(plugEntry.getKey(), plugEntry.getValue());
+                }
+            }
+        }
         return plugs;
     }
 
     public Map<Vertex, VertexGroup> getVertexGroups() {
+        if (isSingleComponent) {
+            return vertexGroups;
+        }
+        //there is more than one component -> construct a new map from the maps of the components
+        //this is needed for the kieler layouter
+        if (vertexGroups == null) {
+            vertexGroups = new LinkedHashMap<>();
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                for (Map.Entry<Vertex, VertexGroup> vgEntry : componentLayouter.getVertexGroups().entrySet()) {
+                    vertexGroups.put(vgEntry.getKey(), vgEntry.getValue());
+                }
+            }
+        }
         return vertexGroups;
     }
 
@@ -657,6 +947,19 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     public Map<Vertex, Set<Port>> getDummyPortsForLabelPadding() {
+        if (isSingleComponent) {
+            return dummyPortsForLabelPadding;
+        }
+        //there is more than one component -> construct a new map from the maps of the components
+        //this is needed for the kieler layouter
+        if (dummyPortsForLabelPadding == null) {
+            dummyPortsForLabelPadding = new LinkedHashMap<>();
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                for (Map.Entry<Vertex, Set<Port>> entry : componentLayouter.getDummyPortsForLabelPadding().entrySet()) {
+                    dummyPortsForLabelPadding.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
         return dummyPortsForLabelPadding;
     }
 
@@ -677,10 +980,16 @@ public class SugiyamaLayouter implements PralineLayouter {
     /////////////////
 
     public int getNumberOfDummys() {
-        return dummyNodesLongEdges.size();
-    }
-
-    public int getNumberOfCrossings() {
-        return countCrossings(orders);
+        if (isSingleComponent) {
+            return dummyNodesForNodelessPorts.size() + dummyNodesSelfLoops.size() + dummyTurningNodes.size()
+                    + dummyNodesLongEdges.size() + dummyNodesForEdgesOfDeg1or0.size() + hyperEdges.size();
+        }
+        else {
+            int sum = 0;
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                sum += componentLayouter.getNumberOfDummys();
+            }
+            return sum;
+        }
     }
 }

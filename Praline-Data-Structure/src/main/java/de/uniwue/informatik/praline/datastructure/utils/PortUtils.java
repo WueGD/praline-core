@@ -21,6 +21,26 @@ public class PortUtils {
         return edges;
     }
 
+    public static VertexGroup getTopLevelVertexGroup(Vertex vertex) {
+        VertexGroup vertexGroup = vertex.getVertexGroup();
+        VertexGroup topLevelVertexGroup = null;
+        while (vertexGroup != null) {
+            topLevelVertexGroup = vertexGroup;
+            vertexGroup = vertexGroup.getVertexGroup();
+        }
+        return topLevelVertexGroup;
+    }
+
+    public static EdgeBundle getTopLevelEdgeBundle(Edge edge) {
+        EdgeBundle edgeBundle = edge.getEdgeBundle();
+        EdgeBundle topLevelEdgeBundle = null;
+        while (edgeBundle != null) {
+            topLevelEdgeBundle = edgeBundle;
+            edgeBundle = edgeBundle.getEdgeBundle();
+        }
+        return topLevelEdgeBundle;
+    }
+
     public static List<Port> getAdjacentPorts(Vertex vertex) {
         List<Port> adjPorts = new ArrayList<>();
         for (Edge edge : getEdges(vertex)) {

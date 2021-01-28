@@ -168,13 +168,27 @@ public class Graph {
             return;
         }
         vertexGroups.add(vg);
-        for (Vertex containedVertex : vg.getAllRecursivelyContainedVertices()) {
+        addReferencesOfContainedObjects(vg);
+    }
+
+    private void addReferencesOfContainedObjects(VertexGroup vg) {
+        for (Vertex containedVertex : vg.getContainedVertices()) {
+            if (!vertices.contains(containedVertex)) {
+                vertices.add(containedVertex);
+            }
             containedVertex.setVertexGroup(vg);
+        }
+        for (VertexGroup containedVertexGroup : vg.getContainedVertexGroups()) {
+            containedVertexGroup.setVertexGroup(vg);
+            addReferencesOfContainedObjects(containedVertexGroup);
         }
     }
 
     public boolean removeVertexGroup(VertexGroup vg) {
-        //set reference at its vertices to null
+        //set reference of contained objects to null
+        for (Vertex containedVertex : vg.getContainedVertices()) {
+            containedVertex.setVertexGroup(null);
+        }
         for (Vertex containedVertex : vg.getContainedVertices()) {
             containedVertex.setVertexGroup(null);
         }
@@ -201,16 +215,60 @@ public class Graph {
     }
 
     public void addEdgeBundle(EdgeBundle eb) {
+        if (eb == null) {
+            return;
+        }
         edgeBundles.add(eb);
+        addReferencesOfContainedObjects(eb);
+    }
+
+    private void addReferencesOfContainedObjects(EdgeBundle eb) {
+        for (Edge containedEdge : eb.getContainedEdges()) {
+            if (!edges.contains(containedEdge)) {
+                edges.add(containedEdge);
+            }
+            containedEdge.setEdgeBundle(eb);
+        }
+        for (EdgeBundle containedEdgeBundle : eb.getContainedEdgeBundles()) {
+            containedEdgeBundle.setEdgeBundle(eb);
+            addReferencesOfContainedObjects(containedEdgeBundle);
+        }
     }
 
     public boolean removeEdgeBundle(EdgeBundle eb) {
-        //set reference at its edges to null
+        //set reference of contained objects to null
         for (Edge containedEdge : eb.getContainedEdges()) {
             containedEdge.setEdgeBundle(null);
         }
+        for (EdgeBundle containedEdgeBundle : eb.getContainedEdgeBundles()) {
+            containedEdgeBundle.setEdgeBundle(null);
+        }
 
         return edgeBundles.remove(eb);
+    }
+
+    public void addVertices(Collection<Vertex> vertices) {
+        for (Vertex vertex : vertices) {
+            addVertex(vertex);
+        }
+    }
+
+    public void addVertexGroups(Collection<VertexGroup> vertexGroups) {
+        for (VertexGroup vertexGroup : vertexGroups) {
+            addVertexGroup(vertexGroup);
+        }
+    }
+
+    public void addEdges(Collection<Edge> edges) {
+        for (Edge edge : edges) {
+            addEdge(edge);
+        }
+    }
+
+    public void addEdgeBundles(Collection<EdgeBundle> edgeBundles) {
+        for (EdgeBundle edgeBundle : edgeBundles) {
+            addEdgeBundle(edgeBundle);
+        }
     }
 
     /*==========

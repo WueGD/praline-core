@@ -146,7 +146,6 @@ public class AllTests {
 
         List<Callable<String>> tasks = new ArrayList<>();
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUMBER_OF_PARALLEL_THREADS);
-        int jj = 0;
         progressCounter = 0;
         totalSteps = 0;
         for (String pathsDataSet : DATA_SETS) {
@@ -167,10 +166,9 @@ public class AllTests {
                 totalSteps += files.size() * noi * Test.getMethods(currentTest).size();
 
                 for (File file : files) {
-                    int k = jj;
                     tasks.add(() -> {
                         try {
-                            parallelio(file, noi, k, currentTest, targetPath);
+                            parallelio(file, noi, currentTest, targetPath);
                         }
                         catch (Exception e) {
                             System.out.println("Exception has been thrown!");
@@ -178,7 +176,6 @@ public class AllTests {
                         }
                         return null;
                     });
-                    jj++;
                 }
             }
         }
@@ -194,7 +191,7 @@ public class AllTests {
         return ++progressCounter;
     }
 
-    public static void parallelio(File file, int noi, int k, Test currentTest, String targetPath) throws IOException {
+    public static void parallelio(File file, int noi, Test currentTest, String targetPath) throws IOException {
 
         Graph graph = null;
 
@@ -279,8 +276,6 @@ public class AllTests {
 
 //                    System.out.println("cd: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
 
-                    //save number of dummy nodes
-                    criterion2method2values.get(Criterion.NUMBER_OF_DUMMY_VERTICES).get(method).add(sugiy.getNumberOfDummys());
 
                     if (currentTest.equals(Test.CROSSING_MINIMIZATION_PHASE)) {
                         sugiy.createDummyNodesAndDoCrossingMinimization(CrossingMinimizationMethod.string2Enum(method),
@@ -291,6 +286,9 @@ public class AllTests {
                         sugiy.createDummyNodesAndDoCrossingMinimization(CrossingMinimizationMethod.PORTS,
                                 NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
                     }
+
+                    //save number of dummy nodes
+                    criterion2method2values.get(Criterion.NUMBER_OF_DUMMY_VERTICES).get(method).add(sugiy.getNumberOfDummys());
 
 //                    System.out.println("cm: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
 

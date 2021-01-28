@@ -1,14 +1,8 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment;
 
 import de.uniwue.informatik.praline.datastructure.graphs.Edge;
-import de.uniwue.informatik.praline.datastructure.graphs.Port;
-import de.uniwue.informatik.praline.datastructure.graphs.PortComposition;
 import de.uniwue.informatik.praline.datastructure.graphs.Vertex;
-import de.uniwue.informatik.praline.datastructure.placements.Orientation;
-import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.util.ConnectedComponentClusterer;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 
 import java.util.*;
@@ -42,13 +36,8 @@ public class LayerAssignment {
      calculateCutValues can be speed up by pre-calculating cutValues for all nodes if necessary
      */
     public Map<Vertex, Integer> networkSimplex () {
-        //execute individually for each connected component
-        ConnectedComponentClusterer connectedComponentClusterer = new ConnectedComponentClusterer(sugy.getGraph());
-        Set<Set<Vertex>> components = connectedComponentClusterer.getConnectedComponents();
-
-        for (Set<Vertex> component : components) {
-            networkSimplexPerComponent(component);
-        }
+        //we only have one connected component, so execute it directly to the graph
+        networkSimplexPerComponent(new LinkedHashSet<>(sugy.getGraph().getVertices()));
 
         assignRanksToOrders();
 

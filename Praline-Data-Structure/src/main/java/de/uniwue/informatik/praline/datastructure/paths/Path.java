@@ -61,4 +61,10 @@ public abstract class Path {
     public void setThickness(double thickness) {
         this.thickness = thickness;
     }
+
+    /*==========
+     * Other methods
+     *==========*/
+
+    public abstract void translate(double xOffset, double yOffset);
 }

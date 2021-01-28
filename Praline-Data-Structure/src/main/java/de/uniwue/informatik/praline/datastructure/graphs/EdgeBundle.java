@@ -23,7 +23,7 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  * An {@link EdgeBundle} may have labels, but just for the whole thing -- for placing {@link Label}s close to
  * {@link Port}s use the labeling of its contained {@link Edge}s.
  */
-@JsonIgnoreProperties({ "allRecursivelyContainedEdges", "allRecursivelyContainedEdgeBundles" })
+@JsonIgnoreProperties({ "allRecursivelyContainedEdges", "allRecursivelyContainedEdgeBundles", "edgeBundle" })
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public class EdgeBundle implements LabeledObject, ReferenceObject {
 
@@ -33,6 +33,7 @@ public class EdgeBundle implements LabeledObject, ReferenceObject {
 
     private final List<Edge> containedEdges;
     private final List<EdgeBundle> containedEdgeBundles;
+    private EdgeBundle edgeBundle;
     private final LabelManager labelManager;
     private String reference;
 
@@ -74,6 +75,9 @@ public class EdgeBundle implements LabeledObject, ReferenceObject {
             e.setEdgeBundle(this);
         }
         this.containedEdgeBundles = newArrayListNullSafe(containedEdgeBundles);
+        for (EdgeBundle eb : this.containedEdgeBundles) {
+            eb.setEdgeBundle(this);
+        }
         this.labelManager = new LabelManager(this, labels, mainlabel);
     }
 
@@ -133,6 +137,14 @@ public class EdgeBundle implements LabeledObject, ReferenceObject {
             allEdgeBundles.addAll(containedEdgeBundle.getAllRecursivelyContainedEdgeBundles());
         }
         return allEdgeBundles;
+    }
+
+    public EdgeBundle getEdgeBundle() {
+        return edgeBundle;
+    }
+
+    protected void setEdgeBundle(EdgeBundle edgeBundle) {
+        this.edgeBundle = edgeBundle;
     }
 
     @Override
@@ -202,6 +214,7 @@ public class EdgeBundle implements LabeledObject, ReferenceObject {
             return false;
         }
         containedEdgeBundles.add(eb);
+        eb.setEdgeBundle(this);
         return true;
     }
 
@@ -216,6 +229,9 @@ public class EdgeBundle implements LabeledObject, ReferenceObject {
      */
     public boolean removeEdgeBundle(EdgeBundle eb) {
         boolean success = containedEdgeBundles.remove(eb);
+        if (success) {
+            eb.setEdgeBundle(null);
+        }
 
         //recursive call to edge bundles inside this edge bundle
         for (EdgeBundle containedEdgeBundle : containedEdgeBundles) {

@@ -119,12 +119,12 @@ public class KielerLayouter implements PralineLayouter {
     }
 
     private Graph getStoredPralineGraph() {
-        return sugiyForInternalUse.getGraph();
+        return sugiyForInternalUse.getGraphWithPreprocessedVertices();
     }
 
     private ElkNode computeLayeredDrawing() {
         //transform praline to ElkLayout
-        Graph pralineGraph = sugiyForInternalUse.getGraph();
+        Graph pralineGraph = sugiyForInternalUse.getGraphWithPreprocessedVertices();
         ElkNode graph = transformPralineGraph2ElkGraph(pralineGraph);
 
         //set properties

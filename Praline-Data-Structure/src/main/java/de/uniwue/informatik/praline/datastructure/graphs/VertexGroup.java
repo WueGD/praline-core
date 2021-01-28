@@ -29,7 +29,7 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  *
  * A {@link VertexGroup} may have {@link Label}s.
  */
-@JsonIgnoreProperties({ "allRecursivelyContainedVertices", "allRecursivelyContainedVertexGroups" })
+@JsonIgnoreProperties({ "allRecursivelyContainedVertices", "allRecursivelyContainedVertexGroups", "vertexGroup" })
 @JsonPropertyOrder({ "drawnFrame", "labelManager", "shape", "containedVertices", "containedVertexGroups",
         "touchingPairs", "portPairings" })
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
@@ -50,6 +50,7 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
     private final List<VertexGroup> containedVertexGroups;
     private final List<TouchingPair> touchingPairs;
     private final List<PortPairing> portPairings;
+    private VertexGroup vertexGroup;
     private final LabelManager labelManager;
     /**
      * null if this group has no specific shape
@@ -97,6 +98,9 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
             v.setVertexGroup(this);
         }
         this.containedVertexGroups = newArrayListNullSafe(containedVertexGroups);
+        for (VertexGroup vg : this.containedVertexGroups) {
+            vg.setVertexGroup(this);
+        }
         this.touchingPairs = newArrayListNullSafe(touchingPairs);
         this.portPairings = newArrayListNullSafe(portPairings);
         this.labelManager = new LabelManager(this, labels, mainLabel);
@@ -170,6 +174,14 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
 
     public List<PortPairing> getPortPairings() {
         return Collections.unmodifiableList(portPairings);
+    }
+
+    public VertexGroup getVertexGroup() {
+        return vertexGroup;
+    }
+
+    protected void setVertexGroup(VertexGroup vertexGroup) {
+        this.vertexGroup = vertexGroup;
     }
 
     @Override
@@ -252,6 +264,7 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
 
     public void addVertexGroup(VertexGroup vg) {
         containedVertexGroups.add(vg);
+        vg.setVertexGroup(this);
     }
 
     /**
@@ -265,6 +278,9 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
      */
     public boolean removeVertexGroup(VertexGroup vg) {
         boolean success = containedVertexGroups.remove(vg);
+        if (success) {
+            vg.setVertexGroup(null);
+        }
 
         //recursive call to vertex groups inside this vertex group
         for (VertexGroup containedVertexGroup : containedVertexGroups) {

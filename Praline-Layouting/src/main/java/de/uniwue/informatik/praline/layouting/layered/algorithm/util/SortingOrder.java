@@ -19,7 +19,7 @@ public class SortingOrder {
     }
 
     public SortingOrder(SortingOrder copyOrder) {
-        this(new ArrayList<>(copyOrder.getNodeOrder()), copyMap(copyOrder.getTopPortOrder()),
+        this(copyNodeOrder(copyOrder.getNodeOrder()), copyMap(copyOrder.getTopPortOrder()),
                 copyMap(copyOrder.getBottomPortOrder()));
     }
 
@@ -151,6 +151,14 @@ public class SortingOrder {
                 shufflePortCompositionsRecursively(((PortGroup)portComposition).getPortCompositions(), order);
             }
         }
+    }
+
+    private static List<List<Vertex>> copyNodeOrder(List<List<Vertex>> nodeOrder) {
+        List<List<Vertex>> copyNodeOrder = new ArrayList<>();
+        for (List<Vertex> layer : nodeOrder) {
+            copyNodeOrder.add(new ArrayList<>(layer));
+        }
+        return copyNodeOrder;
     }
 
     private static Map<Vertex, List<Port>> copyMap(Map<Vertex, List<Port>> topPortOrder) {

@@ -89,6 +89,17 @@ public class Circle extends Ellipse2D.Double implements Shape {
 
 
     /*==========
+     * Modifiers
+     *==========*/
+
+    @Override
+    public void translate(double xOffset, double yOffset) {
+        this.x += xOffset;
+        this.y += yOffset;
+    }
+
+
+    /*==========
      * Clone, equals, hashCode
      *==========*/
 

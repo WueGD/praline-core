@@ -175,6 +175,17 @@ public class ArrowHeadTriangle implements Shape {
 
 
     /*==========
+     * Modifiers
+     *==========*/
+
+    @Override
+    public void translate(double xOffset, double yOffset) {
+        this.xPosition += xOffset;
+        this.yPosition += yOffset;
+    }
+
+
+    /*==========
      * Clone, equals, hashCode
      *==========*/
 

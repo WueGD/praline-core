@@ -96,6 +96,17 @@ public class Rectangle extends Rectangle2D.Double implements Shape {
         this.color = c;
     }
 
+
+    /*==========
+     * Modifiers
+     *==========*/
+
+    @Override
+    public void translate(double xOffset, double yOffset) {
+        this.x += xOffset;
+        this.y += yOffset;
+    }
+
     /*==========
      * Helpful methods
      *==========*/

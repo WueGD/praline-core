@@ -138,7 +138,8 @@ public class DummyNodeCreation {
         // containing a new port group for all ports that are assigned to the "wrong" side (i.e. allWrongSide)
         PortGroup allConsideredSidePCs = new PortGroup();
         for (PortComposition portComposition : new ArrayList<>(node.getPortCompositions())) {
-            if (PortUtils.getPortsRecursively(portComposition).get(0).getOrientationAtVertex() == consideredSide) {
+            List<Port> containedPorts = PortUtils.getPortsRecursively(portComposition);
+            if (!containedPorts.isEmpty() && containedPorts.get(0).getOrientationAtVertex() == consideredSide) {
                 allConsideredSidePCs.addPortComposition(portComposition);
             }
         }

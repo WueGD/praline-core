@@ -19,7 +19,9 @@ public class CsvDataExtraction {
             "Praline-Layouting/results/" +
 //                    "paper-all-tests-2020-06-10_06-18-04";
 //                    "paper-all-tests-2020-08-20_16-01-53";
-                    "2020-11-26_04-07-39";
+//                    "2020-11-26_04-07-39";
+                    "2021-01-25_19-14-23";
+//                    "2021-01-27_02-34-35";
 
     private static final String[] DATA_DIRS =
             {

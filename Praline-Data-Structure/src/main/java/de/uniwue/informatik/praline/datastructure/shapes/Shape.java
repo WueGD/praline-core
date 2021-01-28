@@ -44,4 +44,5 @@ public interface Shape extends Cloneable {
     Color getColor();
     void setColor(Color c);
     Shape clone();
+    void translate(double xOffset, double yOffset);
 }

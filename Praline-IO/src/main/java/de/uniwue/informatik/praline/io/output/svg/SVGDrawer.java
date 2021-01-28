@@ -8,6 +8,7 @@ import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
+import de.uniwue.informatik.praline.io.output.util.DrawingUtils;
 import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.w3c.dom.DOMImplementation;
@@ -60,10 +61,10 @@ public class SVGDrawer {
     }
 
     public void paint(SVGGraphics2D g2d) {
-        g2d.setFont(drawInfo.getFont());
+        g2d.setFont(drawInfo.getFont()); //TODO: use individual font as specified by objectes (e.g. Textlabel of vertex)
 
         //set canvas
-        Rectangle2D bounds = determineDrawingBounds();
+        Rectangle2D bounds = DrawingUtils.determineDrawingBounds(graph, drawInfo, EMPTY_MARGIN_WIDTH);
         g2d.translate(-bounds.getX(), - bounds.getY());
         int canvasWidth = (int) (bounds.getWidth());
         int canvasHeight = (int) (bounds.getHeight());
@@ -139,44 +140,6 @@ public class SVGDrawer {
                     (float) (((nodeRectangle).getY() + (nodeRectangle).getHeight()
                             + drawInfo.getVerticalVertexLabelOffset())));
         }
-    }
-
-    private Rectangle2D determineDrawingBounds() {
-        double minX = Double.POSITIVE_INFINITY;
-        double maxX = Double.NEGATIVE_INFINITY;
-        double minY = Double.POSITIVE_INFINITY;
-        double maxY = Double.NEGATIVE_INFINITY;
-
-        for (Vertex node : graph.getVertices()) {
-            if (node.getShape() == null) {
-                node.setShape(new Rectangle(drawInfo.getVertexMinimumWidth(), drawInfo.getVertexHeight()));
-            }
-            Rectangle2D nodeRectangle = (Rectangle2D) node.getShape();
-            minX = Math.min(minX, nodeRectangle.getX());
-            maxX = Math.max(maxX, nodeRectangle.getX() + nodeRectangle.getWidth());
-            minY = Math.min(minY, nodeRectangle.getY());
-            maxY = Math.max(maxY, nodeRectangle.getY() + nodeRectangle.getHeight());
-        }
-        for (Edge edge : graph.getEdges()) {
-            if (!edge.getPaths().isEmpty()) {
-                for (Path path : edge.getPaths()) {
-                    List<Point2D.Double> edgePoints = ((PolygonalPath) path).getTerminalAndBendPoints();
-                    for (Point2D.Double end : edgePoints) {
-                        minX = Math.min(minX, end.getX());
-                        maxX = Math.max(maxX, end.getX());
-                        minY = Math.min(minY, end.getY());
-                        maxY = Math.max(maxY, end.getY());
-                    }
-                }
-            }
-        }
-
-
-        minX = Math.min(minX - EMPTY_MARGIN_WIDTH, Double.MAX_VALUE);
-        maxX = Math.max(maxX + EMPTY_MARGIN_WIDTH, minX);
-        minY = Math.min(minY - EMPTY_MARGIN_WIDTH, Double.MAX_VALUE);
-        maxY = Math.max(maxY + EMPTY_MARGIN_WIDTH, minY);
-        return new Rectangle2D.Double(minX, minY, maxX - minX, maxY - minY);
     }
 
     private void drawPortPairing(Port port0, Port port1, Graphics2D g2d) {
