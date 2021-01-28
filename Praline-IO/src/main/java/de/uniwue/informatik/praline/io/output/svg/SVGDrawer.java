@@ -110,9 +110,18 @@ public class SVGDrawer {
         //draw edges
         for (Edge edge : graph.getEdges()) {
             if (edge.getPaths().isEmpty()) {
-                Point2D.Double start = new Point2D.Double(edge.getPorts().get(0).getShape().getXPosition(), edge.getPorts().get(0).getShape().getYPosition());
-                Point2D.Double end = new Point2D.Double(edge.getPorts().get(1).getShape().getXPosition(), edge.getPorts().get(1).getShape().getYPosition());
-                g2d.drawLine(((int) Math.round(start.getX())), ((int) Math.round(start.getY())), ((int) Math.round(end.getX())), ((int) Math.round(end.getY())));
+                if (edge.getPorts().size() == 2) {
+                    Point2D.Double start = new Point2D.Double(edge.getPorts().get(0).getShape().getXPosition(),
+                            edge.getPorts().get(0).getShape().getYPosition());
+                    Point2D.Double end = new Point2D.Double(edge.getPorts().get(1).getShape().getXPosition(),
+                            edge.getPorts().get(1).getShape().getYPosition());
+                    g2d.drawLine(((int) Math.round(start.getX())), ((int) Math.round(start.getY())), ((int) Math.round(end.getX())), ((int) Math.round(end.getY())));
+                }
+                else {
+                    String moreOrLess = edge.getPorts().size() > 2 ? "more" : "less";
+                    System.out.println("Edge " + edge + " with " + moreOrLess + " than 2 ports and without paths found."
+                            + " This edge was ignored for the svg.");
+                }
             } else {
                 for (Path path : edge.getPaths()) {
                     List<Point2D.Double> edgePoints = ((PolygonalPath) path).getTerminalAndBendPoints();

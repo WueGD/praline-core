@@ -95,7 +95,12 @@ public class DummyNodeCreation {
     }
 
     public void createDummyNodesForEdges() {
-        createDummyNodesForEdges(true);
+        for (Edge edge : new ArrayList<>(sugy.getGraph().getEdges())) {
+            int dist = (sugy.getRank(sugy.getEndNode(edge))) - (sugy.getRank(sugy.getStartNode(edge)));
+            if (dist > 1) {
+                createAllDummyNodesForEdge(edge);
+            }
+        }
         psaInternal.assignPortsToVertexSides(dummyNodesLongEdges.keySet());
         sugy.changeRanksAccordingToSortingOrder();
     }
@@ -108,23 +113,16 @@ public class DummyNodeCreation {
     public DummyCreationResult createAllDummyNodes() {
 
         // dummy nodes on new intermediate layers
-        createTurningDummiesAndSelfLoopDummies();
+        createTurningDummiesAndSelfLoopDummies2();
 
         sugy.changeRanksAccordingToSortingOrder();
-
-        // create dummy nodes for each edge passing a layer
-        createDummyNodesForEdges(false);
-
 
         // assign ports to vertex sides for dummy vertices
         psaInternal.assignPortsToVertexSides(dummyTurningNodes.keySet());
         psaInternal.assignPortsToVertexSides(dummyNodesSelfLoops.keySet());
-        psaInternal.assignPortsToVertexSides(dummyNodesLongEdges.keySet()); //todo part of them has already been
-        // assigned when calling createDummyNodesForEdges() earlier. To save time we may skip them later(?)
 
-        sugy.changeRanksAccordingToSortingOrder();
-
-        //TODO: insert new ranks and nodes in node order (that was previously done in CrossingMinimization)
+        // create dummy nodes for each edge passing a layer
+        createDummyNodesForEdges();
 
         return new DummyCreationResult(dummyNodesLongEdges, dummyNodesSelfLoops, dummyTurningNodes,
                 nodeToLowerDummyTurningPoint, nodeToUpperDummyTurningPoint, correspondingPortsAtDummy,
@@ -187,9 +185,169 @@ public class DummyNodeCreation {
         node.removePortComposition(wrongSidePortGroup);
     }
 
+    private void createTurningDummiesAndSelfLoopDummies2() {
+        //We go through the current drawing bottom-up and create an intermediate layer iff there are turning dummies
+        // or self loop dummies that need to be created.
+        //We order the nodes on the intermediate layer as prescribed by the layer below. This is because in the
+        // crossing minimization, we will start top-down and then the upper turning dummies that do not have
+        // connection to an upper level should be placed not too much off their destination
+
+        List<List<Vertex>> layersCopy = new ArrayList<>(sugy.getOrders().getNodeOrder());
+        int newLayersCounter = 0;
+        for (int i = 0; i <= layersCopy.size(); i++) {
+            boolean needIntermediateLayer = false;
+            if (i > 0) {
+                needIntermediateLayer = checkIfNeedIntermediateLayer(layersCopy.get(i - 1),
+                        sugy.getOrders().getTopPortOrder(), false);
+            }
+            if (i < layersCopy.size()) {
+                needIntermediateLayer |= checkIfNeedIntermediateLayer(layersCopy.get(i),
+                        sugy.getOrders().getBottomPortOrder(), true);
+            }
+
+            //create the intermediate layer (only if we need it)
+            if (needIntermediateLayer) {
+                //create new layer and update ranks
+                List<Vertex> intermediateLayer = createIntermediateLayer(i + newLayersCounter);
+                ++newLayersCounter;
+
+                //we first go through the top port order of the layer below and create all dummy nodes in order
+                if (i > 0) {
+                    for (Vertex node : layersCopy.get(i - 1)) {
+                        Set<Port> loopPorts = new LinkedHashSet<>(); //we will skip the ports of loops later
+                        for (Port topPort : sugy.getOrders().getTopPortOrder().get(node)) {
+                            for (Edge edge : topPort.getEdges()) {
+                                //check if edge points downwards -> if yes insert turning dummy
+                                if (!sugy.getStartNode(edge).equals(node)) {
+                                    //create turning dummy vertex on intermediate layer
+                                    Vertex upperDummyTurningNode = getDummyTurningNodeForVertex(node, false,
+                                            intermediateLayer);
+                                    splitEdgeByTurningDummyNode(edge, upperDummyTurningNode, false);
+                                }
+                                //otherwise just create the "normal" dummy for a long edge
+                                else {
+                                    if (!loopPorts.contains(topPort)) {
+                                        createAllDummyNodesForEdge(edge);
+                                    }
+                                }
+                            }
+
+                            //upper self loop dummies
+                            Set<Edge> loopEdgesOfNode = sugy.getLoopEdges().get(node) == null ? new LinkedHashSet<>() :
+                                    new LinkedHashSet<>(sugy.getLoopEdges().get(node));
+                            for (Iterator<Edge> loopEdgeIterator = loopEdgesOfNode.iterator(); loopEdgeIterator.hasNext(); ) {
+                                Edge loopEdge = loopEdgeIterator.next();
+                                List<Port> portsOfLoopEdge = sugy.getPortsOfLoopEdge(loopEdge);
+                                if (portsOfLoopEdge.contains(topPort)) {
+                                    //For the self loops, we need to check if they are on both sides of a node. In
+                                    // this case, we need to place dummy vertices on the interemdiate layers above
+                                    // and below that node. When we handled this case for the lower intermediate
+                                    // layer, we have postponed it until now
+                                    if (portsOfLoopEdge.get(0).getOrientationAtVertex() == Orientation.SOUTH ||
+                                            portsOfLoopEdge.get(1).getOrientationAtVertex() == Orientation.SOUTH) {
+                                        List<Vertex> prevIntermediateLayer =
+                                                sugy.getOrders().getNodeOrder().get(i + newLayersCounter - 3);
+                                        createSelfLoopDummyNodes(loopEdge, prevIntermediateLayer, intermediateLayer);
+                                    }
+                                    //otherwise it is just on the upper side of the node
+                                    else {
+                                        createSelfLoopDummyNodes(loopEdge, null, intermediateLayer);
+                                    }
+                                    loopPorts.addAll(portsOfLoopEdge);
+                                    loopEdgeIterator.remove();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //we second go through the bottom port order of the layer above and create all dummy turning nodes
+                // and all self loop dummies; note that we don't need to consider the dummies of long edges because
+                // we have created them just before. Since we go in CrossingMinimization first top-down, we don't
+                // care about where to place dummy nodes having a connection to the top because they will be
+                // re-arranged by the layer-sweep algorithm coming from the top anyways; hence, we just append them
+                // to the end of intermediate layer
+                if (i < layersCopy.size()) {
+                    for (Vertex node : layersCopy.get(i)) {
+                        for (Port bottomPort : sugy.getOrders().getBottomPortOrder().get(node)) {
+                            for (Edge edge : bottomPort.getEdges()) {
+                                //check if edge points upwards -> if yes insert turning dummy
+                                if (sugy.getStartNode(edge).equals(node)) {
+                                    //create turning dummy vertex on intermediate layer
+                                    Vertex lowerDummyTurningNode =
+                                            getDummyTurningNodeForVertex(node, true, intermediateLayer);
+                                    splitEdgeByTurningDummyNode(edge, lowerDummyTurningNode, true);
+                                }
+                                //otherwise do nothing because we've already created the "normal" dummy for a long edge
+                            }
+
+                            //lower self loop dummies
+                            Set<Edge> loopEdgesOfNode = sugy.getLoopEdges().get(node) == null ? new LinkedHashSet<>() :
+                                    new LinkedHashSet<>(sugy.getLoopEdges().get(node));
+                            for (Iterator<Edge> loopEdgeIterator = loopEdgesOfNode.iterator(); loopEdgeIterator.hasNext(); ) {
+                                Edge loopEdge = loopEdgeIterator.next();
+                                List<Port> portsOfLoopEdge = sugy.getPortsOfLoopEdge(loopEdge);
+                                if (portsOfLoopEdge.contains(bottomPort)) {
+                                    //we have to consider the special case that a loop edge has its two ports on both
+                                    // sides of the vertex. In this case, we postpone the creation of the self loop
+                                    // edge + dummies until the next iteration, where we have also added a new
+                                    // intermediate layer above this node.
+                                    if (portsOfLoopEdge.get(0).getOrientationAtVertex() == Orientation.NORTH ||
+                                            portsOfLoopEdge.get(1).getOrientationAtVertex() == Orientation.NORTH) {
+                                        //postpone and do nothing here
+                                    }
+                                    else {
+                                        createSelfLoopDummyNodes(loopEdge, intermediateLayer, null);
+                                        loopEdgeIterator.remove();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean checkIfNeedIntermediateLayer(List<Vertex> layer, Map<Vertex, List<Port>> portOrder,
+                                                 boolean isBottomSide) {
+        for (Vertex node : layer) {
+            for (Port port : portOrder.get(node)) {
+                for (Edge edge : port.getEdges()) {
+                    //need lower turning dummy
+                    if (isBottomSide && sugy.getStartNode(edge).equals(node)) {
+                        return true;
+                    }
+                    //need upper turning dummy
+                    if (!isBottomSide && !sugy.getStartNode(edge).equals(node)) {
+                        return true;
+                    }
+                }
+                //need self loop dummy
+                Set<Edge> loopEdgesOfNode = sugy.getLoopEdges().get(node) == null ? new LinkedHashSet<>() :
+                        new LinkedHashSet<>(sugy.getLoopEdges().get(node));
+                for (Edge loopEdge : loopEdgesOfNode) {
+                    List<Port> portsOfLoopEdge = sugy.getPortsOfLoopEdge(loopEdge);
+                    if (portsOfLoopEdge.contains(port)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private List<Vertex> createIntermediateLayer(int intermediateLayerRank) {
+        List<Vertex> intermediateLayer = new ArrayList<>();
+        sugy.getOrders().getNodeOrder().add(intermediateLayerRank, intermediateLayer);
+        sugy.changeRanksAccordingToSortingOrder();
+        return intermediateLayer;
+    }
+
     private void createTurningDummiesAndSelfLoopDummies() {
         //go through all nodes on all layers in order and create for them dummy turning nodes in order on
-        // intermediate layer. We only really create the intermediate layers we need
+        // intermediate layers. We only really create the intermediate layers we need
         List<Vertex> dummyFirstLayer = new ArrayList<>(); //we use this dummy layer so that we can insert a new lower
         // intermediate layer BEFORE the first actual layer. We will remove this dummy layer in the end
         sugy.getOrders().getNodeOrder().add(0, dummyFirstLayer);
@@ -462,15 +620,6 @@ public class DummyNodeCreation {
         } else {
             sugy.assignDirection(e1, portsFor1.get(1).getVertex(), dummy);
             sugy.assignDirection(e2, portsFor2.get(1).getVertex(), dummy);
-        }
-    }
-
-    private void createDummyNodesForEdges(boolean initRanks) {
-        for (Edge edge : new ArrayList<>(sugy.getGraph().getEdges())) {
-            int dist = (sugy.getRank(sugy.getEndNode(edge))) - (sugy.getRank(sugy.getStartNode(edge)));
-            if (dist > 1) {
-                createAllDummyNodesForEdge(edge);
-            }
         }
     }
 

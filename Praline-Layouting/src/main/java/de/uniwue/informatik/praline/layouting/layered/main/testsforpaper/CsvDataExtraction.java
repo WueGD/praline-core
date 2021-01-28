@@ -20,8 +20,12 @@ public class CsvDataExtraction {
 //                    "paper-all-tests-2020-06-10_06-18-04";
 //                    "paper-all-tests-2020-08-20_16-01-53";
 //                    "2020-11-26_04-07-39";
-                    "2021-01-25_19-14-23";
-//                    "2021-01-27_02-34-35";
+//                    "2021-01-25_19-14-23"; //regular run
+//                    "2021-01-27_02-34-35"; //regular run (new: draw each component individually)
+//                    "2021-01-28_01-59-11"; //no back-moving of ports on wrong sides
+//                    "2021-01-28_02-24-56"; //no back-moving of ports on wrong sides and no re-unpacking of vertex groups
+//                    "2021-01-28_04-40-34"; //same as above + own port group for each wrong-assigned instead of 1 for all
+                    "2021-01-28_16-46-40"; //with DummyNodeCreation.createTurningDummiesAndSelfLoopDummies2()
 
     private static final String[] DATA_DIRS =
             {
@@ -332,6 +336,9 @@ public class CsvDataExtraction {
         int scaleDownDivisor = 1; //1000;
         List<String> newMethods = new ArrayList<>(methods.size());
         for (String method : methods) {
+            if (method.contains("-ratio") || method.contains("-area")) {
+                continue;
+            }
             String newMethod = withoutWidthOrHeight(method);
             if (!newMethods.contains(newMethod)) {
                 newMethods.add(newMethod);
@@ -377,7 +384,7 @@ public class CsvDataExtraction {
                     continue;
                 }
                 for (int i = 0; i < w.size(); i++) {
-                    int area = (w.get(i) / scaleDownDivisor) * (h.get(i) /scaleDownDivisor);
+                    int area = (w.get(i) / scaleDownDivisor) * (h.get(i) / scaleDownDivisor);
                     candidatesArea.put(method, area);
                     double ratio = (double) w.get(i) / (double) h.get(i);
                     candidatesRatio.put(method, ratio);
