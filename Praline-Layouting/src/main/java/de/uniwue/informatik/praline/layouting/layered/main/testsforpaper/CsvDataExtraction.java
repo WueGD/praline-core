@@ -25,7 +25,8 @@ public class CsvDataExtraction {
 //                    "2021-01-28_01-59-11"; //no back-moving of ports on wrong sides
 //                    "2021-01-28_02-24-56"; //no back-moving of ports on wrong sides and no re-unpacking of vertex groups
 //                    "2021-01-28_04-40-34"; //same as above + own port group for each wrong-assigned instead of 1 for all
-                    "2021-01-28_16-46-40"; //with DummyNodeCreation.createTurningDummiesAndSelfLoopDummies2()
+//                    "2021-01-28_16-46-40"; //with DummyNodeCreation.createTurningDummiesAndSelfLoopDummies2()
+                    "2021-01-29_04-47-27"; //regular run with intermediate layers being removed in EdgeRouting
 
     private static final String[] DATA_DIRS =
             {

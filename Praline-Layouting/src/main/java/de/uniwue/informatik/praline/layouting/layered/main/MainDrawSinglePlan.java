@@ -35,11 +35,13 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0005-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0006-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0007-praline.json";
-//            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0008-praline.json";
+            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0008-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0009-praline.json";
+//            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0019-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0024-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0282-praline.json";
-            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0414-praline.json";
+//            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0414-praline.json";
+//            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0434-praline.json";
 //            //small, but many vertex groups
 //            //several loops
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-bc0a6948-ff41-4c1f-9b98-c2042b575adb.json";
@@ -61,7 +63,7 @@ public class MainDrawSinglePlan {
 
     private static final CrossingMinimizationMethod CROSSING_MINIMIZATION_METHOD = CrossingMinimizationMethod.PORTS;
 
-    private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 1; //5;
+    private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 5; //1; //5;
 
     private static final int NUMBER_OF_FORCE_DIRECTED_ITERATIONS = 1; //10;
 

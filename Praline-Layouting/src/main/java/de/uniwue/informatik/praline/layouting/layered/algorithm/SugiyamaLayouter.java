@@ -593,22 +593,24 @@ public class SugiyamaLayouter implements PralineLayouter {
     public void setRank(Vertex node, Integer rank) {
         if (nodeToRank.containsKey(node)) {
             int oldRank = getRank(node);
-            rankToNodes.get(oldRank).remove(node);
-            if (rankToNodes.get(oldRank).isEmpty()) {
-                rankToNodes.remove(oldRank);
+            Collection<Vertex> oldRankSet = rankToNodes.get(oldRank);
+            if (oldRankSet != null) {
+                oldRankSet.remove(node);
+                if (oldRankSet.isEmpty()) {
+                    rankToNodes.remove(oldRank);
+                }
             }
-            rankToNodes.putIfAbsent(rank, new LinkedHashSet<>());
-            rankToNodes.get(rank).add(node);
             nodeToRank.replace(node, rank);
         } else {
             nodeToRank.put(node, rank);
-            rankToNodes.putIfAbsent(rank, new LinkedHashSet<>());
-            rankToNodes.get(rank).add(node);
         }
+        rankToNodes.putIfAbsent(rank, new LinkedHashSet<>());
+        rankToNodes.get(rank).add(node);
     }
 
     public void changeRanksAccordingToSortingOrder() {
         if (isSingleComponent) {
+            rankToNodes.clear();
             List<List<Vertex>> nodeOrder = orders.getNodeOrder();
             for (int i = 0; i < nodeOrder.size(); i++) {
                 List<Vertex> layer = nodeOrder.get(i);
@@ -688,6 +690,10 @@ public class SugiyamaLayouter implements PralineLayouter {
         return isDummyNodeOfLongEdge(node) || isDummyNodeOfSelfLoop(node) || isDummyTurningNode(node) ||
                 isDummyNodeForEdgesOfDeg1or0(node) || isDummyNodeForNodelessPorts(node) ||
                 getHyperEdges().containsKey(node);
+    }
+
+    public Map<Vertex, Edge> getDummyNodesLongEdges() {
+        return dummyNodesLongEdges;
     }
 
     public boolean isDummyNodeOfLongEdge(Vertex node) {

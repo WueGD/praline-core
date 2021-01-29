@@ -45,12 +45,6 @@ public class DrawingPreparation {
                                Map<Vertex, Set<Port>> dummyPortsForLabelPadding,
                                List<Port> dummyPortsForNodesWithoutPort) {
         initialize(drawInfo, sortingOrder, dummyPortsForLabelPadding, dummyPortsForNodesWithoutPort);
-        // do path for edges
-        doPathForEdges();
-        // adjust port shapes
-        adjustPortShapes();
-        // add Edges with Paths for remaining dummyNodes
-        drawEdgesForDummys();
         // restore original elements
         restoreOriginalElements(false);
         //tighten nodes after unifying ports with multiple edges
@@ -244,96 +238,6 @@ public class DrawingPreparation {
                     new Rectangle(newL, nodeShape.getYPosition(), (newR - newL), nodeShape.getHeight(), null);
         }
         return tightenedRectangle;
-    }
-
-    private void doPathForEdges() {
-        for (Edge edge : sugy.getGraph().getEdges()) {
-            Port p1 = edge.getPorts().get(0);
-            Port p2 = edge.getPorts().get(1);
-            // create path; else update end-point-positions
-            if (edge.getPaths().isEmpty()) {
-                if (sugy.isTopPort(p1)) {
-                    p1 = edge.getPorts().get(1);
-                    p2 = edge.getPorts().get(0);
-                }
-                Point2D.Double start = new Point2D.Double(p1.getShape().getXPosition(), (p1.getShape().getYPosition() - drawInfo.getPortHeight()));
-                Point2D.Double end = new Point2D.Double(p2.getShape().getXPosition(), (p2.getShape().getYPosition() + drawInfo.getPortHeight()));
-                edge.addPath(new PolygonalPath(start, end, new LinkedList<>()));
-            } else {
-                PolygonalPath path = (PolygonalPath) edge.getPaths().get(0);
-                Point2D.Double start = path.getStartPoint();
-                Point2D.Double end = path.getEndPoint();
-                if (end.getX() == p1.getShape().getXPosition()) {
-                    p1 = edge.getPorts().get(1);
-                    p2 = edge.getPorts().get(0);
-                }
-                if (sugy.isTopPort(p1)) {
-                    path.setStartPoint(new Point2D.Double(start.getX(), (start.getY() + drawInfo.getPortHeight())));
-                } else {
-                    path.setStartPoint(new Point2D.Double(start.getX(), (start.getY() - drawInfo.getPortHeight())));
-                }
-                if (sugy.isTopPort(p2)) {
-                    path.setEndPoint(new Point2D.Double(end.getX(), (end.getY() + drawInfo.getPortHeight())));
-                } else {
-                    path.setEndPoint(new Point2D.Double(end.getX(), (end.getY() - drawInfo.getPortHeight())));
-                }
-            }
-        }
-    }
-
-    private void adjustPortShapes() {
-        for (Vertex vertex : sugy.getGraph().getVertices()) {
-            for (Port port : vertex.getPorts()) {
-                Rectangle portShape = (Rectangle) port.getShape();
-                portShape.x = portShape.getXPosition() - (drawInfo.getPortWidth() / 2);
-                if (!sugy.isTopPort(port)) {
-                    portShape.y = portShape.getYPosition() - drawInfo.getPortHeight();
-                }
-            }
-        }
-    }
-
-    private void drawEdgesForDummys() {
-        Collection<Vertex> vertices;
-        vertices = new LinkedHashSet<>(sugy.getGraph().getVertices());
-        for (Vertex node : vertices) {
-            if (sugy.isDummyNodeOfLongEdge(node)) {
-                Port p1 = (Port) node.getPortCompositions().get(0);
-                Port p2 = (Port) node.getPortCompositions().get(1);
-                Edge originalEdge = sugy.getDummyEdge2RealEdge().get(p1.getEdges().get(0));
-                List<Port> portsForNewEdge = new LinkedList<>();
-                portsForNewEdge.add(p1);
-                portsForNewEdge.add(p2);
-                Edge newEdge = new Edge(portsForNewEdge);
-                Point2D.Double start;
-                Point2D.Double end;
-                if (sugy.isTopPort(p1)) {
-                    if (sugy.isTopPort(p2)){
-                        start = new Point2D.Double(p1.getShape().getXPosition() + (drawInfo.getPortWidth() / 2), (p1.getShape().getYPosition() + drawInfo.getPortHeight()));
-                        end = new Point2D.Double(p2.getShape().getXPosition() + (drawInfo.getPortWidth() / 2), (p2.getShape().getYPosition() + drawInfo.getPortHeight()));
-                    } else {
-                        start = new Point2D.Double(p1.getShape().getXPosition() + (drawInfo.getPortWidth() / 2), (p1.getShape().getYPosition() + drawInfo.getPortHeight()));
-                        end = new Point2D.Double(p2.getShape().getXPosition() + (drawInfo.getPortWidth() / 2), (p2.getShape().getYPosition()));
-                    }
-                } else {
-                    if (sugy.isTopPort(p2)){
-                        start = new Point2D.Double(p1.getShape().getXPosition() + (drawInfo.getPortWidth() / 2), (p1.getShape().getYPosition()));
-                        end = new Point2D.Double(p2.getShape().getXPosition() + (drawInfo.getPortWidth() / 2), (p2.getShape().getYPosition() + drawInfo.getPortHeight()));
-                    } else {
-                        start = new Point2D.Double(p1.getShape().getXPosition() + (drawInfo.getPortWidth() / 2), (p1.getShape().getYPosition()));
-                        end = new Point2D.Double(p2.getShape().getXPosition() + (drawInfo.getPortWidth() / 2), (p2.getShape().getYPosition()));
-                    }
-                }
-                newEdge.addPath(new PolygonalPath(start, end, new LinkedList<>()));
-                sugy.getGraph().addEdge(newEdge);
-                sugy.getDummyEdge2RealEdge().put(newEdge, originalEdge);
-                Vertex endNode0 = portsForNewEdge.get(0).getVertex();
-                Vertex endNode1 = portsForNewEdge.get(1).getVertex();
-                sugy.assignDirection(newEdge,
-                        sugy.getRank(endNode0) < sugy.getRank(endNode1) ? endNode0 : endNode1,
-                        sugy.getRank(endNode0) < sugy.getRank(endNode1) ? endNode1 : endNode0);
-            }
-        }
     }
 
     private void shiftAllUpToRank(int rank, double shiftValue) {
