@@ -27,15 +27,16 @@ public class MainDrawKielerPlan {
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-06001ee4-a1ee-4d84-85ff-93792f56e5c7.json";
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-a01bd68a-b853-480a-b2bc-58851f52c673.json";
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-d4cbdce2-3a35-4fc1-9ed8-69e196371ee5.json";
+//            "Praline-Layouting/data/praline-package-2020-05-18/praline-6fc3a807-fb4f-4108-a732-e91efc0872c7.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0000-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0001-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0002-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0003-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0004-praline.json";
-//            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0005-praline.json";
+            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0005-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0006-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0007-praline.json";
-            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0008-praline.json";
+//            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0008-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0009-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0019-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0024-praline.json";
@@ -60,7 +61,7 @@ public class MainDrawKielerPlan {
 
     private static final DirectionMethod DIRECTION_METHOD = DirectionMethod.FORCE;
 
-    private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 5; //1; //5;
+    private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 1; //5;
 
     private static final int NUMBER_OF_FORCE_DIRECTED_ITERATIONS = 1; //10;
 

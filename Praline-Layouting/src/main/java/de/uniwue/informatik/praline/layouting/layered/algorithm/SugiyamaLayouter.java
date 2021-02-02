@@ -749,6 +749,31 @@ public class SugiyamaLayouter implements PralineLayouter {
         return dummyEdge2RealEdge;
     }
 
+    public Edge getOriginalEdgeExceptForHyperE(Vertex dummyNodeLongEdge) {
+        Edge longEdge = dummyNodesLongEdges.get(dummyNodeLongEdge);
+        if (longEdge == null) {
+            return null;
+        }
+        return getOriginalEdgeExceptForHyperE(longEdge);
+    }
+
+    public Edge getOriginalEdgeExceptForHyperE(Edge edge) {
+        Edge currentEdge = edge;
+        while (dummyEdge2RealEdge.containsKey(currentEdge)) {
+            currentEdge = dummyEdge2RealEdge.get(currentEdge);
+        }
+        return currentEdge;
+    }
+
+    public Edge getOriginalEdge(Edge edge) {
+        Edge originalEdgeExceptForHyperE = getOriginalEdgeExceptForHyperE(edge);
+        Edge originalEdge = hyperEdges.get(hyperEdgeParts.get(originalEdgeExceptForHyperE));
+        if (originalEdge == null) {
+            return originalEdgeExceptForHyperE;
+        }
+        return originalEdge;
+    }
+
     public Map<Vertex, Set<Edge>> getLoopEdges() {
         if (isSingleComponent) {
             return loopEdges;

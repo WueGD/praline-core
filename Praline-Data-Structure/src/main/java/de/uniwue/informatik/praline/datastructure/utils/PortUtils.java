@@ -21,6 +21,30 @@ public class PortUtils {
         return edges;
     }
 
+    public static Collection<Port> getOtherEndPoints(Edge edge, Port port) {
+        Set<Port> endpoints = new LinkedHashSet<>(edge.getPorts());
+        endpoints.remove(port);
+        return endpoints;
+    }
+
+    /**
+     *
+     * @param edge
+     * @param port
+     * @return
+     *      some other endpoint (not being port) of this edge or null if there is no other endpoint
+     */
+    public static Port getOtherEndPoint(Edge edge, Port port) {
+        Collection<Port> otherEndPoints = getOtherEndPoints(edge, port);
+        if (otherEndPoints.contains(port)) {
+            otherEndPoints.remove(port);
+        }
+        if (otherEndPoints.isEmpty()) {
+            return null;
+        }
+        return otherEndPoints.iterator().next();
+    }
+
     public static VertexGroup getTopLevelVertexGroup(Vertex vertex) {
         VertexGroup vertexGroup = vertex.getVertexGroup();
         VertexGroup topLevelVertexGroup = null;

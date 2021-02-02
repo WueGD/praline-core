@@ -6,7 +6,9 @@ import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.placements.Orientation;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
+import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 
@@ -23,7 +25,6 @@ public class NodePlacement {
     private double layerHeight;
     private Map<Vertex, Set<Port>> dummyPorts;
     private List<Edge> dummyEdges;
-    private Set<Edge> oneNodeEdges;
     private int portnumber;
     // variables according to paper:
     private Map<Port, PortValues> portValues;
@@ -44,7 +45,6 @@ public class NodePlacement {
     public Map<Vertex, Set<Port>> placeNodes () {
         initialize();
         // create lists of ports for layers
-        // and algorithm.restore all oneNodeEdges as well as noEdgePorts
         initializeStructure();
         // create dummyPorts to have enough space for labels
         dummyPortsForWidth();
@@ -113,7 +113,6 @@ public class NodePlacement {
         dummyVertex = new Vertex();
         dummyVertex.getLabelManager().addLabel(new TextLabel("dummyVertex"));
         dummyVertex.getLabelManager().setMainLabel(dummyVertex.getLabelManager().getLabels().get(0));
-        oneNodeEdges = new LinkedHashSet<>();
         portnumber = 0;
     }
 
@@ -353,48 +352,115 @@ public class NodePlacement {
     }
 
     private void handleCrossings() {
+        //determine for all long edges, over how many dummy vertices they go, i.e., their length.
+        //later, longer edges will be preferred for making them straight compared to shorter edges
+        Map<Edge, Integer> lengthOfLongEdge = new LinkedHashMap<>();
+        determineLengthOfLongEdges(lengthOfLongEdge);
+
         for (int layer = 0; layer < (structure.size() - 1); layer++) {
-            LinkedList<Port[]> stack = new LinkedList<>();
-            for (Port port1 : structure.get(layer)) {
-                for (Edge edge : port1.getEdges()) {
-                    if (!oneNodeEdges.contains(edge)) {
-                        Port port2 = edge.getPorts().get(0);
-                        if (port2.equals(port1)) port2 = edge.getPorts().get(1);
-                        if (portValues.get(port2).getLayer() == (layer + 1)) {
-                            Port[] stackEntry = {port1, port2};
-                            while (true) {
-                                if (stack.isEmpty()) {
-                                    stack.push(stackEntry);
-                                    break;
-                                }
-                                Port[] top = stack.pop();
-                                // check whether top element of stack (top) has higher index than new Element (stackEntry) => crossing => conflict
-                                if (portValues.get(top[1]).getPosition() < portValues.get(stackEntry[1]).getPosition()) {
-                                    stack.push(top);
-                                    stack.push(stackEntry);
-                                    break;
-                                } else {
-                                    // solve conflict by preferring one edge
-                                    // prefer dummy to dummy edge
-                                    if ((sugy.isDummyNodeOfLongEdge(top[0].getVertex()) || sugy.isDummyTurningNode(top[0].getVertex())) && (sugy.isDummyNodeOfLongEdge(top[1].getVertex()) || sugy.isDummyTurningNode(top[1].getVertex()))) {
-                                        stack.push(top);
-                                        break;
-                                    } else if (!((sugy.isDummyNodeOfLongEdge(stackEntry[0].getVertex()) || sugy.isDummyTurningNode(stackEntry[0].getVertex())) && (sugy.isDummyNodeOfLongEdge(stackEntry[1].getVertex()) || sugy.isDummyTurningNode(stackEntry[1].getVertex())))) {
-                                        // prefer edge with min index distance (just an arbitrary heuristic - maybe can do better)
-                                        if (Math.abs(portValues.get(stackEntry[1]).getPosition() - portValues.get(stackEntry[0]).getPosition()) >
-                                                Math.abs(portValues.get(top[1]).getPosition() - portValues.get(top[0]).getPosition())) {
-                                            stack.push(top);
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
+            LinkedList<Port[]> stack = new LinkedList<>(); //stack of edges that are made straight
+            //an entry of this stack is the 2 end ports of the corresponding edge, the first for the lower, the second
+            // for the upper port
+            for (Port port0 : structure.get(layer)) {
+                for (Edge edge : port0.getEdges()) {
+                    Port port1 = PortUtils.getOtherEndPoint(edge, port0);
+                    if (portValues.get(port1).getLayer() == (layer + 1)) {
+                        Port[] stackEntry = {port0, port1};
+                        fillStackOfCrossingEdges(stack, stackEntry, new LinkedList<>(), lengthOfLongEdge);
                     }
                 }
             }
             // initialize root and align according to Alg. 2 from paper
             verticalAlignment(stack);
+        }
+    }
+
+    private void determineLengthOfLongEdges(Map<Edge, Integer> lengthOfLongEdge) {
+        for (Vertex vertex : sugy.getDummyNodesLongEdges().keySet()) {
+            Edge longEdge = sugy.getOriginalEdgeExceptForHyperE(vertex);
+            Integer oldValue = lengthOfLongEdge.get(longEdge);
+            if (oldValue == null || oldValue == 0) {
+                lengthOfLongEdge.put(longEdge, 1);
+            }
+            else {
+                lengthOfLongEdge.replace(longEdge, oldValue + 1);
+            }
+        }
+    }
+
+    private void fillStackOfCrossingEdges(LinkedList<Port[]> stack, Port[] stackEntry,
+                                          LinkedList<Port[]> removedStackEntriesPotentiallyToBeReAdded,
+                                          Map<Edge, Integer> lengthOfLongEdge) {
+        while (true) {
+            if (stack.isEmpty()) {
+                stack.push(stackEntry);
+                break;
+            }
+            Port[] top = stack.pop();
+            // if the upper port values of the top edge of the stack and the current edge are increasing, they don't
+            // cross (on this layer) and we can keep them both.
+            // However we will discard all edges in removedStackEntriesPotentiallyToBeReAdded that were potentially
+            // in between them two because they have lower priority than stackEntry and are in conflict with stackEntry
+            if (portValues.get(top[1]).getPosition() < portValues.get(stackEntry[1]).getPosition()) {
+                stack.push(top);
+                stack.push(stackEntry);
+                break;
+            }
+            // otherwise => crossing => conflict
+            else {
+                /*
+                keep the edge that...
+
+                #1. has greater length (in terms of being a long edge)
+                #2. is non-incident to a dummy turning node or a dummy self loop node
+                #3. is more left, i.e., already on the stack
+
+                EDIT JZ 2021/02/02: #2 does not help in one or the other direction -> removed it (commented out)
+
+                 */
+                //#1.
+                int topLength = lengthOfLongEdge.getOrDefault(sugy.getOriginalEdgeExceptForHyperE(top[1].getVertex()),0);
+                int stackEntryLength =
+                        lengthOfLongEdge.getOrDefault(sugy.getOriginalEdgeExceptForHyperE(stackEntry[1].getVertex()),0);
+                if (topLength > stackEntryLength) {
+                    keepTop(stack, removedStackEntriesPotentiallyToBeReAdded, top);
+                    break;
+                }
+                else if (topLength == stackEntryLength) {
+                    //#2.
+    //                    boolean topIncidentToTurningPoint =
+    //                            sugy.isDummyTurningNode(top[0].getVertex()) ||
+    //                            sugy.isDummyNodeOfSelfLoop(top[0].getVertex()) ||
+    //                            sugy.isDummyTurningNode(top[1].getVertex()) ||
+    //                            sugy.isDummyNodeOfSelfLoop(top[1].getVertex());
+    //                    boolean stackEntryIncidentToTurningPoint =
+    //                            sugy.isDummyTurningNode(stackEntry[0].getVertex()) ||
+    //                            sugy.isDummyNodeOfSelfLoop(stackEntry[0].getVertex()) ||
+    //                            sugy.isDummyTurningNode(stackEntry[1].getVertex()) ||
+    //                            sugy.isDummyNodeOfSelfLoop(stackEntry[1].getVertex());
+    //                    if (!topIncidentToTurningPoint && stackEntryIncidentToTurningPoint) {
+    //                        keepTop(stack, removedStackEntriesPotentiallyToBeReAdded, top);
+    //                        break;
+    //                    }
+    //                    //#3.
+    //                    else if (topIncidentToTurningPoint == stackEntryIncidentToTurningPoint) {
+                        keepTop(stack, removedStackEntriesPotentiallyToBeReAdded, top);
+                        break;
+//                    }
+                }
+
+                //otherwise we discard top and compare the current stackEntry to the next one on top of the stack
+                removedStackEntriesPotentiallyToBeReAdded.push(top);
+            }
+        }
+    }
+
+    private void keepTop(LinkedList<Port[]> stack, LinkedList<Port[]> removedStackEntriesPotentiallyToBeReAdded,
+                         Port[] top) {
+        stack.push(top);
+        //re-add the entries we removed in between back to the stack
+        while (!removedStackEntriesPotentiallyToBeReAdded.isEmpty()) {
+            stack.push(removedStackEntriesPotentiallyToBeReAdded.pop());
         }
     }
 
