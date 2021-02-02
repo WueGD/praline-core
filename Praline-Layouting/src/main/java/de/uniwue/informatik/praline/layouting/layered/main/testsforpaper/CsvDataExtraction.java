@@ -26,7 +26,10 @@ public class CsvDataExtraction {
 //                    "2021-01-28_02-24-56"; //no back-moving of ports on wrong sides and no re-unpacking of vertex groups
 //                    "2021-01-28_04-40-34"; //same as above + own port group for each wrong-assigned instead of 1 for all
 //                    "2021-01-28_16-46-40"; //with DummyNodeCreation.createTurningDummiesAndSelfLoopDummies2()
-                    "2021-01-29_04-47-27"; //regular run with intermediate layers being removed in EdgeRouting
+//                    "2021-01-29_04-47-27"; //regular run with intermediate layers being removed in EdgeRouting
+//                    "2021-01-29_13-59-15"; //rr with preference of edges non-incident to turning dummies in NodePlacement
+//                    "2021-02-01_02-14-59"; //rr with extra layer sweep vertex sorting phase after fixing port positions
+                    "2021-02-02_02-14-46"; //rr with changes in NodePlacement to prefer longer edges in making them straight
 
     private static final String[] DATA_DIRS =
             {
@@ -143,7 +146,7 @@ public class CsvDataExtraction {
             //for each graph do evaluation, add it to all methods
             for (Map<String, NumberDistribution<Integer>> result : results) {
                 Map<String, Integer> candidates = new LinkedHashMap<>(methods.size());
-                //fin the values of each individual method
+                //find the values of each individual method
                 for (String method : methods) {
                     int value = (int) result.get(method).get(StatisticParameter.MIN);
                     candidates.put(method, value);
@@ -151,28 +154,7 @@ public class CsvDataExtraction {
                         method2absoluteTime.get(method).add(value);
                     }
                 }
-                //now the reference value (as specified or best total)
-                int referenceValue = Integer.MAX_VALUE;
-                int bestValue = Integer.MAX_VALUE;
-                boolean hasReferenceValue = false;
-                for (String method : methods) {
-                    if (method.equals(ENTRIES_RELATIVE_TO)) {
-                        referenceValue = candidates.get(method);
-                        hasReferenceValue = true;
-                    }
-                    bestValue = Math.min(bestValue, candidates.get(method));
-                    if (!hasReferenceValue) {
-                        referenceValue = bestValue;
-                    }
-                }
-                //specify quality of everyone relative to reference value
-                for (String method : methods) {
-                    Integer value = candidates.get(method);
-                    method2best.get(method).add(value == bestValue ? 1 : 0);
-                    //we treat reference value == 0 as reference value == 1 to avoid a relative value of infinity
-                    method2relativeQuality.get(method).add(
-                            value == 0 ? 1.0 : referenceValue == 0 ? value : (double) value / (double) referenceValue);
-                }
+                findBestValues(methods, method2relativeQuality, method2best, candidates);
             }
 
             //text output
@@ -190,6 +172,168 @@ public class CsvDataExtraction {
 
         if (method2absoluteTime != null) {
             regularTextOutputTime(methodsForTime, method2absoluteTime);
+        }
+    }
+
+    private static void evaluateSpace(List<Map<String, NumberDistribution<Integer>>> results,
+                                      Collection<String> methods) {
+        int scaleDownDivisor = 1; //1000;
+        List<String> newMethods = new ArrayList<>(methods.size());
+        for (String method : methods) {
+            if (method.contains("-ratio") || method.contains("-area")) {
+                continue;
+            }
+            String newMethod = withoutWidthOrHeight(method);
+            if (!newMethods.contains(newMethod)) {
+                newMethods.add(newMethod);
+            }
+        }
+
+        //compute resulting values
+        Map<String, NumberDistribution<Double>> widthMethod2relativeQuality = new LinkedHashMap<>();
+        Map<String, NumberDistribution<Integer>> widthMethod2best = new LinkedHashMap<>();
+        Map<String, NumberDistribution<Double>> heightMethod2relativeQuality = new LinkedHashMap<>();
+        Map<String, NumberDistribution<Integer>> heightMethod2best = new LinkedHashMap<>();
+        Map<String, NumberDistribution<Double>> areaMethod2relativeQuality = new LinkedHashMap<>();
+        Map<String, NumberDistribution<Integer>> areaMethod2best = new LinkedHashMap<>();
+        Map<String, NumberDistribution<Double>> ratioMethod2relativeQuality = new LinkedHashMap<>();
+        Map<String, NumberDistribution<Integer>> ratioMethod2best = new LinkedHashMap<>();
+        for (String method : newMethods) {
+            widthMethod2relativeQuality.put(method, new NumberDistribution<>());
+            widthMethod2best.put(method, new NumberDistribution<>());
+            heightMethod2relativeQuality.put(method, new NumberDistribution<>());
+            heightMethod2best.put(method, new NumberDistribution<>());
+            areaMethod2relativeQuality.put(method, new NumberDistribution<>());
+            areaMethod2best.put(method, new NumberDistribution<>());
+            ratioMethod2relativeQuality.put(method, new NumberDistribution<>());
+            ratioMethod2best.put(method, new NumberDistribution<>());
+        }
+
+        //for each graph do evaluation, add it to all methods
+        for (Map<String, NumberDistribution<Integer>> result : results) {
+            Map<String, NumberDistribution<Integer>> width = new LinkedHashMap<>();
+            Map<String, NumberDistribution<Integer>> height = new LinkedHashMap<>();
+            for (String method : newMethods) {
+                width.put(method, new NumberDistribution<>());
+                height.put(method, new NumberDistribution<>());
+            }
+
+            Map<String, Integer> widthCandidates = new LinkedHashMap<>(newMethods.size());
+            Map<String, Integer> heightCandidates = new LinkedHashMap<>(newMethods.size());
+            Map<String, Integer> areaCandidates = new LinkedHashMap<>(newMethods.size());
+            Map<String, Double> candidatesRatio = new LinkedHashMap<>(newMethods.size());
+            //first find best of each individual method
+            for (String method : methods) {
+                if (method.contains("-width")) {
+                    width.put(withoutWidthOrHeight(method), result.get(method));
+                }
+                else if (method.contains("-height")) {
+                    height.put(withoutWidthOrHeight(method), result.get(method));
+                }
+            }
+            for (String method : newMethods) {
+                NumberDistribution<Integer> w = width.get(method);
+                NumberDistribution<Integer> h = height.get(method);
+                if (w == null || h == null) {
+                    continue;
+                }
+                int minWidth = Integer.MAX_VALUE;
+                int minHeight = Integer.MAX_VALUE;
+                int minArea = Integer.MAX_VALUE;
+                double bestRatio = Double.POSITIVE_INFINITY;
+                for (int i = 0; i < w.size(); i++) {
+                    minWidth = Math.min(minWidth, w.get(i));
+                    minHeight = Math.min(minHeight, h.get(i));
+                    int area = (w.get(i) / scaleDownDivisor) * (h.get(i) / scaleDownDivisor);
+                    minArea = Math.min(minArea, area);
+                    double ratio = (double) w.get(i) / (double) h.get(i);
+                    bestRatio = 1.0 + Math.min(Math.abs(bestRatio - 1.0),
+                            Math.abs((Double.isNaN(ratio) ? bestRatio : ratio) - 1.0));
+                }
+                widthCandidates.put(method, minWidth);
+                heightCandidates.put(method, minHeight);
+                areaCandidates.put(method, minArea);
+                candidatesRatio.put(method, bestRatio);
+            }
+
+            //find best for categories width, height, area
+            findBestValues(newMethods, widthMethod2relativeQuality, widthMethod2best, widthCandidates);
+            findBestValues(newMethods, heightMethod2relativeQuality, heightMethod2best, heightCandidates);
+            findBestValues(newMethods, areaMethod2relativeQuality, areaMethod2best, areaCandidates);
+
+            //separate handling for category ratio, because we treat it a bit differently
+            double bestRatio = Double.POSITIVE_INFINITY;
+            double referenceRatio = Double.POSITIVE_INFINITY;
+            boolean hasReferenceRatio = false;
+            for (String method : newMethods) {
+                Double entry = candidatesRatio.get(method);
+                if (method.equals(ENTRIES_RELATIVE_TO)) {
+                    referenceRatio = entry;
+                    hasReferenceRatio = true;
+                }
+                bestRatio =
+                        1.0 + Math.min(Math.abs(bestRatio - 1.0), Math.abs((entry == null ? bestRatio : entry) - 1.0));
+                if (!hasReferenceRatio) {
+                    referenceRatio = bestRatio;
+                }
+            }
+            //specify quality of everyone relative to best
+            for (String method : newMethods) {
+                Double valueRatio = candidatesRatio.get(method);
+                if (valueRatio == null) {
+                    continue;
+                }
+                ratioMethod2best.get(method).add(valueRatio == bestRatio ? 1 : 0);
+                //we treat reference value == 0 as reference value == 1 to avoid a relative value of infinity
+                ratioMethod2relativeQuality.get(method).add(valueRatio == 1.0 ? 1.0 :
+                        valueRatio >= 1 ? valueRatio / referenceRatio : referenceRatio / valueRatio);
+            }
+        }
+
+        //text output
+        if (TABLE_CONTENT_OUTPUT) {
+            tableTextOutput("width", newMethods, widthMethod2relativeQuality, widthMethod2best);
+            tableTextOutput("height", newMethods, heightMethod2relativeQuality, heightMethod2best);
+            tableTextOutput("area", newMethods, areaMethod2relativeQuality, areaMethod2best);
+            tableTextOutput("ratio", newMethods, ratioMethod2relativeQuality, ratioMethod2best);
+        }
+        else {
+            regularTextOutput("width", results.size(), newMethods, widthMethod2relativeQuality, widthMethod2best);
+            regularTextOutput("height", results.size(), newMethods, heightMethod2relativeQuality, heightMethod2best);
+            regularTextOutput("area", results.size(), newMethods, areaMethod2relativeQuality, areaMethod2best);
+            regularTextOutput("ratio", results.size(), newMethods, ratioMethod2relativeQuality, ratioMethod2best);
+        }
+    }
+
+    private static void findBestValues(List<String> methods,
+                                       Map<String, NumberDistribution<Double>> method2relativeQuality,
+                                       Map<String, NumberDistribution<Integer>> method2best,
+                                       Map<String, Integer> candidates) {
+        //now the reference value (as specified or best total)
+        int referenceValue = Integer.MAX_VALUE;
+        int bestValue = Integer.MAX_VALUE;
+        boolean hasReferenceValue = false;
+        for (String method : methods) {
+            Integer entry = candidates.get(method);
+            if (method.equals(ENTRIES_RELATIVE_TO)) {
+                referenceValue = entry;
+                hasReferenceValue = true;
+            }
+            bestValue = Math.min(bestValue, entry == null ? bestValue : entry);
+            if (!hasReferenceValue) {
+                referenceValue = bestValue;
+            }
+        }
+        //specify quality of everyone relative to reference value
+        for (String method : methods) {
+            Integer value = candidates.get(method);
+            if (value == null) {
+                continue;
+            }
+            method2best.get(method).add(value == bestValue ? 1 : 0);
+            //we treat reference value == 0 as reference value == 1 to avoid a relative value of infinity
+            method2relativeQuality.get(method).add(
+                    value == 0 ? 1.0 : referenceValue == 0 ? value : (double) value / (double) referenceValue);
         }
     }
 
@@ -330,132 +474,6 @@ public class CsvDataExtraction {
             return s.substring(0, s.length() - "-width".length());
         }
         return s;
-    }
-
-    private static void evaluateSpace(List<Map<String, NumberDistribution<Integer>>> results,
-                                      Collection<String> methods) {
-        int scaleDownDivisor = 1; //1000;
-        List<String> newMethods = new ArrayList<>(methods.size());
-        for (String method : methods) {
-            if (method.contains("-ratio") || method.contains("-area")) {
-                continue;
-            }
-            String newMethod = withoutWidthOrHeight(method);
-            if (!newMethods.contains(newMethod)) {
-                newMethods.add(newMethod);
-            }
-        }
-
-        //compute resulting values
-        Map<String, NumberDistribution<Double>> areaMethod2relativeQuality = new LinkedHashMap<>();
-        Map<String, NumberDistribution<Integer>> areaMethod2best = new LinkedHashMap<>();
-        Map<String, NumberDistribution<Double>> ratioMethod2relativeQuality = new LinkedHashMap<>();
-        Map<String, NumberDistribution<Integer>> ratioMethod2best = new LinkedHashMap<>();
-        for (String method : newMethods) {
-            areaMethod2relativeQuality.put(method, new NumberDistribution<>());
-            areaMethod2best.put(method, new NumberDistribution<>());
-            ratioMethod2relativeQuality.put(method, new NumberDistribution<>());
-            ratioMethod2best.put(method, new NumberDistribution<>());
-        }
-
-        //for each graph do evaluation, add it to all methods
-        for (Map<String, NumberDistribution<Integer>> result : results) {
-            Map<String, NumberDistribution<Integer>> width = new LinkedHashMap<>();
-            Map<String, NumberDistribution<Integer>> height = new LinkedHashMap<>();
-            for (String method : newMethods) {
-                width.put(method, new NumberDistribution<>());
-                height.put(method, new NumberDistribution<>());
-            }
-
-            Map<String, Integer> candidatesArea = new LinkedHashMap<>(newMethods.size());
-            Map<String, Double> candidatesRatio = new LinkedHashMap<>(newMethods.size());
-            //first find best of each individual method
-            for (String method : methods) {
-                if (method.contains("-width")) {
-                    width.put(withoutWidthOrHeight(method), result.get(method));
-                }
-                else if (method.contains("-height")) {
-                    height.put(withoutWidthOrHeight(method), result.get(method));
-                }
-            }
-            for (String method : newMethods) {
-                NumberDistribution<Integer> w = width.get(method);
-                NumberDistribution<Integer> h = height.get(method);
-                if (w == null || h == null) {
-                    continue;
-                }
-                for (int i = 0; i < w.size(); i++) {
-                    int area = (w.get(i) / scaleDownDivisor) * (h.get(i) / scaleDownDivisor);
-                    candidatesArea.put(method, area);
-                    double ratio = (double) w.get(i) / (double) h.get(i);
-                    candidatesRatio.put(method, ratio);
-                }
-            }
-            //now the best total
-            int bestArea = Integer.MAX_VALUE;
-            int referenceArea = Integer.MAX_VALUE;
-            boolean hasReferenceValue = false;
-            for (String method : newMethods) {
-                Integer entry = candidatesArea.get(method);
-                if (method.equals(ENTRIES_RELATIVE_TO)) {
-                    referenceArea = entry;
-                    hasReferenceValue = true;
-                }
-                bestArea = Math.min(bestArea, entry == null ? bestArea : entry);
-                if (!hasReferenceValue) {
-                    referenceArea = bestArea;
-                }
-
-            }
-            //specify quality of everyone relative to best
-            for (String method : newMethods) {
-                Integer valueArea = candidatesArea.get(method);
-                if (valueArea == null) {
-                    continue;
-                }
-                areaMethod2best.get(method).add(valueArea == bestArea ? 1 : 0);
-                //we treat reference value == 0 as reference value == 1 to avoid a relative value of infinity
-                areaMethod2relativeQuality.get(method).add(valueArea == 0 ? 1.0 :
-                        referenceArea == 0 ? valueArea : (double) valueArea / (double) referenceArea);
-            }
-            //now the best total
-            double bestRatio = Double.POSITIVE_INFINITY;
-            double referenceRatio = Double.POSITIVE_INFINITY;
-            hasReferenceValue = false;
-            for (String method : newMethods) {
-                Double entry = candidatesRatio.get(method);
-                if (method.equals(ENTRIES_RELATIVE_TO)) {
-                    referenceRatio = entry;
-                    hasReferenceValue = true;
-                }
-                bestRatio =
-                        1.0 + Math.min(Math.abs(bestRatio - 1.0), Math.abs((entry == null ? bestRatio : entry) - 1.0));
-                if (!hasReferenceValue) {
-                    referenceRatio = bestRatio;
-                }
-            }
-            //specify quality of everyone relative to best
-            for (String method : newMethods) {
-                Double valueRatio = candidatesRatio.get(method);
-                if (valueRatio == null) {
-                    continue;
-                }
-                ratioMethod2best.get(method).add(valueRatio == bestRatio ? 1 : 0);
-                //we treat reference value == 0 as reference value == 1 to avoid a relative value of infinity
-                ratioMethod2relativeQuality.get(method).add(valueRatio == 1.0 ? 1.0 :
-                        valueRatio >= 1 ? valueRatio / referenceRatio : referenceRatio / valueRatio);
-            }
-        }
-
-        //text output
-        if (TABLE_CONTENT_OUTPUT) {
-            tableTextOutput("area", newMethods, areaMethod2relativeQuality, areaMethod2best);
-            tableTextOutput("ratio", newMethods, ratioMethod2relativeQuality, ratioMethod2best);
-        }
-        else {
-            regularTextOutput("area", results.size(), newMethods, areaMethod2relativeQuality, areaMethod2best);
-            regularTextOutput("ratio", results.size(), newMethods, ratioMethod2relativeQuality, ratioMethod2best);
-        }
     }
 
     private static Map<String, NumberDistribution<Integer>> readFile (String filePath, String testCase) {
