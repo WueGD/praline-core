@@ -29,7 +29,15 @@ public class CsvDataExtraction {
 //                    "2021-01-29_04-47-27"; //regular run with intermediate layers being removed in EdgeRouting
 //                    "2021-01-29_13-59-15"; //rr with preference of edges non-incident to turning dummies in NodePlacement
 //                    "2021-02-01_02-14-59"; //rr with extra layer sweep vertex sorting phase after fixing port positions
-                    "2021-02-02_02-14-46"; //rr with changes in NodePlacement to prefer longer edges in making them straight
+//                    "2021-02-02_02-14-46"; //rr with changes in NodePlacement to prefer longer edges in making them straight
+//                    "2021-02-03_04-51-33"; //rr with final sorting + in CM with assignment acc. to other side ports
+//                    "2021-02-03_14-54-05"; //same as above but only 1 run (1 run is new default also for the next)
+//                    "2021-02-03_19-32-04"; //rr with final sorting + in CM with keeping nodes w/o edges at curr pos [CURRENT BEST]
+//                    "2021-02-04_00-16-18"; //same as before but with computing pseudo barycenters from curr pos for nodes w/o edges
+//                    "2021-02-04_00-45-10"; //same as 2 before but w/o final sorting
+//                    "2021-02-04_01-06-35"; //same as 2 before but w/o final sorting
+//                    "2021-02-04_01-30-09"; //same as 4 above but with also ignoring nodes with multiple port groups in port sorting
+                    "2021-02-04_02-27-04"; //same as 4 above but with also ignoring nodes with multiple port groups in port sorting
 
     private static final String[] DATA_DIRS =
             {

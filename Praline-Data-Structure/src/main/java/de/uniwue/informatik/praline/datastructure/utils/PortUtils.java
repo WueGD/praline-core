@@ -107,6 +107,26 @@ public class PortUtils {
         }
     }
 
+    public static List<PortGroup> getAllRecursivelyContainedPortGroups(Vertex vertex) {
+        ArrayList<PortGroup> allPortGroups = new ArrayList<>();
+        for (PortComposition portComposition : vertex.getPortCompositions()) {
+            allPortGroups.addAll(getAllRecursivelyContainedPortGroups(portComposition));
+        }
+        return allPortGroups;
+    }
+
+    public static List<PortGroup> getAllRecursivelyContainedPortGroups(PortComposition portComposition) {
+        if (portComposition instanceof PortGroup) {
+            ArrayList<PortGroup> allPortGroups = new ArrayList<>();
+            allPortGroups.add((PortGroup) portComposition);
+            for (PortComposition containedPC : ((PortGroup) portComposition).getPortCompositions()) {
+                allPortGroups.addAll(getAllRecursivelyContainedPortGroups(containedPC));
+            }
+            return allPortGroups;
+        }
+        return Collections.emptyList();
+    }
+
     public static PortComposition getLeastCommonAncestor(PortComposition port0, PortComposition port1) {
         if (port0 == null || port1 == null) {
             return null;

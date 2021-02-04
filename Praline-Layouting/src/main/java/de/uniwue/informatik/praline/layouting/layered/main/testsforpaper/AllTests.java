@@ -49,7 +49,7 @@ public class AllTests {
 
     private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 1; //5; //10; //50 //200
 
-    private static final int NUMBER_OF_CROSSING_REDUCTION_ITERATIONS = 3; //10; //5; //50
+    private static final int NUMBER_OF_CROSSING_REDUCTION_ITERATIONS = 1; //3; //10; //5; //50
 
 
 

@@ -68,8 +68,21 @@ public class CrossingMinimization {
 
         //do sweeping and allow movement of ports
         doSweeping(handlePortPairings, true);
+        //do several iterations because these 2 steps influence each other
+        int iterations = 2;
+        for (int i = 0; i < iterations; i++) {
+            handleTurningVerticesFinally(true);
+            orderPortsFinally(i % 2 == 0, i == iterations - 1, handlePortPairings, false);
+        }
+//      handleTurningVerticesFinally(true);
+
         //do sweeping while fixing the order of ports, this also eliminates multiple crossings of the same pair of edges
-        doSweeping(handlePortPairings, false);
+        doSweeping(false, false);
+        iterations = 2;
+        for (int i = 0; i < iterations; i++) {
+            orderPortsFinally(i % 2 == 0, true, false, true);
+        }
+
 
         return this.orders;
     }
@@ -171,37 +184,71 @@ public class CrossingMinimization {
                 int rank = Math.abs(directedRank);
                 boolean upwards = directedRank > 0;
                 List<SortingNode> currentLayer = getSortingNodeLayer(rank, upwards);
-                List<SortingNode> adjacentPreviousLayer = getSortingNodeLayer(rank + (upwards ? -1 :  1), !upwards);
+                List<SortingNode> currentLayerWithEdges = new ArrayList<>(currentLayer.size());
+                List<SortingNode> adjacentPreviousLayer = getSortingNodeLayer(rank + (upwards ? -1 : 1), !upwards);
+//                int rankNextLayer = rank + (upwards ? 1 : -1);
+//                List<SortingNode> adjacentNextLayer = rankNextLayer < 0 || maxRank <= rankNextLayer ? null :
+//                        getSortingNodeLayer(rankNextLayer, upwards);
 
                 Map<SortingNode, Double> barycenters = new LinkedHashMap<>();
-                for (SortingNode node : currentLayer) {
+                List<SortingNode> deadEnds = new ArrayList<>(); //nodes without edges in the considered direction
+                List<Integer> currPositionsOfDeadEnds = new ArrayList<>();
+//                Map<SortingNode, Double> barycentersFromOtherSide = new LinkedHashMap<>(); //we use barycenters from
+                // the wrong direction as a second criterion for nodes that don't have edges in the considered direction
+                for (int i = 0; i < currentLayer.size(); i++) {
+                    SortingNode node = currentLayer.get(i);
+                    //barycenter in considered direction
                     double barycenter = getBarycenter(node, adjacentPreviousLayer);
-                    //special case: if node has no neighbor in adjacent layer, that is when its barycenter is set to
-                    // NaN (because of division by zero [vertices]), then...
-                    // 1.) try to get its position relative to the other side, i.e., the next level
-                    // and if this is also NaN, then...
-                    // 2.) keep its old position.
-                    //
-                    // In any case normalize these barycenters by the size of the previous layer
-                    //TODO: commented out for now, investigate this further later. These type of vertices seem to
-                    // have the largest effect on affecting many crossings
-//                    if (Double.isNaN(barycenter)) {
-//                        int rankNextSide = rank + (upwards ? 1 : -1);
-//                        List<SortingNode> adjacentNextLayer = rankNextSide < 0 || maxRank <= rankNextSide ?
-//                                Collections.emptyList() : getSortingNodeLayer(rankNextSide, upwards);
-//                        barycenter = getBarycenter(node, adjacentNextLayer)  / (double) (adjacentNextLayer.size())
+                    if (Double.isNaN(barycenter)) {
+                        deadEnds.add(node);
+                        currPositionsOfDeadEnds.add(i);
+                    } else {
+                        currentLayerWithEdges.add(node);
+                    }
+//                    //we don't consider the barycenter in wrong direction if it is an outer layer or if it is the
+//                    // very first top-down swipe
+//                    if (adjacentNextLayer == null || (currentIteration == 0 && directedRank <= 0)) {
+//                        //special case: if dead end in current direction and this is the last layer, we use the current
+//                        // position as barycenter
+//                        for (SortingNode deadEnd : new ArrayList<>(deadEnds)) {
+//                            barycenter = (double) currentLayer.indexOf(node) / (double) (currentLayer.size())
 //                                * (double) (adjacentPreviousLayer.size() - 1);
-
-
-                        if (Double.isNaN(barycenter)) {
-                                barycenter = (double) currentLayer.indexOf(node) / (double) (currentLayer.size())
-                                * (double) (adjacentPreviousLayer.size() - 1);
-                        }
+//                            currentLayerWithEdges.add(deadEnds.get(0));
+//                            deadEnds.remove(0);
+//                        }
+//                    }
+//                    else {
+//                        //barycenter in wrong direction
+//                        double barycenterFromOtherSide = getBarycenter(node, adjacentNextLayer);
+//                        if (Double.isNaN(barycenterFromOtherSide)) {
+//                            //special case: if dead end in wrong direction, use current position as barycenter
+//                            barycenterFromOtherSide = (double) currentLayer.indexOf(node) / (double) (currentLayer.size())
+//                                    * (double) (adjacentNextLayer.size() - 1);
+//                        }
+//                        barycentersFromOtherSide.put(node, barycenterFromOtherSide);
 //                    }
                     barycenters.put(node, barycenter);
                 }
-                currentLayer.sort(Comparator.comparingDouble(barycenters::get));
-                updateVerticesAndPortsOrder(rank, currentLayer, barycenters, upwards, allowPortPermuting);
+                currentLayerWithEdges.sort(Comparator.comparingDouble(barycenters::get));
+
+                List<SortingNode> combinedOrder;
+                if (!deadEnds.isEmpty()) {
+                    //TODO: make them 3 variants for the experiments!
+                    //best: integrateDeadEndsViaOldRelativePosition, worst: integrateDeadEndsViaBarycentersFromOtherSide
+                    combinedOrder =
+//                            integrateDeadEndsViaPseudoBarycenters(currentLayer, barycenters, deadEnds,
+//                                    currPositionsOfDeadEnds, currentLayer.size());
+                            integrateDeadEndsViaOldRelativePosition(
+                                   currentLayerWithEdges, deadEnds, currPositionsOfDeadEnds);
+//                            integrateDeadEndsViaBarycentersFromOtherSide(currentLayer, currentLayerWithEdges,
+//                                  deadEnds, barycentersFromOtherSide);
+                } else {
+                    //if there are no dead ends, just take the order computed before
+                    combinedOrder = currentLayerWithEdges;
+                }
+
+
+                updateVerticesAndPortsOrder(rank, combinedOrder, upwards, allowPortPermuting);
                 if (handlePortPairings && allowPortPermuting) {
                     reorderPortParingsAndTurningDummies(rank, upwards);
                 }
@@ -209,20 +256,186 @@ public class CrossingMinimization {
             }
 
             hasChanged = checkIfHasChanged(lastStepNodeOrder, lastStepTopPortOrder, lastStepBottomPortOrder,
-                    currentIteration, handlePortPairings && allowPortPermuting);
+                    currentIteration, handlePortPairings && allowPortPermuting, allowPortPermuting);
             ++currentIteration;
         }
+    }
 
-        if (allowPortPermuting) {
-            //do several iterations because these 2 steps influence each other
-            int iterations = 2;
-            for (int i = 0; i < iterations; i++) {
-                handleTurningVerticesFinally(true);
-                orderPortsFinally(i % 2 == 0, i == iterations - 1, handlePortPairings);
-//              orderPortsFinally(i % 2 != 0);
+    private List<SortingNode> integrateDeadEndsViaOldRelativePosition(List<SortingNode> currentLayerWithEdges,
+                                                                      List<SortingNode> deadEnds,
+                                                                      List<Integer> currPositionsOfDeadEnds) {
+        /*
+        this is an alternative for integrateDeadEndsViaBarycentersFromOtherSide because the latter seems to work bad in
+        practice unfortunately :(
+
+        here, if a node without edges in the considered direction was the k-th element before, we will keep it as the
+         k-th element. This also alternative to computing a barycenter for those edges just from its old position,
+         i.e., k, normalized by the size of the adjacent previous layer
+         */
+
+        List<SortingNode> combinedOrder = new ArrayList<>(currentLayerWithEdges.size() + deadEnds.size());
+        Iterator<SortingNode> nodesWithEdgesIterator = currentLayerWithEdges.iterator();
+        int indexDeadEnds = 0;
+        for (int i = 0; i < currentLayerWithEdges.size() + deadEnds.size(); i++) {
+            if (indexDeadEnds < deadEnds.size() && currPositionsOfDeadEnds.get(indexDeadEnds) == i) {
+                combinedOrder.add(deadEnds.get(indexDeadEnds));
+                ++indexDeadEnds;
             }
-//          handleTurningVerticesFinally(true);
+            else {
+                combinedOrder.add(nodesWithEdgesIterator.next());
+            }
         }
+        return combinedOrder;
+    }
+
+    private List<SortingNode> integrateDeadEndsViaPseudoBarycenters(List<SortingNode> currentLayer,
+                                                                    Map<SortingNode, Double> barycenters,
+                                                                    List<SortingNode> deadEnds,
+                                                                    List<Integer> currPositionsOfDeadEnds,
+                                                                    int sizeAdjacentPreviousLayer) {
+
+        /*
+        For comparison reasons another alternative to integrateDeadEndsViaOldRelativePosition().
+        We compute a pseudo barycenter as the current position normalized by the sizes of this layer and the adjacent
+        previous layer.
+        It was the old default before this step of the crossing minimization phase was tackeled.
+        However it works worse.
+         */
+
+        int sizeCurrentLayer = currentLayer.size();
+        for (int i = 0; i < deadEnds.size(); i++) {
+            SortingNode deadEnd = deadEnds.get(i);
+            double pseudoBarycenter = (double) currPositionsOfDeadEnds.get(i) /
+                    (double) (sizeCurrentLayer) * (double) (sizeAdjacentPreviousLayer - 1);
+            barycenters.put(deadEnd, pseudoBarycenter);
+        }
+
+        currentLayer.sort(Comparator.comparingDouble(barycenters::get));
+        return currentLayer;
+    }
+
+
+    //seems to work badly... so this was taken out again
+    private List<SortingNode> integrateDeadEndsViaBarycentersFromOtherSide(List<SortingNode> currentLayer,
+                                                                           List<SortingNode> currentLayerWithEdges,
+                                                                           List<SortingNode> deadEnds,
+                                                                           Map<SortingNode, Double> barycentersFromOtherSide) {
+
+        /*
+        In currentLayerWithEdges, there are all nodes of this layer except for the dead ends.
+        Next we have to re-insert the dead ends at "good" positions between these entries.
+        For this, we use the barycenters from the other side!
+        Each node in currentLayerWithEdges has such a value. The intermediate insertion positions get a value
+        computed by the weighted average of the barycenterFromOtherSides-entries of the nodes in
+        currentLayerWithEdges. The weight is (1/2)^d, where d is the distance to the insertion position
+        (minimum is d=0, so weight = 1, then weight 1/2, weight 1/4 and so on).
+        If we would compute this value using all entries, we need quadratic time. We speed this up by considering
+        only k neighbors to the left and to the right (eg k=10) and then this can be done in linear time.
+
+        For all dead ends we have a barycenterFromTheOtherSide. We take that value and compare it to the
+        potential insertion position values. We insert a dead end at the place it has the minimum difference.
+        For multiple dead ends at the same position, we sort them in- or decreasingly depending on the size
+        of the previous/next insertion position.
+         */
+
+        List<Double> currentLayerBarycentersFromOtherSide = new ArrayList<>(currentLayerWithEdges.size());
+        for (SortingNode node : currentLayerWithEdges) {
+            currentLayerBarycentersFromOtherSide.add(barycentersFromOtherSide.get(node));
+        }
+        int k = Math.min(10, currentLayerBarycentersFromOtherSide.size()); //number of neighborhood entries to be checked
+        int ell = currentLayerWithEdges.size() + 1; //number of insertion positions
+        List<Double> insertionPositionValues = new ArrayList<>(ell);
+        for (int i = 0; i < ell; i++) {
+            double sum = 0; //s_i (value of the insertion position) to be computed
+            for (int j = Math.max(0, i - k); j < Math.min(ell - 1, i + k); j++) {
+                sum += currentLayerBarycentersFromOtherSide.get(j) * w(i, j, k) * b(i, j, ell);
+            }
+            insertionPositionValues.add(sum);
+        }
+        //now find insertion positions for dead ends
+        Map<Integer, List<SortingNode>> insertionPosition2deadEnd = new LinkedHashMap<>();
+        for (SortingNode deadEnd : deadEnds) {
+            double barycenterFromOtherSide = barycentersFromOtherSide.get(deadEnd);
+            //find min difference
+            double minDiff = Double.POSITIVE_INFINITY;
+            int idealInsertionPosition = 0;
+            for (int i = 0; i < ell; i++) {
+                double diff = Math.abs(barycenterFromOtherSide - insertionPositionValues.get(i));
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    idealInsertionPosition = i;
+                }
+            }
+            //remember for ideal insertion position
+            insertionPosition2deadEnd.putIfAbsent(idealInsertionPosition, new ArrayList<>());
+            insertionPosition2deadEnd.get(idealInsertionPosition).add(deadEnd);
+        }
+        //now combine currentLayerBarycentersFromOtherSide with dead ends
+        List<SortingNode> combinedOrder = new ArrayList<>(currentLayer.size());
+        for (int i = 0; i < ell; i++) {
+            List<SortingNode> deadEndsAtI = insertionPosition2deadEnd.get(i);
+            if (deadEndsAtI != null) {
+                if (deadEndsAtI.size() > 1) {
+                    //sort it a- or descending depending on the neighboring entries of
+                    // currentLayerBarycentersFromOtherSide
+                    int startIndex = i == 0 ? 0 : i == ell - 1 ? ell - 3 : i - 1;
+                    boolean ascending = (currentLayerBarycentersFromOtherSide.size() <= 1) ||
+                            (currentLayerBarycentersFromOtherSide.get(startIndex) <
+                                    currentLayerBarycentersFromOtherSide.get(startIndex + 1));
+                    if (ascending) {
+                        deadEndsAtI.sort(Comparator.comparingDouble(barycentersFromOtherSide::get));
+                    } else {
+                        deadEndsAtI.sort(Comparator.comparingDouble(barycentersFromOtherSide::get).reversed());
+                    }
+                }
+                combinedOrder.addAll(deadEndsAtI);
+            }
+            if (i < ell - 1) {
+                combinedOrder.add(currentLayerWithEdges.get(i));
+            }
+        }
+        return combinedOrder;
+    }
+
+    /**
+     *
+     * @param i
+     * @param j
+     * @param k
+     * @return
+     *      weight of this entry
+     */
+    private double w(int i, int j, int k) {
+        return Math.pow(2.0, (k - d(i, j) - 2)) / (Math.pow(2.0, k) - 1);
+    }
+
+    /**
+     *
+     * @param i
+     * @param j
+     * @return
+     *      distance between i and j with different behavior for j < i and i <= j
+     */
+    private double d(int i, int j) {
+        if (j < i) {
+            return (double) (i - j - 1);
+        }
+        return (double) (j - i);
+    }
+
+    /**
+     *
+     * @param i
+     * @param j
+     * @param ell
+     * @return
+     *      whether with same distance as j to i but on the other side of i exists (return 1.0 if yes, return 2.0 if no)
+     */
+    private double b(int i, int j, int ell) {
+        if (2 * i - j - 1 >= 0 && 2 * i - j < ell) {
+            return 1.0;
+        }
+        return 2.0;
     }
 
     private void placeTurningDummiesNextToTheirVertices() {
@@ -381,31 +594,29 @@ public class CrossingMinimization {
         return layerList;
     }
 
-    private void updateVerticesAndPortsOrder(int layerIndex, List<SortingNode> currentLayer,
-                                             Map<SortingNode, Double> barycenters, boolean upwards,
+    private void updateVerticesAndPortsOrder(int layerIndex, List<SortingNode> newOrdering, boolean upwards,
                                              boolean allowPortMovement) {
-        //bring vertices together acc. to the previously compute barycenters
+        //bring vertices together acc. to the previously computed barycenters
         List<Vertex> verticesOfLayer = new ArrayList<>();
         List<Port> portOrdering = new ArrayList<>();
         Map<Vertex, Double> barycenterSum = new LinkedHashMap<>();
         Map<Vertex, Integer> counter = new LinkedHashMap<>();
-        for (SortingNode node : currentLayer) {
+        for (int i = 0; i < newOrdering.size(); i++) {
+            SortingNode node = newOrdering.get(i);
             Object nodeObject = node.getStoredObject();
             if (nodeObject instanceof Vertex) {
                 verticesOfLayer.add((Vertex) nodeObject);
-                barycenterSum.put((Vertex) nodeObject, barycenters.get(node));
+                barycenterSum.put((Vertex) nodeObject, (double) i);
                 counter.put((Vertex) nodeObject, 1);
-            }
-            else if (nodeObject instanceof Port) {
+            } else if (nodeObject instanceof Port) {
                 portOrdering.add((Port) nodeObject);
                 Vertex vertex = ((Port) nodeObject).getVertex();
                 if (!barycenterSum.containsKey(vertex)) {
                     verticesOfLayer.add(vertex);
-                    barycenterSum.put(vertex, barycenters.get(node));
+                    barycenterSum.put(vertex, (double) i);
                     counter.put(vertex, 1);
-                }
-                else {
-                    barycenterSum.replace(vertex, barycenterSum.get(vertex) + barycenters.get(node));
+                } else {
+                    barycenterSum.replace(vertex, barycenterSum.get(vertex) + (double) i);
                     counter.replace(vertex, counter.get(vertex) + 1);
                 }
             }
@@ -419,7 +630,7 @@ public class CrossingMinimization {
             for (Vertex vertex : verticesOfLayer) {
                 if (considerPortsOfNode(vertex)) {
                     List<Port> portsOfVertex =
-                            orderPortsConstraintToPortGroups(portOrdering, vertex.getPortCompositions(), true);
+                            orderPortsConstraintToPortGroups(portOrdering, vertex.getPortCompositions(), allowPortMovement);
                     if (upwards) {
                         orders.getBottomPortOrder().replace(vertex, portsOfVertex);
                     } else {
@@ -433,7 +644,7 @@ public class CrossingMinimization {
     private boolean checkIfHasChanged(List<List<Vertex>> lastStepNodeOrder,
                                       Map<Vertex, List<Port>> lastStepTopPortOrder,
                                       Map<Vertex, List<Port>> lastStepBottomPortOrder, int currentIteration,
-                                      boolean handlePortPairings) {
+                                      boolean handlePortPairings, boolean allowPortPermuting) {
         // todo: number of iterations is calculated arbitrarily - adapt if necessary - lower in case of runtime issues
         int numberOfIterations = (orders.getNodeOrder().size());
         boolean hasChanged = false;
@@ -460,7 +671,7 @@ public class CrossingMinimization {
             // todo: in case of runtime issues change to more intelligent counting method
             SortingOrder currentOrderCopy = new SortingOrder(orders);
             orderPortsFinally(currentOrderCopy.getTopPortOrder(), currentOrderCopy.getBottomPortOrder(),false, true,
-                    false, handlePortPairings);
+                    false, handlePortPairings, allowPortPermuting);
             int newNumberOfCrossings = sugy.countCrossings(currentOrderCopy);
             if (newNumberOfCrossings < numberOfCrossings) {
                 numberOfCrossings = newNumberOfCrossings;
@@ -651,14 +862,15 @@ public class CrossingMinimization {
                  (port0.getPortGroup() == null || !port0.getPortGroup().isOrdered());
     }
 
-    private void orderPortsFinally(boolean upwards, boolean isFinalSorting, boolean handlePortPairings) {
+    private void orderPortsFinally(boolean upwards, boolean isFinalSorting, boolean handlePortPairings,
+                                   boolean ignoreNodesWithPairings) {
         orderPortsFinally(this.orders.getTopPortOrder(), this.orders.getBottomPortOrder(), true, upwards, isFinalSorting,
-                handlePortPairings);
+                handlePortPairings, ignoreNodesWithPairings);
     }
 
     private void orderPortsFinally(Map<Vertex, List<Port>> currentTPortOrder, Map<Vertex, List<Port>> currentBPortOrder,
                                    boolean updateCurrentValues, boolean upwards, boolean isFinalSorting,
-                                   boolean handlePortPairings) {
+                                   boolean handlePortPairings, boolean ignoreNodesWithPairings) {
         List<Map<Vertex, List<Port>>> portOrdersToBeSorted = Arrays.asList(currentBPortOrder, currentTPortOrder);
 
         List<List<Vertex>> nodeOrder = new ArrayList<>(orders.getNodeOrder());
@@ -669,6 +881,9 @@ public class CrossingMinimization {
             for (Vertex node : layer) {
                 //do not sort ports of turning dummies, this will be done by handleTurningVerticesFinally()
                 if (sugy.isDummyTurningNode(node)) {
+                    continue;
+                }
+                if (ignoreNodesWithPairings && sugy.isPlug(node)) {
                     continue;
                 }
                 for (Map<Vertex, List<Port>> currentPortOrderMap : portOrdersToBeSorted) {
