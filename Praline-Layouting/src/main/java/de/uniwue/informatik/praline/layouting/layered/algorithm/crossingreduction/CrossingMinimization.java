@@ -912,9 +912,9 @@ public class CrossingMinimization {
         }
     }
 
-    private void movePortsAdjacentToDummyTurningPoints(Vertex node, List<Vertex> layer,
-                                                       Map<Vertex, List<Port>> currentBPortOrder,
-                                                       Map<Vertex, List<Port>> currentTPortOrder) {
+    private void movePortsAdjacentToTurningDummy(Vertex node, List<Vertex> layer,
+                                                 Map<Vertex, List<Port>> currentBPortOrder,
+                                                 Map<Vertex, List<Port>> currentTPortOrder) {
 
         List<Port> bottomOrder = currentBPortOrder.get(node);
         List<Port> topOrder = currentTPortOrder.get(node);
@@ -1517,7 +1517,7 @@ public class CrossingMinimization {
                 else {
                     //move dummy turning points to the outsides
                     if (movePortsAdjToTurningDummiesToTheOutside) {
-                        movePortsAdjacentToDummyTurningPoints(node, orders.getNodeOrder().get(rank), orders.getBottomPortOrder(),
+                        movePortsAdjacentToTurningDummy(node, orders.getNodeOrder().get(rank), orders.getBottomPortOrder(),
                                 orders.getTopPortOrder());
                     }
 

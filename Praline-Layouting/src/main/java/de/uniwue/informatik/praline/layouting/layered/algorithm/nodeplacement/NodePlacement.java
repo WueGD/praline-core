@@ -11,6 +11,7 @@ import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
+import edu.uci.ics.jung.graph.util.Pair;
 
 import java.util.*;
 
@@ -474,61 +475,74 @@ public class NodePlacement {
         }
     }
 
+    //Alg. 3b (alternative) from Brandes, Walter, Zink - Erratum: Fast and Simple Horizontal Coordinate Assignment
+    // https://arxiv.org/abs/2008.01252
     private void horizontalCompaction() {
-        for (List<Port> list : structure) {
-            for (Port v : list) {
-                if (portValues.get(v).getRoot().equals(v)) {
-                    placeBlock(v);
+        // coordinates relative to sink
+        for (List<Port> layer : structure) {
+            for (Port portV : layer) {
+                if (portValues.get(portV).getRoot().equals(portV)) {
+                    placeBlock(portV);
                 }
             }
         }
-        // compute x values
-        for (List<Port> list : structure) {
-            for (Port v : list) {
-                portValues.get(v).setX(portValues.get(portValues.get(v).getRoot()).getX());
-            }
-        }
-        // fix shift values
+        //class offsets
+        List<List<Pair<Port>>> neighborings = new ArrayList<>(structure.size());
         for (int i = 0; i < structure.size(); i++) {
-            setShift(structure.get(i).get(0));
+            neighborings.add(new ArrayList<>());
         }
-        // do shift
-        for (List<Port> list : structure) {
-            for (Port v : list) {
-                Double shift = portValues.get(portValues.get(portValues.get(v).getRoot()).getSink()).getGlobalShift();
-                if (shift < Double.MAX_VALUE) {
-                    portValues.get(v).setX(portValues.get(v).getX() + shift);
+
+        //find all neighborings
+        for (List<Port> layer : structure) {
+            for (int j = layer.size() - 1; j > 0; j--) {
+                Port portVj = layer.get(j);
+                Port portVjMinus1 = layer.get(j - 1);
+                PortValues vJ = this.portValues.get(portVj);
+                PortValues vJMinus1 = this.portValues.get(portVjMinus1);
+                if (!vJMinus1.getSink().equals(vJ.getSink())) {
+                    int layerOfSink = portValues.get(vJ.getSink()).getLayer();
+                    neighborings.get(layerOfSink).add(new Pair<>(portVjMinus1, portVj));
                 }
+            }
+        }
+
+        //apply shift for all neighborings
+        for (int i = 0; i < structure.size(); i++) {
+            List<Port> layer = structure.get(i);
+            Port portV1 = layer.get(0);
+            PortValues v1 = this.portValues.get(portV1);
+            Port portSinkV1 = v1.getSink();
+            PortValues sinkV1 = portValues.get(portSinkV1);
+            if (sinkV1.getShift() == Double.POSITIVE_INFINITY) {
+                sinkV1.setShift(0);
+            }
+            for (Pair<Port> neighboring : neighborings.get(i)) {
+                //load variables involved
+                Port portU = neighboring.getFirst();
+                PortValues u = this.portValues.get(portU);
+                Port portV = neighboring.getSecond();
+                PortValues v = this.portValues.get(portV);
+                Port portSinkU = u.getSink();
+                PortValues sinkU = this.portValues.get(portSinkU);
+                Port portSinkV = v.getSink();
+                PortValues sinkV = this.portValues.get(portSinkV);
+
+                //apply shift
+                sinkU.setShift(Math.min(sinkU.getShift(), sinkV.getShift() + v.getX() - (u.getX() + delta)));
+            }
+        }
+
+        //absolute coordinates
+        for (List<Port> layer : structure) {
+            for (Port portV : layer) {
+                PortValues v = this.portValues.get(portV);
+                Port portSinkV = v.getSink();
+                PortValues sinkV = this.portValues.get(portSinkV);
+                v.setX(v.getX() + sinkV.getShift());
             }
         }
     }
 
-    // compute global shift
-    private void setShift (Port v) {
-        // if node is sink and shift is not set
-        if (portValues.get(v).getRoot().equals(v) && !(portValues.get(v).getGlobalShift() < Double.MAX_VALUE)) {
-            double shift = Double.MAX_VALUE;
-            // compute shift value to all other nodes it has one to
-            for (Map.Entry<Port, Double> entry : portValues.get(v).getShift().entrySet()) {
-                Port u = entry.getKey();
-                Double shiftU = portValues.get(u).getGlobalShift();
-                Double newShift;
-                if (shiftU < Double.MAX_VALUE) {
-                    newShift = (entry.getValue() + shiftU);
-                } else {
-                    newShift = entry.getValue();
-                }
-                if (shift < Double.MAX_VALUE) {
-                    shift = Math.min(shift, newShift);
-                } else {
-                    shift = newShift;
-                }
-            }
-            portValues.get(v).setGlobalShift(shift);
-        }
-    }
-
-    // method placeBlock from paper
     private void placeBlock(Port portV) {
         PortValues v = portValues.get(portV);
         if (v.getX() == Double.MIN_VALUE) {
@@ -543,15 +557,20 @@ public class NodePlacement {
                     if (v.getSink().equals(portV)) {
                         v.setSink(u.getSink());
                     }
-                    if (!v.getSink().equals(u.getSink())) {
-                        portValues.get(u.getSink()).addShift((v.getX() - u.getX() - delta), v.getSink());
-                    } else {
+                    if (v.getSink().equals(u.getSink())) {
                         v.setX(Math.max(v.getX(),(u.getX() + delta)));
                     }
                 }
                 portW = w.getAlign();
                 w = portValues.get(portW);
             } while (!portW.equals(portV));
+            //align the whole block
+            while (!w.getAlign().equals(portV)) {
+                portW = w.getAlign();
+                w = portValues.get(portW);
+                w.setX(v.getX());
+                w.setSink(v.getSink());
+            }
         }
     }
 

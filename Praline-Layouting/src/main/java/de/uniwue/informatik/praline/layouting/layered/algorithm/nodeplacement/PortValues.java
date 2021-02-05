@@ -13,8 +13,7 @@ public class PortValues {
     private Port root;
     private Port predecessor;
     private Port sink;
-    private double globalShift;
-    private Map<Port, Double> shift;
+    private double shift;
     private double x;
     private int position;
     private int layer;
@@ -25,8 +24,7 @@ public class PortValues {
         this.root = port;
         this.predecessor = predecessor;
         this.sink = port;
-        this.shift = new LinkedHashMap<>();
-        this.globalShift = Double.MAX_VALUE;
+        this.shift = Double.POSITIVE_INFINITY;
         this.position = position;
         this.layer = layer;
         this.x = Double.MIN_VALUE;
@@ -56,24 +54,12 @@ public class PortValues {
         this.sink = sink;
     }
 
-    public Map<Port, Double> getShift() {
-        return Collections.unmodifiableMap(shift);
+    public double getShift() {
+        return shift;
     }
 
-    public void addShift(double shift, Port target) {
-        if (this.shift.containsKey(target)) {
-            this.shift.replace(target, Math.min(shift, this.shift.get(target)));
-        } else {
-            this.shift.put(target, shift);
-        }
-    }
-
-    public double getGlobalShift () {
-        return globalShift;
-    }
-
-    public void setGlobalShift(double globalShift) {
-        this.globalShift = globalShift;
+    public void setShift(double newShift) {
+        shift = newShift;
     }
 
     public double getX() {
