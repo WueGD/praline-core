@@ -7,10 +7,9 @@ import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.placements.Orientation;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 import edu.uci.ics.jung.graph.util.Pair;
 
 import java.util.*;
