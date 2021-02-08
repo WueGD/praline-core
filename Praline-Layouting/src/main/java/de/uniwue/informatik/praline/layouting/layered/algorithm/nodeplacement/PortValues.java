@@ -2,55 +2,71 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm.nodeplacement;
 
 import de.uniwue.informatik.praline.datastructure.graphs.Port;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 public class PortValues {
 
     private Port port;
-    private Port align;
-    private Port root;
-    private Port predecessor;
-    private Port sink;
+    private PortValues align;
+    private PortValues root;
+    private PortValues predecessor;
+    private PortValues sink;
     private double shift;
-    private double x;
+    private double x; //x position in the current run; these are 1 of 4 intermediate run and in the end the final x pos
+    private double xValueSum; //the sum of all x positions in the intermediate runs. Used to determine the final x pos
     private int position;
     private int layer;
 
-    public PortValues(Port port, Port predecessor, int position, int layer) {
+    public PortValues(Port port) {
+        this(port, null, -1, -1);
+    }
+
+    public PortValues(Port port, PortValues predecessor, int layer, int position) {
         this.port = port;
-        this.align = port;
-        this.root = port;
         this.predecessor = predecessor;
-        this.sink = port;
-        this.shift = Double.POSITIVE_INFINITY;
-        this.position = position;
         this.layer = layer;
+        this.position = position;
+        this.xValueSum = 0;
+        resetValues();
+    }
+
+    public void lateInit(PortValues predecessor, int layer, int position) {
+        this.predecessor = predecessor;
+        this.layer = layer;
+        this.position = position;
+    }
+
+    public void resetValues() {
+        this.align = this;
+        this.root = this;
+        this.sink = this;
+        this.shift = Double.POSITIVE_INFINITY;
         this.x = Double.MIN_VALUE;
     }
 
-    public Port getAlign() {
+    public Port getPort() {
+        return port;
+    }
+
+    public PortValues getAlign() {
         return align;
     }
 
-    public void setAlign(Port align) {
+    public void setAlign(PortValues align) {
         this.align = align;
     }
 
-    public Port getRoot() {
+    public PortValues getRoot() {
         return root;
     }
 
-    public void setRoot(Port root) {
+    public void setRoot(PortValues root) {
         this.root = root;
     }
 
-    public Port getSink() {
+    public PortValues getSink() {
         return sink;
     }
 
-    public void setSink(Port sink) {
+    public void setSink(PortValues sink) {
         this.sink = sink;
     }
 
@@ -70,7 +86,15 @@ public class PortValues {
         this.x = x;
     }
 
-    public Port getPredecessor() {
+    public double getxValueSum() {
+        return xValueSum;
+    }
+
+    public void addToXValueSum(double xValueSum) {
+        this.xValueSum += xValueSum;
+    }
+
+    public PortValues getPredecessor() {
         return predecessor;
     }
 

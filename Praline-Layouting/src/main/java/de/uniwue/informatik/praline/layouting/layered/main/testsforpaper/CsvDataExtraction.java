@@ -41,7 +41,8 @@ public class CsvDataExtraction {
 //                    "2021-02-04_04-23-07"; //same as 2021-02-03_19-32-04, but dummy turning points are weighted 2:1 towards their nodes
 //                    "2021-02-05_18-44-21"; //should be the same as 2021-02-03_19-32-04 (changed only code style in NodePlacement)
 //                    "2021-02-05_19-06-26"; //same as above
-                    "2021-02-05_19-49-53"; //same as above
+//                    "2021-02-05_19-49-53"; //same as above
+                    "2021-02-08_17-53-15"; //NodePlacement without maps
 
     private static final String[] DATA_DIRS =
             {
