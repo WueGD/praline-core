@@ -2,6 +2,9 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm.nodeplacement;
 
 import de.uniwue.informatik.praline.datastructure.graphs.Port;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PortValues {
 
     private Port port;
@@ -11,7 +14,7 @@ public class PortValues {
     private PortValues sink;
     private double shift;
     private double x; //x position in the current run; these are 1 of 4 intermediate run and in the end the final x pos
-    private double xValueSum; //the sum of all x positions in the intermediate runs. Used to determine the final x pos
+    private List<Double> xValues; //all x positions in the intermediate runs.
     private int position;
     private int layer;
 
@@ -24,7 +27,7 @@ public class PortValues {
         this.predecessor = predecessor;
         this.layer = layer;
         this.position = position;
-        this.xValueSum = 0;
+        this.xValues = new ArrayList<>(4);
         resetValues();
     }
 
@@ -86,12 +89,12 @@ public class PortValues {
         this.x = x;
     }
 
-    public double getxValueSum() {
-        return xValueSum;
+    public List<Double> getXValues() {
+        return xValues;
     }
 
-    public void addToXValueSum(double xValueSum) {
-        this.xValueSum += xValueSum;
+    public void addToXValues(double xValue) {
+        this.xValues.add(xValue);
     }
 
     public PortValues getPredecessor() {

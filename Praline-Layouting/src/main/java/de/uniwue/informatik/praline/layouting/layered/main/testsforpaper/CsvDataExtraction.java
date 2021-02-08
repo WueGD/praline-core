@@ -42,7 +42,8 @@ public class CsvDataExtraction {
 //                    "2021-02-05_18-44-21"; //should be the same as 2021-02-03_19-32-04 (changed only code style in NodePlacement)
 //                    "2021-02-05_19-06-26"; //same as above
 //                    "2021-02-05_19-49-53"; //same as above
-                    "2021-02-08_17-53-15"; //NodePlacement without maps
+//                    "2021-02-08_17-53-15"; //NodePlacement without maps
+                    "2021-02-08_18-55-28"; //in NodePlacement average of 2 median x-coordinates (instead of all 4 x-coordinates)
 
     private static final String[] DATA_DIRS =
             {

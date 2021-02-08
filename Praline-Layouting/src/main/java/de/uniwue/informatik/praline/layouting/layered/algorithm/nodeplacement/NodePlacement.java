@@ -56,8 +56,8 @@ public class NodePlacement {
                 case 2:
                     for (List<PortValues> order : structure) {
                         Collections.reverse(order);
-                        initializePortValueParams();
                     }
+                    initializePortValueParams();
                     break;
                 case 1:
                     //same as case 3
@@ -71,6 +71,8 @@ public class NodePlacement {
             handleCrossings();
             // make compact
             horizontalCompaction();
+            // change to positive x-values and align to smallest width
+            makePositiveAndAligned(i);
             // add to xValues
             switch (i) {
                 case 0:
@@ -78,7 +80,7 @@ public class NodePlacement {
                 case 1:
                     for (List<PortValues> portLayer : structure) {
                         for (PortValues portValues : portLayer) {
-                            portValues.addToXValueSum(portValues.getX());
+                            portValues.addToXValues(portValues.getX());
                         }
                     }
                     break;
@@ -87,7 +89,7 @@ public class NodePlacement {
                 case 3:
                     for (List<PortValues> portLayer : structure) {
                         for (PortValues portValues : portLayer) {
-                            portValues.addToXValueSum(-portValues.getX());
+                            portValues.addToXValues(-portValues.getX());
                         }
                     }
             }
@@ -95,7 +97,10 @@ public class NodePlacement {
         //set final x
         for (List<PortValues> portLayer : structure) {
             for (PortValues portValues : portLayer) {
-                portValues.setX(portValues.getxValueSum() / 4.0);
+                //find 2 medians of the 4 entries and take their avarage
+                List<Double> xValues = portValues.getXValues();
+                xValues.sort(Double::compareTo);
+                portValues.setX((xValues.get(1) + xValues.get(2)) / 2.0);
             }
         }
         // bring back original order
@@ -103,8 +108,6 @@ public class NodePlacement {
             Collections.reverse(order);
             initializePortValueParams();
         }
-        // change to positive x-values
-        makePositive();
 
         reTransformStructure(false);
 
@@ -575,35 +578,55 @@ public class NodePlacement {
         }
     }
 
-    private void makePositive() {
-        //double shift = 0.0;
-        //for (int layer = 0; layer < structure.size(); layer++) {
-        //    Port potentialSink = structure.get(layer).get(0);
-        //    if (portValues.get(potentialSink).getSink().equals(potentialSink)) {
-        //        shift += portValues.get(potentialSink).getShift();
-        //        portValues.get(potentialSink).setShift(shift);
-        //    }
-        //}
+    private void makePositiveAndAligned(int iteration) {
+        double maxXCorrespondingRun = Double.NEGATIVE_INFINITY;
 
-        double minX = Double.MAX_VALUE;
+        double minX = Double.POSITIVE_INFINITY;
+        double maxX = Double.NEGATIVE_INFINITY;
 
         for (List<PortValues> portLayer : structure) {
             for (PortValues portValues : portLayer) {
                 if (portValues.getX() < minX) {
                     minX = portValues.getX();
                 }
-            }
-        }
-        if (minX < 0) {
-            for (List<PortValues> portLayer : structure) {
-                for (PortValues portValues : portLayer) {
-                    portValues.setX(portValues.getX() - minX + 10);
+                if (portValues.getX() > maxX) {
+                    maxX = portValues.getX();
+                }
+                if (iteration == 3) { //the last 2 must be right aligned, so we must track the extend of the 2nd
+                    double correspondingX = portValues.getXValues().get(iteration - 1);
+                    if (correspondingX > maxXCorrespondingRun) {
+                        maxXCorrespondingRun = correspondingX;
+                    }
                 }
             }
-        } else {
+        }
+
+        //first shift acc to minX
+        double xShiftValue =
+                -minX + drawInfo.getPortSpacing() + drawInfo.getBorderWidth() + drawInfo.getEdgeDistanceHorizontal();
+        maxX += xShiftValue;
+        for (List<PortValues> portLayer : structure) {
+            for (PortValues portValues : portLayer) {
+                portValues.setX(portValues.getX() + xShiftValue);
+            }
+        }
+
+        //now align this or the previous depending on iteration and on the width
+        //we align the 0th and 1st to the left (this is already done by shifting it to postive values) and we align
+        // the 2nd and 3rd to the right of the smaller one; for that we must record the extensions of the 2nd and 3rd
+        // run
+        if (iteration == 3 && maxX != maxXCorrespondingRun) {
+            boolean prevIsSmaller = maxXCorrespondingRun < maxX;
+            double xAlignShiftValue = maxXCorrespondingRun - maxX;
+
+
             for (List<PortValues> portLayer : structure) {
                 for (PortValues portValues : portLayer) {
-                    portValues.setX(portValues.getX() + 10);
+                    if (prevIsSmaller) {
+                        portValues.setX(portValues.getX() + xAlignShiftValue);
+                    } else {
+                        portValues.getXValues().set(2, portValues.getXValues().get(2) - xAlignShiftValue);
+                    }
                 }
             }
         }
