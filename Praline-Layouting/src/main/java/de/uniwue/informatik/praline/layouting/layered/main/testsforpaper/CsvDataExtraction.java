@@ -36,14 +36,18 @@ public class CsvDataExtraction {
 //                    "2021-02-04_00-16-18"; //same as before but with computing pseudo barycenters from curr pos for nodes w/o edges
 //                    "2021-02-04_00-45-10"; //same as 2 before but w/o final sorting
 //                    "2021-02-04_01-06-35"; //same as 2 before but w/o final sorting
-//                    "2021-02-04_01-30-09"; //same as 4 above but with also ignoring nodes with multiple port groups in port sorting
-//                    "2021-02-04_02-27-04"; //same as 4 above but with also ignoring nodes with multiple port groups in port sorting
+//                    "2021-02-04_01-30-09"; //same as 4 before but with also ignoring nodes with multiple port groups in port sorting
+//                    "2021-02-04_02-27-04"; //same as 4 before but with also ignoring nodes with multiple port groups in port sorting
 //                    "2021-02-04_04-23-07"; //same as 2021-02-03_19-32-04, but dummy turning points are weighted 2:1 towards their nodes
 //                    "2021-02-05_18-44-21"; //should be the same as 2021-02-03_19-32-04 (changed only code style in NodePlacement)
 //                    "2021-02-05_19-06-26"; //same as above
 //                    "2021-02-05_19-49-53"; //same as above
 //                    "2021-02-08_17-53-15"; //NodePlacement without maps
-                    "2021-02-08_18-55-28"; //in NodePlacement average of 2 median x-coordinates (instead of all 4 x-coordinates)
+//                    "2021-02-08_18-55-28"; //in NodePlacement average of 2 median x-coordinates (instead of all 4 x-coordinates)
+//                    "2021-02-09_20-27-21"; //rr with smaller vertices: max stretch = 4.0
+//                    "2021-02-09_23-38-16"; //same as before but unbounded stretch
+//                    "2021-02-10_00-16-05"; //same as 2 before but gaps btw. real ports and bounding ports are not closed
+                    "2021-02-10_00-49-22"; //rr with smaller vertices: max stretch = 8.0
 
     private static final String[] DATA_DIRS =
             {

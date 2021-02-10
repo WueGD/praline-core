@@ -25,10 +25,13 @@ public class NodePlacement {
     private Vertex dummyVertex;
     private double layerHeight;
     private Map<Vertex, Set<Port>> dummyPorts;
+    private Map<Port, Vertex> dummyPort2unionNode;
     private List<Edge> dummyEdges;
     private int portnumber;
     // spacing variable according to paper:
     private double delta;
+    //new max port spacing within a vertex
+    private double maxPortSpacing;
 
     public NodePlacement (SugiyamaLayouter sugy, SortingOrder sortingOrder, DrawingInformation drawingInformation) {
         this.sugy = sugy;
@@ -71,6 +74,8 @@ public class NodePlacement {
             handleCrossings();
             // make compact
             horizontalCompaction();
+            //we often don't want arbitrarily broad vertices
+            closeRemainingGapsWithinNodes();
             // change to positive x-values and align to smallest width
             makePositiveAndAligned(i);
             // add to xValues
@@ -118,8 +123,11 @@ public class NodePlacement {
         structure = new ArrayList<>();
         port2portValues = new LinkedHashMap<>();
         delta = Math.max(drawInfo.getEdgeDistanceHorizontal(), drawInfo.getPortWidth() + drawInfo.getPortSpacing());
+        maxPortSpacing = Math.max(delta,
+                (drawInfo.getPortWidth() + drawInfo.getPortSpacing()) * drawInfo.getVertexWidthMaxStretchFactor());
         heightOfLayers = new ArrayList<>();
         dummyPorts = new LinkedHashMap<>();
+        dummyPort2unionNode = new LinkedHashMap<>();
         dummyEdges = new LinkedList<>();
         dummyVertex = new Vertex();
         dummyVertex.getLabelManager().addLabel(new TextLabel("dummyVertex"));
@@ -284,6 +292,7 @@ public class NodePlacement {
                                 addToCorrectPortGroupOrNode(p, currentUnionNode, deviceVertex);
                                 dummyPorts.putIfAbsent(deviceVertex, new LinkedHashSet<>());
                                 dummyPorts.get(deviceVertex).add(p);
+                                dummyPort2unionNode.put(p, currentUnionNode);
                                 newOrder.add(createNewPortValues(p));
                                 currentWidthUnionNode += (delta);
                             }
@@ -326,6 +335,7 @@ public class NodePlacement {
             addToCorrectPortGroupOrNode(p, currentUnionNode, currentNode);
             dummyPorts.putIfAbsent(currentNode, new LinkedHashSet<>());
             dummyPorts.get(currentNode).add(p);
+            dummyPort2unionNode.put(p, currentUnionNode);
             if (first) {
                 first = false;
                 nodeOrder.addFirst(createNewPortValues(p));
@@ -498,6 +508,7 @@ public class NodePlacement {
     // https://arxiv.org/abs/2008.01252
     private void horizontalCompaction() {
         // coordinates relative to sink
+        //we have to go through the structure with increasing indices in both layers and port indices on layers
         for (List<PortValues> layer : structure) {
             for (PortValues v : layer) {
                 if (v.getRoot().equals(v)) {
@@ -553,7 +564,7 @@ public class NodePlacement {
     }
 
     private void placeBlock(PortValues v) {
-        if (v.getX() == Double.MIN_VALUE) {
+        if (v.getX() == Double.NEGATIVE_INFINITY) {
             v.setX(0);
             PortValues w = v;
             do {
@@ -569,11 +580,155 @@ public class NodePlacement {
                 }
                 w = w.getAlign();
             } while (!w.equals(v));
+
+            // Check for all nodes of this block whether their distance to the prev node in the same class is too large:
+            // If the max distance within a vertex becomes greater than allowed (within a vertex counts also if the
+            // left port is part of regular vertex and the right one belongs to the boundary of the vertex, i.e., it
+            // belongs to dummyVertex), break an alignment.
+            // This can only be the case when w and its predecessor are in the same block and have the same sink
+            // and they are no dummy vertices.
+            do {
+                PortValues predW = w.getPredecessor();
+                Vertex nodeOfW = dummyPort2unionNode.getOrDefault(w.getPort(), w.getPort().getVertex());
+                Vertex nodeOfPredW = predW == null ? null :
+                        dummyPort2unionNode.getOrDefault(predW.getPort(), predW.getPort().getVertex());
+
+                if (predW != null && w.getAlign() != w && nodeOfW.equals(nodeOfPredW) && !nodeOfW.equals(dummyVertex)
+                        && !sugy.isDummy(nodeOfW) && v.getSink().equals(predW.getRoot().getSink())
+                        && v.getX() - predW.getX() > maxPortSpacing) {
+                    //remove alignments
+                    //usually we cut to the top of u, but when it is the first of its block, i.e., v, or if it has a
+                    // port paring to to the top, then we cut to the bottom
+                    PortValues alignW = w.getAlign();
+                    boolean isPairedToTop = sugy.isPaired(w.getPort()) &&
+                            sugy.getPairedPort(w.getPort()).equals(w.getAlignRe().getPort());
+                    boolean isPairedToBottom = sugy.isPaired(w.getPort()) &&
+                            sugy.getPairedPort(w.getPort()).equals(w.getAlign().getPort());
+                    boolean cutBelow = isPairedToTop || w.equals(v);
+
+                    //cut alignment below or above w
+                    //if w == v and is paired to top or
+                    //if we want to cut below but there is nothing below -> leave as is
+                    if ( ! ((w.equals(v) && isPairedToBottom) || (cutBelow && w.getAlign().equals(v)))) {
+                        if (cutBelow) {
+                            removeAlignment(w, false);
+                        } else {
+                            //cut alignment above w
+                            removeAlignment(w, true);
+                        }
+                        //re-start process for both parts -> the old root v (which is now the root of a smaller
+                        // block) and the new root (which becomes now the root of a block)
+                        v.setX(Double.NEGATIVE_INFINITY);
+                        placeBlock(v); //for v again
+                        if (cutBelow) {
+                            placeBlock(alignW); //for the new root below v
+                        } else {
+                            placeBlock(w); //everything above w is fine
+                        }
+
+                        //do not continue
+                        return;
+                    }
+                }
+                w = w.getAlign();
+            } while (!w.equals(v));
+
             //align the whole block
             while (!w.getAlign().equals(v)) {
                 w = w.getAlign();
                 w.setX(v.getX());
                 w.setSink(v.getSink());
+            }
+        }
+    }
+
+    private void removeAlignment(PortValues w, boolean removeAlignmentReToTop) {
+        PortValues oldRoot = w.getRoot();
+        PortValues newRoot;
+        if (removeAlignmentReToTop) {
+            newRoot = w;
+            w.getAlignRe().setAlign(oldRoot);
+        } else {
+            newRoot = w.getAlign();
+            w.setAlign(oldRoot);
+        }
+        PortValues newSink = newRoot.getPredecessor() == null ? newRoot : newRoot.getPredecessor().getRoot().getSink();
+        PortValues u = newRoot;
+        PortValues lowest;
+        do {
+            u.setRoot(newRoot);
+            u.setSink(newSink);
+            lowest = u;
+            u = u.getAlign();
+        } while (!u.equals(oldRoot));
+        lowest.setAlign(newRoot);
+    }
+
+    private void closeRemainingGapsWithinNodes() {
+        //post processing: if vertices of the same vertex in different classes have distance greater than specified for
+        // the vertex stretch, then we "transfer" these ports to the class on the right
+        //for this, we again go through the structure and "pull" the ports of the same vertex to the right
+
+        for (List<PortValues> layer : structure) {
+            for (int j = 1; j < layer.size(); j++) {
+                //load variables involved
+                PortValues u = layer.get(j - 1);
+                PortValues v = layer.get(j);
+                Vertex nodeOfU = dummyPort2unionNode.getOrDefault(u.getPort(), u.getPort().getVertex());
+                Vertex nodeOfV = dummyPort2unionNode.getOrDefault(v.getPort(), v.getPort().getVertex());
+                //also align it to the right border, i.e., v belongs to the
+                if (nodeOfU != dummyVertex && (nodeOfU.equals(nodeOfV) || nodeOfV.equals(dummyVertex))
+                        && !sugy.isDummy(nodeOfU) && v.getX() - u.getX() > maxPortSpacing) {
+                    moveToTheRight(u, nodeOfU);
+                }
+            }
+        }
+    }
+
+    private void moveToTheRight(PortValues u, Vertex nodeOfU) {
+        List<PortValues> portsToBeMoved = new ArrayList<>(2);
+        portsToBeMoved.add(u);
+
+        //we must also move a port potentially paired with u
+        Port portU = u.getPort();
+        if (sugy.isPaired(portU)) {
+            Port pairedPort = sugy.getPairedPort(portU);
+            if (u.getAlignRe().getPort().equals(pairedPort)) {
+                portsToBeMoved.add(u.getAlignRe());
+            } else if (u.getAlign().getPort().equals(pairedPort)) {
+                portsToBeMoved.add(u.getAlign());
+            } else {
+                System.out.println("Warning! Found a paired port that is not aligned to its partner. This should " +
+                        "never happen.");
+            }
+        }
+
+        //determine movement to the right
+        double moveValue = Double.POSITIVE_INFINITY;
+        for (PortValues v : portsToBeMoved) {
+            double freeSpaceToTheRight = v.getSuccessor() == null ? Double.POSITIVE_INFINITY :
+                    v.getSuccessor().getX() - v.getX();
+            //we need to leave at least delta distance between neighborings -> also subtract delta once
+            moveValue = Math.min(moveValue, freeSpaceToTheRight - delta);
+        }
+
+        //if we can't move -> abort
+        if (moveValue <= 0) {
+            return;
+        }
+
+        //do actual shift
+        for (PortValues v : portsToBeMoved) {
+            v.setX(v.getX() + moveValue);
+        }
+
+        //continue this process to the right as long as it's the same vertex
+        for (PortValues v : portsToBeMoved) {
+            PortValues predU = u.getPredecessor();
+            Vertex nodeOfPredU = predU == null ? null :
+                    dummyPort2unionNode.getOrDefault(predU.getPort(), predU.getPort().getVertex());
+            if (predU != null && nodeOfU.equals(nodeOfPredU) & u.getX() - predU.getX() > maxPortSpacing) {
+                moveToTheRight(predU, nodeOfPredU);
             }
         }
     }

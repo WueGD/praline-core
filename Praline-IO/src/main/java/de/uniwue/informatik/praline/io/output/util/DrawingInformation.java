@@ -14,6 +14,7 @@ public class DrawingInformation {
     public final static double DEFAULT_BORDER_WIDTH = 2;
     public final static double DEFAULT_VERTEX_HEIGHT = 30; //24 //48;
     public final static double DEFAULT_VERTEX_MINIMUM_WIDTH = 12; //20;
+    public final static double DEFAULT_VERTEX_WIDTH_MAX_STRETCH_FACTOR = 6.0; //1.0; //Double.POSITIVE_INFINITY
     private static final Color DEFAULT_VERTEX_COLOR = Color.lightGray; //null for transparent;
     public final static double DEFAULT_PORT_WIDTH = 8;
     public final static double DEFAULT_PORT_HEIGHT = 4;
@@ -43,6 +44,8 @@ public class DrawingInformation {
     private double borderWidth;
     private double vertexHeight; //TODO: as minimum height/flexible for diff. heights (multiple labels above each other)
     private double vertexMinimumWidth;
+    private double vertexWidthMaxStretchFactor; //for vertical stretch; 1 means (almost) no stretch, positive infinity
+    // means arbitrary stretch
     private Color vertexColor; //null for transparent
     private double portWidth;
     private double portHeight;
@@ -65,26 +68,29 @@ public class DrawingInformation {
     private boolean showPortGroups;
 
     public DrawingInformation() {
-        this(DEFAULT_BORDER_WIDTH, DEFAULT_VERTEX_HEIGHT, DEFAULT_VERTEX_MINIMUM_WIDTH, DEFAULT_VERTEX_COLOR,
-                DEFAULT_PORT_WIDTH, DEFAULT_PORT_HEIGHT, DEFAULT_PORT_SPACING, DEFAULT_PORT_COLOR,
-                DEFAULT_EDGE_DISTANCE_HORIZONTAL, DEFAULT_EDGE_DISTANCE_VERTICAL, DEFAULT_DISTANCE_BETWEEN_LAYERS,
-                DEFAULT_FONT, DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET, DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET,
+        this(DEFAULT_BORDER_WIDTH, DEFAULT_VERTEX_HEIGHT, DEFAULT_VERTEX_MINIMUM_WIDTH,
+                DEFAULT_VERTEX_WIDTH_MAX_STRETCH_FACTOR, DEFAULT_VERTEX_COLOR, DEFAULT_PORT_WIDTH, DEFAULT_PORT_HEIGHT,
+                DEFAULT_PORT_SPACING, DEFAULT_PORT_COLOR, DEFAULT_EDGE_DISTANCE_HORIZONTAL,
+                DEFAULT_EDGE_DISTANCE_VERTICAL, DEFAULT_DISTANCE_BETWEEN_LAYERS, DEFAULT_FONT,
+                DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET, DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET,
                 DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET, DEFAULT_VERTICAL_PORT_LABEL_OFFSET, DEFAULT_PORT_PAIRING_COLOR,
                 DEFAULT_SHOW_VERTEX_LABELS, DEFAULT_SHOW_PORT_LABELS, DEFAULT_SHOW_PORT_PAIRINGS,
                 DEFAULT_PORT_GROUP_COLOR, DEFAULT_PORT_GROUP_BORDER, DEFAULT_SHOW_PORT_GROUPS);
     }
 
-    public DrawingInformation(double borderWidth, double vertexHeight, double vertexMinimumWidth, Color vertexColor,
-                              double portWidth, double portHeight, double portSpacing, Color portColor,
-                              double edgeDistanceHorizontal, double edgeDistanceVertical,
-                              double distanceBetweenLayers, Font font, double horizontalVertexLabelOffset,
-                              double verticalVertexLabelOffset, double horizontalPortLabelOffset,
-                              double verticalPortLabelOffset, Color portPairingColor, boolean showVertexLabels,
-                              boolean showPortLabels,boolean showPortPairings, Color portGroupColor,
-                              double portGroupBorder, boolean showPortGroups) {
+    public DrawingInformation(double borderWidth, double vertexHeight, double vertexMinimumWidth,
+                              double vertexWidthMaxStretchFactor, Color vertexColor, double portWidth,
+                              double portHeight, double portSpacing, Color portColor, double edgeDistanceHorizontal,
+                              double edgeDistanceVertical, double distanceBetweenLayers, Font font,
+                              double horizontalVertexLabelOffset, double verticalVertexLabelOffset,
+                              double horizontalPortLabelOffset, double verticalPortLabelOffset,
+                              Color portPairingColor, boolean showVertexLabels, boolean showPortLabels,
+                              boolean showPortPairings, Color portGroupColor, double portGroupBorder,
+                              boolean showPortGroups) {
         this.borderWidth = borderWidth;
         this.vertexHeight = vertexHeight;
         this.vertexMinimumWidth = vertexMinimumWidth;
+        this.vertexWidthMaxStretchFactor = vertexWidthMaxStretchFactor;
         this.vertexColor = vertexColor;
         this.portWidth = portWidth;
         this.portHeight = portHeight;
@@ -174,6 +180,10 @@ public class DrawingInformation {
 
     public double getVertexMinimumWidth() {
         return vertexMinimumWidth;
+    }
+
+    public double getVertexWidthMaxStretchFactor() {
+        return vertexWidthMaxStretchFactor;
     }
 
     public Color getVertexColor() {

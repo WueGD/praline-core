@@ -215,6 +215,8 @@ public class DummyNodeCreation {
                 if (i > 0) {
                     for (Vertex node : layersCopy.get(i - 1)) {
                         Set<Port> loopPorts = new LinkedHashSet<>(); //we will skip the ports of loops later
+                        Set<Edge> loopEdgesOfNode = sugy.getLoopEdges().get(node) == null ? new LinkedHashSet<>() :
+                                new LinkedHashSet<>(sugy.getLoopEdges().get(node));
                         for (Port topPort : sugy.getOrders().getTopPortOrder().get(node)) {
                             for (Edge edge : topPort.getEdges()) {
                                 //check if edge points downwards -> if yes insert turning dummy
@@ -233,8 +235,6 @@ public class DummyNodeCreation {
                             }
 
                             //upper self loop dummies
-                            Set<Edge> loopEdgesOfNode = sugy.getLoopEdges().get(node) == null ? new LinkedHashSet<>() :
-                                    new LinkedHashSet<>(sugy.getLoopEdges().get(node));
                             for (Iterator<Edge> loopEdgeIterator = loopEdgesOfNode.iterator(); loopEdgeIterator.hasNext(); ) {
                                 Edge loopEdge = loopEdgeIterator.next();
                                 List<Port> portsOfLoopEdge = sugy.getPortsOfLoopEdge(loopEdge);
@@ -269,6 +269,8 @@ public class DummyNodeCreation {
                 // to the end of intermediate layer
                 if (i < layersCopy.size()) {
                     for (Vertex node : layersCopy.get(i)) {
+                        Set<Edge> loopEdgesOfNode = sugy.getLoopEdges().get(node) == null ? new LinkedHashSet<>() :
+                                new LinkedHashSet<>(sugy.getLoopEdges().get(node));
                         for (Port bottomPort : sugy.getOrders().getBottomPortOrder().get(node)) {
                             for (Edge edge : bottomPort.getEdges()) {
                                 //check if edge points upwards -> if yes insert turning dummy
@@ -282,8 +284,6 @@ public class DummyNodeCreation {
                             }
 
                             //lower self loop dummies
-                            Set<Edge> loopEdgesOfNode = sugy.getLoopEdges().get(node) == null ? new LinkedHashSet<>() :
-                                    new LinkedHashSet<>(sugy.getLoopEdges().get(node));
                             for (Iterator<Edge> loopEdgeIterator = loopEdgesOfNode.iterator(); loopEdgeIterator.hasNext(); ) {
                                 Edge loopEdge = loopEdgeIterator.next();
                                 List<Port> portsOfLoopEdge = sugy.getPortsOfLoopEdge(loopEdge);

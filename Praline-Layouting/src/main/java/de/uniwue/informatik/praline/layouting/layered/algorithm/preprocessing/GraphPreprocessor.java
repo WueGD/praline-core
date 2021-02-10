@@ -193,8 +193,15 @@ public class GraphPreprocessor {
             Vertex representative = new Vertex();
 
             // create main Label
-            String idV = ("R#" + ++indexVG);
-            createMainLabel(idV, representative);
+            ++indexVG;
+            StringBuilder idV = new StringBuilder();
+            for (Vertex groupVertex : groupVertices) {
+                if (!idV.toString().equals("")) {
+                    idV.append("|");
+                }
+                idV.append(groupVertex.getLabelManager().getMainLabel().toString());
+            }
+            createMainLabel(idV.toString(), representative);
             int indexPort = 0;
 
             sugy.getGraph().addVertex(representative);

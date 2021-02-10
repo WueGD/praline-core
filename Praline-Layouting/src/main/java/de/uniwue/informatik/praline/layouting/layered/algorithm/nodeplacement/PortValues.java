@@ -9,8 +9,10 @@ public class PortValues {
 
     private Port port;
     private PortValues align;
+    private PortValues alignRe; //the other direction of the align pointer
     private PortValues root;
     private PortValues predecessor;
+    private PortValues successor;
     private PortValues sink;
     private double shift;
     private double x; //x position in the current run; these are 1 of 4 intermediate run and in the end the final x pos
@@ -25,6 +27,9 @@ public class PortValues {
     public PortValues(Port port, PortValues predecessor, int layer, int position) {
         this.port = port;
         this.predecessor = predecessor;
+        if (predecessor != null) {
+            predecessor.successor = this;
+        }
         this.layer = layer;
         this.position = position;
         this.xValues = new ArrayList<>(4);
@@ -33,16 +38,20 @@ public class PortValues {
 
     public void lateInit(PortValues predecessor, int layer, int position) {
         this.predecessor = predecessor;
+        if (predecessor != null) {
+            predecessor.successor = this;
+        }
         this.layer = layer;
         this.position = position;
     }
 
     public void resetValues() {
         this.align = this;
+        this.alignRe = this;
         this.root = this;
         this.sink = this;
         this.shift = Double.POSITIVE_INFINITY;
-        this.x = Double.MIN_VALUE;
+        this.x = Double.NEGATIVE_INFINITY;
     }
 
     public Port getPort() {
@@ -53,8 +62,13 @@ public class PortValues {
         return align;
     }
 
+    public PortValues getAlignRe() {
+        return alignRe;
+    }
+
     public void setAlign(PortValues align) {
         this.align = align;
+        align.alignRe = this;
     }
 
     public PortValues getRoot() {
@@ -101,6 +115,10 @@ public class PortValues {
         return predecessor;
     }
 
+    public PortValues getSuccessor() {
+        return successor;
+    }
+
     public int getPosition() {
         return position;
     }
@@ -111,16 +129,17 @@ public class PortValues {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(port.toString()).append(": ");
-        sb.append(" align: ").append(align.toString());
-        sb.append(" root: ").append(root.toString());
-        sb.append(" pred: ").append(predecessor.toString());
-        sb.append(" sink: ").append(sink.toString());
-        sb.append(" shift: ").append(shift);
-        sb.append(" x: ").append(x);
-        sb.append(" pos: ").append(position);
-        sb.append(" layer: ").append(layer);
-        return sb.toString();
+//        StringBuilder sb = new StringBuilder();
+//        sb.append(port.toString()).append(": ");
+//        sb.append(" align: ").append(align.toString());
+//        sb.append(" root: ").append(root.toString());
+//        sb.append(" pred: ").append(predecessor.toString());
+//        sb.append(" sink: ").append(sink.toString());
+//        sb.append(" shift: ").append(shift);
+//        sb.append(" x: ").append(x);
+//        sb.append(" pos: ").append(position);
+//        sb.append(" layer: ").append(layer);
+//        return sb.toString();
+        return "PortValues[" + port.toString() + "]";
     }
 }
