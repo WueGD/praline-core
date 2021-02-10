@@ -6,6 +6,7 @@ import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.Collection;
 
 import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
 
@@ -23,7 +24,6 @@ public class DrawingInformation {
     public final static double DEFAULT_EDGE_DISTANCE_HORIZONTAL = 10;
     public final static double DEFAULT_EDGE_DISTANCE_VERTICAL = 10;
     public final static double DEFAULT_DISTANCE_BETWEEN_LAYERS = 20;
-    public final static Font DEFAULT_FONT = new Font("Myanmar Text", Font.PLAIN, 10);
     public final static double DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET = 2;
     public final static double DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET = -12;
     public final static double DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET = -2;
@@ -54,7 +54,6 @@ public class DrawingInformation {
     private double edgeDistanceHorizontal;
     private double edgeDistanceVertical;
     private double distanceBetweenLayers;
-    private Font font;
     private double horizontalVertexLabelOffset;
     private double verticalVertexLabelOffset;
     private double horizontalPortLabelOffset;
@@ -71,7 +70,7 @@ public class DrawingInformation {
         this(DEFAULT_BORDER_WIDTH, DEFAULT_VERTEX_HEIGHT, DEFAULT_VERTEX_MINIMUM_WIDTH,
                 DEFAULT_VERTEX_WIDTH_MAX_STRETCH_FACTOR, DEFAULT_VERTEX_COLOR, DEFAULT_PORT_WIDTH, DEFAULT_PORT_HEIGHT,
                 DEFAULT_PORT_SPACING, DEFAULT_PORT_COLOR, DEFAULT_EDGE_DISTANCE_HORIZONTAL,
-                DEFAULT_EDGE_DISTANCE_VERTICAL, DEFAULT_DISTANCE_BETWEEN_LAYERS, DEFAULT_FONT,
+                DEFAULT_EDGE_DISTANCE_VERTICAL, DEFAULT_DISTANCE_BETWEEN_LAYERS,
                 DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET, DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET,
                 DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET, DEFAULT_VERTICAL_PORT_LABEL_OFFSET, DEFAULT_PORT_PAIRING_COLOR,
                 DEFAULT_SHOW_VERTEX_LABELS, DEFAULT_SHOW_PORT_LABELS, DEFAULT_SHOW_PORT_PAIRINGS,
@@ -81,7 +80,7 @@ public class DrawingInformation {
     public DrawingInformation(double borderWidth, double vertexHeight, double vertexMinimumWidth,
                               double vertexWidthMaxStretchFactor, Color vertexColor, double portWidth,
                               double portHeight, double portSpacing, Color portColor, double edgeDistanceHorizontal,
-                              double edgeDistanceVertical, double distanceBetweenLayers, Font font,
+                              double edgeDistanceVertical, double distanceBetweenLayers,
                               double horizontalVertexLabelOffset, double verticalVertexLabelOffset,
                               double horizontalPortLabelOffset, double verticalPortLabelOffset,
                               Color portPairingColor, boolean showVertexLabels, boolean showPortLabels,
@@ -99,7 +98,6 @@ public class DrawingInformation {
         this.edgeDistanceHorizontal = edgeDistanceHorizontal;
         this.edgeDistanceVertical = edgeDistanceVertical;
         this.distanceBetweenLayers = distanceBetweenLayers;
-        this.font = font;
         this.horizontalVertexLabelOffset = horizontalVertexLabelOffset;
         this.verticalVertexLabelOffset = verticalVertexLabelOffset;
         this.horizontalPortLabelOffset = horizontalPortLabelOffset;
@@ -114,14 +112,7 @@ public class DrawingInformation {
     }
 
     public double getMinVertexWidth(Vertex vertex) {
-        String[] labelStrings = new String[vertex.getLabelManager().getLabels().size()];
-
-        int i = 0;
-        for (Label label : vertex.getLabelManager().getLabels()) {
-            labelStrings[i++] = label instanceof TextLabel ? ((TextLabel) label).getInputText() : "";
-        }
-
-        double labelWidth = getMinLabelWidth(labelStrings);
+        double labelWidth = getMinLabelWidth(vertex.getLabelManager().getLabels());
 
         double givenWidth = vertex.getShape() != null && vertex.getShape() instanceof Rectangle &&
                 ((de.uniwue.informatik.praline.datastructure.shapes.Rectangle) vertex.getShape()).getWidth() >= 0 ?
@@ -131,23 +122,21 @@ public class DrawingInformation {
         return Math.max(labelWidth, givenWidth);
     }
 
-    private double getMinLabelWidth(String[] labelStrings) {
+    private double getMinLabelWidth(Collection<Label> labels) {
         double minWidth = 0;
-        for (String name : labelStrings) {
-            minWidth = Math.max(minWidth, g2d.getFontMetrics().getStringBounds(name, g2d).getWidth());
+        for (Label label : labels) {
+            if (label instanceof TextLabel) {
+                Font font = ((TextLabel) label).getLabelStyle().getFont();
+                g2d.setFont(font);
+                minWidth = Math.max(minWidth, g2d.getFontMetrics().getStringBounds(
+                        ((TextLabel) label).getLayoutText(), g2d).getWidth());
+            }
         }
         return minWidth;
     }
 
     public double getVertexHeight(Vertex vertex) {
-        String[] labelStrings = new String[vertex.getLabelManager().getLabels().size()];
-
-        int i = 0;
-        for (Label label : vertex.getLabelManager().getLabels()) {
-            labelStrings[i++] = label instanceof TextLabel ? ((TextLabel) label).getInputText() : "";
-        }
-
-        double labelHeight = getMinLabelHeight(labelStrings);
+        double labelHeight = getMinLabelHeight(vertex.getLabelManager().getLabels());
 
         double givenWidth = vertex.getShape() != null && vertex.getShape() instanceof Rectangle &&
                 ((de.uniwue.informatik.praline.datastructure.shapes.Rectangle) vertex.getShape()).getHeight() >= 0 ?
@@ -157,17 +146,17 @@ public class DrawingInformation {
         return Math.max(labelHeight, givenWidth);
     }
 
-    private double getMinLabelHeight(String[] labelStrings) {
-        double minHeight = vertexMinimumWidth;
-        for (String name : labelStrings) {
-            minHeight = Math.max(minHeight, g2d.getFontMetrics().getStringBounds(name, g2d).getHeight());
+    private double getMinLabelHeight(Collection<Label> labels) {
+        double minHeight = vertexHeight;
+        for (Label label : labels) {
+            if (label instanceof TextLabel) {
+                Font font = ((TextLabel) label).getLabelStyle().getFont();
+                g2d.setFont(font);
+                minHeight = Math.max(minHeight, g2d.getFontMetrics().getStringBounds(
+                        ((TextLabel) label).getLayoutText(), g2d).getHeight());
+            }
         }
         return minHeight;
-    }
-
-    private static double getStringMinimumHeight() {
-        return g2d.getFontMetrics().getStringBounds(
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwyxz1234567890", DrawingInformation.g2d).getHeight();
     }
 
     public double getBorderWidth() {
@@ -216,10 +205,6 @@ public class DrawingInformation {
 
     public double getDistanceBetweenLayers() {
         return distanceBetweenLayers;
-    }
-
-    public Font getFont() {
-        return font;
     }
 
     public double getHorizontalVertexLabelOffset() {
@@ -308,10 +293,6 @@ public class DrawingInformation {
 
     public void setDistanceBetweenLayers(double distanceBetweenLayers) {
         this.distanceBetweenLayers = distanceBetweenLayers;
-    }
-
-    public void setFont(Font font) {
-        this.font = font;
     }
 
     public void setHorizontalVertexLabelOffset(double horizontalVertexLabelOffset) {

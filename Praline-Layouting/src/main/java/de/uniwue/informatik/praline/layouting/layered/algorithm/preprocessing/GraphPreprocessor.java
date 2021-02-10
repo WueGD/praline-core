@@ -3,6 +3,7 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing;
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
+import de.uniwue.informatik.praline.datastructure.labels.LeaderedLabel;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
@@ -18,6 +19,8 @@ public class GraphPreprocessor {
     }
 
     public void construct() {
+        //in labels, set the layout text
+        setTextLabelLayoutText();
         //handle edge bundles
         handleEdgeBundles();
         // handle Port if it has no Vertex
@@ -32,6 +35,47 @@ public class GraphPreprocessor {
         handleVertexGroups();
         // handle Edge if both Ports have same Vertex
         handleLoopEdges();
+    }
+
+    private void setTextLabelLayoutText() {
+        //for all labeled object, set the layout text to be the input text
+        for (Vertex vertex : sugy.getGraph().getVertices()) {
+            setLayoutText(vertex);
+            for (Port port : vertex.getPorts()) {
+                setLayoutText(port);
+            }
+        }
+        for (Edge edge : sugy.getGraph().getEdges()) {
+            setLayoutText(edge);
+        }
+        for (VertexGroup vertexGroup : sugy.getGraph().getVertexGroups()) {
+            setLayoutText(vertexGroup);
+            for (VertexGroup containedVG : vertexGroup.getAllRecursivelyContainedVertexGroups()) {
+                setLayoutText(containedVG);
+            }
+        }
+        for (EdgeBundle edgeBundle : sugy.getGraph().getEdgeBundles()) {
+            setLayoutText(edgeBundle);
+            for (EdgeBundle containedEB : edgeBundle.getAllRecursivelyContainedEdgeBundles()) {
+                setLayoutText(containedEB);
+            }
+        }
+    }
+
+    private void setLayoutText(LabeledObject labeledObject) {
+        //for all labeled object, set the layout text to be the input text
+        for (Label label : labeledObject.getLabelManager().getLabels()) {
+            if (label instanceof TextLabel) {
+                String inputText = ((TextLabel) label).getInputText();
+                if (inputText == null) {
+                    inputText = "";
+                }
+                ((TextLabel) label).setLayoutText(inputText);
+            }
+            else if (label instanceof LeaderedLabel) {
+                setLayoutText((LeaderedLabel) label);
+            }
+        }
     }
 
 

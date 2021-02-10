@@ -61,11 +61,9 @@ public class SVGDrawer {
     }
 
     public void paint(SVGGraphics2D g2d) {
-        g2d.setFont(drawInfo.getFont()); //TODO: use individual font as specified by objectes (e.g. Textlabel of vertex)
-
         //set canvas
         Rectangle2D bounds = DrawingUtils.determineDrawingBounds(graph, drawInfo, EMPTY_MARGIN_WIDTH);
-        g2d.translate(-bounds.getX(), - bounds.getY());
+        g2d.translate(-bounds.getX(), -bounds.getY());
         int canvasWidth = (int) (bounds.getWidth());
         int canvasHeight = (int) (bounds.getHeight());
         g2d.setSVGCanvasSize(new Dimension(canvasWidth, canvasHeight));
@@ -142,9 +140,8 @@ public class SVGDrawer {
         Rectangle2D nodeRectangle = (Rectangle2D) node.getShape();
         Label mainLabel = node.getLabelManager().getMainLabel(); //TODO: draw all labels, not only main label
         if (mainLabel instanceof TextLabel) {
-            g2d.setFont(((TextLabel) mainLabel).getFont());
-            //TODO: differentiate between input text and layout text in the text label
-            g2d.drawString(((TextLabel) mainLabel).getInputText(),
+            g2d.setFont(((TextLabel) mainLabel).getLabelStyle().getFont());
+            g2d.drawString(((TextLabel) mainLabel).getLayoutText(),
                     (float) ((nodeRectangle).getX() + drawInfo.getHorizontalVertexLabelOffset()),
                     (float) (((nodeRectangle).getY() + (nodeRectangle).getHeight()
                             + drawInfo.getVerticalVertexLabelOffset())));
@@ -219,9 +216,8 @@ public class SVGDrawer {
     private void drawPortLabel(Port port, Graphics2D g2d, Rectangle nodeRectangle, Rectangle2D portRectangle) {
         Label mainLabel = port.getLabelManager().getMainLabel(); //TODO: draw all labels, not only main label
         if (mainLabel instanceof TextLabel) {
-            g2d.setFont(((TextLabel) mainLabel).getFont());
-            //TODO: differentiate between input text and layout text in the text label
-            String text = ((TextLabel) mainLabel).getInputText();
+            g2d.setFont(((TextLabel) mainLabel).getLabelStyle().getFont());
+            String text = ((TextLabel) mainLabel).getLayoutText();
             double yCoordinate = portRectangle.getY() +
                     (portRectangle.getY() < nodeRectangle.getY() ?
                             portRectangle.getHeight() + drawInfo.getVerticalPortLabelOffset()

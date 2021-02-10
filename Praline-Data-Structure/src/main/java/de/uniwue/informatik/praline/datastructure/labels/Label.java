@@ -1,6 +1,7 @@
 package de.uniwue.informatik.praline.datastructure.labels;
 
 import com.fasterxml.jackson.annotation.*;
+import de.uniwue.informatik.praline.datastructure.labels.styles.LabelStyle;
 import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
 import de.uniwue.informatik.praline.datastructure.placements.Placement;
 import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
@@ -18,37 +19,29 @@ import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
  * A {@link LabeledObject} can have an arbitrary number of {@link Label}s, which are managed by the
  * {@link LabelManager} of the {@link LabeledObject}.
  *
- * A {@link Label} is supposed to be visualized by the drawing algorithm unless {@link Label#isShowLabel()} is set to
+ * A {@link Label} is supposed to be visualized by the drawing algorithm unless {@link LabelStyle#isShowLabel()} is set to
  * false. Therefore, a {@link Label} is a {@link ShapedObject}.
  * The position of the {@link Label} relative to its {@link LabeledObject} is specified by
- * {@link Label#getPlacement()}, {@link Label#getHorizontalPlacement()} and {@link Label#getVerticalPlacement()}.
+ * {@link LabelStyle#getPlacement()}, {@link LabelStyle#getHorizontalPlacement()} and
+ * {@link LabelStyle#getVerticalPlacement()}.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = TextLabel.class, name = "text"),
-        @JsonSubTypes.Type(value = IconLabel.class, name = "icon"),
-        @JsonSubTypes.Type(value = LeaderedLabel.class, name = "leadered"),
+        @JsonSubTypes.Type(value = OldUnstyledTextLabel.class, name = "text"),
+        @JsonSubTypes.Type(value = TextLabel.class, name = "textLabel"),
+        @JsonSubTypes.Type(value = IconLabel.class, name = "iconLabel"),
+        @JsonSubTypes.Type(value = LeaderedLabel.class, name = "leaderedLabel"),
         @JsonSubTypes.Type(value = ReferenceIconLabel.class, name = "referenceIcon"),
 })
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
-public abstract class Label implements ShapedObject {
-
-    /*==========
-     * Default values
-     *==========*/
-
-    public static final boolean DEFAULT_SHOW_LABEL = true;
-
+public abstract class Label<LS extends LabelStyle> implements ShapedObject {
 
     /*==========
      * Instance variables
      *==========*/
 
     private LabelManager associatedLabelManager;
-    private boolean showLabel;
-    private Placement placement;
-    private HorizontalPlacement horizontalPlacement;
-    private VerticalPlacement verticalPlacement;
+    protected LS labelStyle;
     private Shape shape;
 
 
@@ -57,24 +50,20 @@ public abstract class Label implements ShapedObject {
      *==========*/
 
     protected Label() {
-        this(Placement.FREE, HorizontalPlacement.FREE, VerticalPlacement.FREE, Label.DEFAULT_SHOW_LABEL, null);
+        this(null, null);
     }
 
     protected Label(Shape shape) {
-        this(Placement.FREE, HorizontalPlacement.FREE, VerticalPlacement.FREE, Label.DEFAULT_SHOW_LABEL, shape);
+        this(null, shape);
     }
 
-    protected Label(Placement placement, HorizontalPlacement horizontalPlacement, VerticalPlacement verticalPlacement) {
-        this(placement, horizontalPlacement, verticalPlacement, Label.DEFAULT_SHOW_LABEL, null);
+    protected Label(LS labelStyle) {
+        this(labelStyle, null);
     }
 
-    protected Label(Placement placement, HorizontalPlacement horizontalPlacement, VerticalPlacement verticalPlacement,
-                 boolean showLabel, Shape shape) {
+    protected Label(LS labelStyle, Shape shape) {
+        this.labelStyle = labelStyle;
         this.shape = shape;
-        this.showLabel = showLabel;
-        this.placement = placement == null ? Placement.FREE : placement;
-        this.horizontalPlacement = horizontalPlacement == null ? HorizontalPlacement.FREE : horizontalPlacement;
-        this.verticalPlacement = verticalPlacement == null ? VerticalPlacement.FREE : verticalPlacement;
     }
 
 
@@ -109,36 +98,12 @@ public abstract class Label implements ShapedObject {
         this.associatedLabelManager = associatedLabelManager;
     }
 
-    public boolean isShowLabel() {
-        return showLabel;
+    public LS getLabelStyle() {
+        return labelStyle;
     }
 
-    public void setShowLabel(boolean showLabel) {
-        this.showLabel = showLabel;
-    }
-
-    public Placement getPlacement() {
-        return placement;
-    }
-
-    public void setPlacement(Placement placement) {
-        this.placement = placement;
-    }
-
-    public HorizontalPlacement getHorizontalPlacement() {
-        return horizontalPlacement;
-    }
-
-    public void setHorizontalPlacement(HorizontalPlacement horizontalPlacement) {
-        this.horizontalPlacement = horizontalPlacement;
-    }
-
-    public VerticalPlacement getVerticalPlacement() {
-        return verticalPlacement;
-    }
-
-    public void setVerticalPlacement(VerticalPlacement verticalPlacement) {
-        this.verticalPlacement = verticalPlacement;
+    public void setLabelStyle(LS labelStyle) {
+        this.labelStyle = labelStyle;
     }
 
     @Override
