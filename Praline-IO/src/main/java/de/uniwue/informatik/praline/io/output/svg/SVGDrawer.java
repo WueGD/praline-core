@@ -9,6 +9,7 @@ import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.io.output.util.DrawingUtils;
+import de.uniwue.informatik.praline.io.output.util.FontManager;
 import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.w3c.dom.DOMImplementation;
@@ -25,7 +26,11 @@ public class SVGDrawer {
 
     //TODO was created for the specific use for the layered drawing algo --> change to make it general usable
 
-    private static final double EMPTY_MARGIN_WIDTH = 20.0;
+    public static final double EMPTY_MARGIN_WIDTH = 20.0;
+
+    public static final double BOTTOM_PORT_LABEL_OFFSET = -5.0; //todo: found this value by trying :(
+
+
     private final Graph graph;
 
     private DrawingInformation drawInfo;
@@ -140,7 +145,7 @@ public class SVGDrawer {
         Rectangle2D nodeRectangle = (Rectangle2D) node.getShape();
         Label mainLabel = node.getLabelManager().getMainLabel(); //TODO: draw all labels, not only main label
         if (mainLabel instanceof TextLabel) {
-            g2d.setFont(((TextLabel) mainLabel).getLabelStyle().getFont());
+            g2d.setFont(FontManager.fontOf((TextLabel) mainLabel));
             g2d.drawString(((TextLabel) mainLabel).getLayoutText(),
                     (float) ((nodeRectangle).getX() + drawInfo.getHorizontalVertexLabelOffset()),
                     (float) (((nodeRectangle).getY() + (nodeRectangle).getHeight()
@@ -216,15 +221,17 @@ public class SVGDrawer {
     private void drawPortLabel(Port port, Graphics2D g2d, Rectangle nodeRectangle, Rectangle2D portRectangle) {
         Label mainLabel = port.getLabelManager().getMainLabel(); //TODO: draw all labels, not only main label
         if (mainLabel instanceof TextLabel) {
-            g2d.setFont(((TextLabel) mainLabel).getLabelStyle().getFont());
+            g2d.setFont(FontManager.fontOf((TextLabel) mainLabel));
             String text = ((TextLabel) mainLabel).getLayoutText();
             double yCoordinate = portRectangle.getY() +
                     (portRectangle.getY() < nodeRectangle.getY() ?
                             portRectangle.getHeight() + drawInfo.getVerticalPortLabelOffset()
-                                    + g2d.getFontMetrics().getStringBounds(text, g2d).getHeight() :
+                                    + g2d.getFontMetrics().getStringBounds(text, g2d).getHeight()
+                                    + BOTTOM_PORT_LABEL_OFFSET:
                             0 - drawInfo.getVerticalPortLabelOffset());
             g2d.drawString(text, ((float) (portRectangle.getX() + drawInfo.getHorizontalPortLabelOffset())),
                     (float) yCoordinate);
         }
     }
+
 }

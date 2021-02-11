@@ -27,7 +27,7 @@ public class DrawingInformation {
     public final static double DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET = 2;
     public final static double DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET = -12;
     public final static double DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET = -2;
-    public final static double DEFAULT_VERTICAL_PORT_LABEL_OFFSET = 1;
+    public final static double DEFAULT_VERTICAL_PORT_LABEL_OFFSET = 2.0;
     public final static Color DEFAULT_PORT_PAIRING_COLOR = Color.DARK_GRAY;
     public final static boolean DEFAULT_SHOW_PORT_PAIRINGS = true;
     public static final boolean DEFAULT_SHOW_VERTEX_LABELS = true;
@@ -126,8 +126,7 @@ public class DrawingInformation {
         double minWidth = 0;
         for (Label label : labels) {
             if (label instanceof TextLabel) {
-                Font font = ((TextLabel) label).getLabelStyle().getFont();
-                g2d.setFont(font);
+                g2d.setFont(FontManager.fontOf((TextLabel) label));
                 minWidth = Math.max(minWidth, g2d.getFontMetrics().getStringBounds(
                         ((TextLabel) label).getLayoutText(), g2d).getWidth());
             }
@@ -150,8 +149,7 @@ public class DrawingInformation {
         double minHeight = vertexHeight;
         for (Label label : labels) {
             if (label instanceof TextLabel) {
-                Font font = ((TextLabel) label).getLabelStyle().getFont();
-                g2d.setFont(font);
+                g2d.setFont(FontManager.fontOf((TextLabel) label));
                 minHeight = Math.max(minHeight, g2d.getFontMetrics().getStringBounds(
                         ((TextLabel) label).getLayoutText(), g2d).getHeight());
             }
