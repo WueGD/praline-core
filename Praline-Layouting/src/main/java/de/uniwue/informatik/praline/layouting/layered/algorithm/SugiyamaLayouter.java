@@ -834,10 +834,28 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     public double getMinWidthForNode(Vertex node) {
-        if (isDummy(node)) {
-            return 0;
+        if (isSingleComponent) {
+            if (isDummy(node)) {
+                return 0;
+            }
+            if (isPlug(node) || vertexGroups.containsKey(node)) {
+                double minWidth = Double.POSITIVE_INFINITY;
+                VertexGroup vertexGroup = isPlug(node) ? plugs.get(node) : vertexGroups.get(node);
+                for (Vertex originalVertex : vertexGroup.getAllRecursivelyContainedVertices()) {
+                    minWidth = Math.min(minWidth, drawInfo.getMinVertexWidth(originalVertex));
+                }
+                return minWidth;
+            }
+            return drawInfo.getMinVertexWidth(node);
         }
-        return drawInfo.getMinVertexWidth(node);
+        else {
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                if (componentLayouter.getGraph().getVertices().contains(node)) {
+                    return componentLayouter.getMinWidthForNode(node);
+                }
+            }
+            return -1;
+        }
     }
 
     //this method is used by kieler layouter

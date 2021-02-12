@@ -304,7 +304,7 @@ public class KielerLayouter implements PralineLayouter {
             else {
                 int numberOfPorts = Math.max(sugiyForInternalUse.getOrders().getTopPortOrder().get(pralineVertex).size(),
                         sugiyForInternalUse.getOrders().getBottomPortOrder().get(pralineVertex).size());
-                vertex.setWidth(Math.max(drawInfo.getMinVertexWidth(pralineVertex),
+                vertex.setWidth(Math.max(sugiyForInternalUse.getMinWidthForNode(pralineVertex),
                         numberOfPorts * (drawInfo.getPortWidth() + drawInfo.getPortSpacing())
                                 + drawInfo.getPortSpacing()));
             }
