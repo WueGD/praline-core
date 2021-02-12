@@ -6,6 +6,7 @@ import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 import de.uniwue.informatik.praline.datastructure.paths.Path;
 import de.uniwue.informatik.praline.datastructure.shapes.ArrowHeadTriangle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
+import de.uniwue.informatik.praline.datastructure.styles.PathStyle;
 
 import java.util.Collection;
 
@@ -26,7 +27,6 @@ public class LeaderedLabel extends Label<LabelStyle> implements LabeledObject {
      *==========*/
 
     public static final Shape DEFAULT_SHAPE_TO_BE_CLONED = new ArrowHeadTriangle();
-    public static final double UNSPECIFIED_THICKNESS = -1;
 
 
     /*==========
@@ -34,7 +34,7 @@ public class LeaderedLabel extends Label<LabelStyle> implements LabeledObject {
      *==========*/
 
     private Shape arrowHead;
-    private double pathThickness;
+    private PathStyle pathStyle;
     private Path path;
     private final LabelManager labelManager;
 
@@ -44,40 +44,40 @@ public class LeaderedLabel extends Label<LabelStyle> implements LabeledObject {
      *==========*/
 
     public LeaderedLabel() {
-        this(LeaderedLabel.DEFAULT_SHAPE_TO_BE_CLONED.clone(), LeaderedLabel.UNSPECIFIED_THICKNESS, null, null, null,
+        this(LeaderedLabel.DEFAULT_SHAPE_TO_BE_CLONED.clone(), null, null, null, null,
             null);
     }
 
     public LeaderedLabel(Shape arrowHead) {
-        this(arrowHead, LeaderedLabel.UNSPECIFIED_THICKNESS, null, null, null, null);
+        this(arrowHead, null, null, null, null, null);
     }
 
-    public LeaderedLabel(double pathThickness) {
-        this(LeaderedLabel.DEFAULT_SHAPE_TO_BE_CLONED.clone(), pathThickness, null, null, null, null);
+    public LeaderedLabel(PathStyle pathStyle) {
+        this(LeaderedLabel.DEFAULT_SHAPE_TO_BE_CLONED.clone(), pathStyle, null, null, null, null);
     }
 
-    public LeaderedLabel(Shape arrowHead, double pathThickness) {
-        this(arrowHead, pathThickness, null, null, null, null);
+    public LeaderedLabel(Shape arrowHead, PathStyle pathStyle) {
+        this(arrowHead, pathStyle, null, null, null, null);
     }
 
     @JsonCreator
     private LeaderedLabel(
             @JsonProperty("path") final Path path,
             @JsonProperty("arrowHead") final Shape arrowHead,
-            @JsonProperty("pathThickness") final double pathThickness,
+            @JsonProperty("pathStyle") final PathStyle pathStyle,
             @JsonProperty("labelStyle") final LabelStyle labelStyle,
             @JsonProperty("shape") final  Shape shape,
             @JsonProperty("labelManager") final LabelManager labelManager
     ) {
-        this(arrowHead, pathThickness, labelStyle, shape, labelManager.getLabels(), labelManager.getMainLabel());
+        this(arrowHead, pathStyle, labelStyle, shape, labelManager.getLabels(), labelManager.getMainLabel());
         this.setPath(path);
     }
 
-    public LeaderedLabel(Shape arrowHead, double pathThickness, LabelStyle labelStyle, Shape shape,
+    public LeaderedLabel(Shape arrowHead, PathStyle pathStyle, LabelStyle labelStyle, Shape shape,
                          Collection<Label> labels, Label mainLabel) {
         super(labelStyle == null ? LabelStyle.DEFAULT_LABEL_STYLE : labelStyle, shape);
         this.arrowHead = arrowHead;
-        this.pathThickness = pathThickness;
+        this.pathStyle = pathStyle == null ? PathStyle.DEFAULT_PATH_STYLE : pathStyle;
         this.labelManager = new LabelManager(this, labels, mainLabel);
     }
 
@@ -94,12 +94,12 @@ public class LeaderedLabel extends Label<LabelStyle> implements LabeledObject {
         this.arrowHead = arrowHead;
     }
 
-    public double getPathThickness() {
-        return pathThickness;
+    public PathStyle getPathStyle() {
+        return pathStyle;
     }
 
-    public void setPathThickness(double pathThickness) {
-        this.pathThickness = pathThickness;
+    public void setPathStyle(PathStyle pathStyle) {
+        this.pathStyle = pathStyle;
     }
 
     public Path getPath() {
