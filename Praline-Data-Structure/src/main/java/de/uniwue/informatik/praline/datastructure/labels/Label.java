@@ -1,10 +1,8 @@
 package de.uniwue.informatik.praline.datastructure.labels;
 
 import com.fasterxml.jackson.annotation.*;
-import de.uniwue.informatik.praline.datastructure.labels.styles.LabelStyle;
-import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
-import de.uniwue.informatik.praline.datastructure.placements.Placement;
-import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
+import de.uniwue.informatik.praline.datastructure.oldUnstyledObjects.OldUnstyledTextLabel;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
 

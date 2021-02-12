@@ -2,16 +2,12 @@ package de.uniwue.informatik.praline.datastructure.labels;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.uniwue.informatik.praline.datastructure.labels.styles.LabelStyle;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 import de.uniwue.informatik.praline.datastructure.paths.Path;
-import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
-import de.uniwue.informatik.praline.datastructure.placements.Placement;
-import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
 import de.uniwue.informatik.praline.datastructure.shapes.ArrowHeadTriangle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 
 import java.util.Collection;
-import java.util.Objects;
 
 /**
  * Rather special version of {@link Label} (see there for more).
@@ -79,7 +75,7 @@ public class LeaderedLabel extends Label<LabelStyle> implements LabeledObject {
 
     public LeaderedLabel(Shape arrowHead, double pathThickness, LabelStyle labelStyle, Shape shape,
                          Collection<Label> labels, Label mainLabel) {
-        super(labelStyle == null ? new LabelStyle() : labelStyle, shape);
+        super(labelStyle == null ? LabelStyle.DEFAULT_LABEL_STYLE : labelStyle, shape);
         this.arrowHead = arrowHead;
         this.pathThickness = pathThickness;
         this.labelManager = new LabelManager(this, labels, mainLabel);

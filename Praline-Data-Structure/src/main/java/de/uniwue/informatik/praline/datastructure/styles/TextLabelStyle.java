@@ -1,13 +1,16 @@
-package de.uniwue.informatik.praline.datastructure.labels.styles;
+package de.uniwue.informatik.praline.datastructure.styles;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
 import de.uniwue.informatik.praline.datastructure.placements.Placement;
 import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
 
 import java.awt.*;
 
+@JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public class TextLabelStyle extends LabelStyle {
 
     /*==========
@@ -18,6 +21,10 @@ public class TextLabelStyle extends LabelStyle {
     public static final boolean DEFAULT_NO_BREAK = false;
     public static final Color DEFAULT_COLOR = Color.BLACK;
 
+    private static final String TEMPLATE_DESCRIPTION = "default text label style";
+    public static final TextLabelStyle DEFAULT_TEXT_LABEL_STYLE = new TextLabelStyle(TEMPLATE_DESCRIPTION, DEFAULT_FONT,
+            DEFAULT_NO_BREAK, DEFAULT_COLOR, DEFAULT_SHOW_LABEL, DEFAULT_PLACEMENT, DEFAULT_HORIZONTAL_PLACEMENT,
+            DEFAULT_VERTICAL_PLACEMENT);
 
     /*==========
      * Instance variables
@@ -33,15 +40,15 @@ public class TextLabelStyle extends LabelStyle {
      *==========*/
 
     public TextLabelStyle() {
-        this(DEFAULT_FONT);
+        this(null, null);
     }
 
-    public TextLabelStyle(Font font) {
-        this(font, DEFAULT_NO_BREAK, DEFAULT_COLOR);
+    public TextLabelStyle(String description, Font font) {
+        this(description, font, DEFAULT_NO_BREAK, DEFAULT_COLOR);
     }
 
-    public TextLabelStyle(Font font, boolean noBreak, Color color) {
-        this(null, font, noBreak, color, DEFAULT_SHOW_LABEL, DEFAULT_PLACEMENT, DEFAULT_HORIZONTAL_PLACEMENT,
+    public TextLabelStyle(String description, Font font, boolean noBreak, Color color) {
+        this(description, font, noBreak, color, DEFAULT_SHOW_LABEL, DEFAULT_PLACEMENT, DEFAULT_HORIZONTAL_PLACEMENT,
                 DEFAULT_VERTICAL_PLACEMENT);
     }
 

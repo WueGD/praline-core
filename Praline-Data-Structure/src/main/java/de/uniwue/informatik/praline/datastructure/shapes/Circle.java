@@ -3,8 +3,8 @@ package de.uniwue.informatik.praline.datastructure.shapes;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.uniwue.informatik.praline.datastructure.styles.ShapeStyle;
 
-import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Objects;
@@ -23,7 +23,7 @@ public class Circle extends Ellipse2D.Double implements Shape {
      * Instance variables
      *==========*/
 
-    private Color color;
+    private ShapeStyle shapeStyle;
 
 
     /*==========
@@ -47,10 +47,10 @@ public class Circle extends Ellipse2D.Double implements Shape {
             @JsonProperty("xposition") final double x,
             @JsonProperty("yposition") final double y,
             @JsonProperty("radius") final double radius,
-            @JsonProperty("color") final Color color
+            @JsonProperty("shapeStyle") final ShapeStyle shapeStyle
     ) {
         super(x, y, 2.0 * radius, 2.0 * radius);
-        this.color = color != null ? color : DEFAULT_COLOR;
+        this.shapeStyle = shapeStyle == null ? ShapeStyle.DEFAULT_SHAPE_STYLE : shapeStyle;
     }
 
 
@@ -78,13 +78,13 @@ public class Circle extends Ellipse2D.Double implements Shape {
     }
 
     @Override
-    public Color getColor() {
-        return color;
+    public ShapeStyle getShapeStyle() {
+        return shapeStyle;
     }
 
     @Override
-    public void setColor(Color c) {
-        this.color = c;
+    public void setShapeStyle(ShapeStyle shapeStyle) {
+        this.shapeStyle = shapeStyle;
     }
 
 
@@ -114,11 +114,11 @@ public class Circle extends Ellipse2D.Double implements Shape {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         Circle circle = (Circle) o;
-        return Objects.equals(color, circle.color);
+        return Objects.equals(shapeStyle, circle.shapeStyle);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), color);
+        return Objects.hash(super.hashCode(), shapeStyle);
     }
 }

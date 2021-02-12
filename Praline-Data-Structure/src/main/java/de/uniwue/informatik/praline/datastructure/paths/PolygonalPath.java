@@ -3,6 +3,7 @@ package de.uniwue.informatik.praline.datastructure.paths;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.uniwue.informatik.praline.datastructure.styles.PathStyle;
 
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
@@ -20,7 +21,7 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  * or orthogonal paths, i. e. only horizontal and vertical segments, if the choice of points is done accordingly
  * (alternatingly changing only the x- or y- coordinate between each two consecutive points).
  */
-@JsonIgnoreProperties({ "terminalAndBendPoints" })
+@JsonIgnoreProperties({ "terminalAndBendPoints", "terminalPoints", "segments" })
 public class PolygonalPath extends Path {
 
     /*==========
@@ -37,24 +38,16 @@ public class PolygonalPath extends Path {
      *==========*/
 
     public PolygonalPath() {
-        this(null, null, null, Path.UNSPECIFIED_THICKNESS);
-    }
-
-    public PolygonalPath(double thickness) {
-        this(null, null, null, thickness);
+        this(null, null, null, null);
     }
 
     public PolygonalPath(Point2D.Double startPoint, Point2D.Double endPoint, List<Point2D.Double> bendPoints) {
-        this(startPoint, endPoint, bendPoints, UNSPECIFIED_THICKNESS);
+        this(startPoint, endPoint, bendPoints, null);
     }
 
     public PolygonalPath(List<Point2D.Double> terminalAndBendPoints) {
-        this(terminalAndBendPoints, Path.UNSPECIFIED_THICKNESS);
-    }
-
-    public PolygonalPath(List<Point2D.Double> terminalAndBendPoints, double thickness) {
         this(terminalAndBendPoints.get(0), terminalAndBendPoints.get(terminalAndBendPoints.size() - 1),
-                newListWithoutFirstAndLast(terminalAndBendPoints), thickness);
+                newListWithoutFirstAndLast(terminalAndBendPoints), null);
     }
 
     @JsonCreator
@@ -62,9 +55,9 @@ public class PolygonalPath extends Path {
             @JsonProperty("startPoint") final Point2D.Double startPoint,
             @JsonProperty("endPoint") final Point2D.Double endPoint,
             @JsonProperty("bendPoints") final List<Point2D.Double> bendPoints,
-            @JsonProperty("thickness") final double thickness
+            @JsonProperty("pathStyle") final PathStyle pathStyle
     ) {
-        super(thickness);
+        super(pathStyle);
         this.startPoint = startPoint;
         this.endPoint = endPoint;
         this.bendPoints = newArrayListNullSafe(bendPoints);

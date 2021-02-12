@@ -1,10 +1,9 @@
 package de.uniwue.informatik.praline.datastructure.shapes;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.uniwue.informatik.praline.datastructure.styles.ShapeStyle;
 
-import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
@@ -24,7 +23,6 @@ import java.util.List;
  * The position ({@link ArrowHeadTriangle#getXPosition()} + {@link ArrowHeadTriangle#getYPosition()}) is relative to
  * the apex of the isosceles triangle, i. e., the pointing top vertex of the {@link ArrowHeadTriangle}.
  */
-@JsonIgnoreProperties({ "cornerPoints" })
 public class ArrowHeadTriangle implements Shape {
 
     /*==========
@@ -49,7 +47,7 @@ public class ArrowHeadTriangle implements Shape {
      * segment between the apex and the base (i.e. the segment with length the altitude of the triangle.
      */
     private double orientationAngle;
-    private Color color;
+    private ShapeStyle shapeStyle;
 
 
     /*==========
@@ -68,14 +66,14 @@ public class ArrowHeadTriangle implements Shape {
             @JsonProperty("length") final double length,
             @JsonProperty("width") final double width,
             @JsonProperty("orientationAngle") final double orientationAngle,
-            @JsonProperty("color") final Color color
+            @JsonProperty("shapeStyle") final ShapeStyle shapeStyle
     ) {
         this.xPosition = x;
         this.yPosition = y;
         this.length = length;
         this.width = width;
         this.orientationAngle = orientationAngle;
-        this.color = color != null ? color : DEFAULT_COLOR;
+        this.shapeStyle = shapeStyle == null ? ShapeStyle.DEFAULT_SHAPE_STYLE : shapeStyle;
     }
 
 
@@ -147,13 +145,13 @@ public class ArrowHeadTriangle implements Shape {
     }
 
     @Override
-    public Color getColor() {
-        return color;
+    public ShapeStyle getShapeStyle() {
+        return shapeStyle;
     }
 
     @Override
-    public void setColor(Color c) {
-        this.color = c;
+    public void setShapeStyle(ShapeStyle shapeStyle) {
+        this.shapeStyle = shapeStyle;
     }
 
     public Collection<Point2D.Double> getCornerPoints() {
@@ -205,11 +203,12 @@ public class ArrowHeadTriangle implements Shape {
         ArrowHeadTriangle that = (ArrowHeadTriangle) o;
         return Double.compare(that.xPosition, xPosition) == 0 && Double.compare(that.yPosition, yPosition) == 0 &&
                 Double.compare(that.length, length) == 0 && Double.compare(that.width, width) == 0 &&
-                Double.compare(that.orientationAngle, orientationAngle) == 0 && Objects.equals(color, that.color);
+                Double.compare(that.orientationAngle, orientationAngle) == 0
+                && Objects.equals(shapeStyle, that.shapeStyle);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(xPosition, yPosition, length, width, orientationAngle, color);
+        return Objects.hash(xPosition, yPosition, length, width, orientationAngle, shapeStyle);
     }
 }

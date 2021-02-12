@@ -3,8 +3,9 @@ package de.uniwue.informatik.praline.datastructure.shapes;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import de.uniwue.informatik.praline.datastructure.oldUnstyledObjects.OldUnstyledRectangle;
+import de.uniwue.informatik.praline.datastructure.styles.ShapeStyle;
 
-import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
 /**
@@ -16,10 +17,11 @@ import java.awt.geom.Rectangle2D;
  * Implementations are {@link Rectangle}, {@link Circle} and {@link ArrowHeadTriangle}.
  */
 @JsonIgnoreProperties({ "bounds", "bounds2D", "boundingBox", "x", "y", "empty", "minX", "minY", "maxX", "maxY",
-        "centerX", "centerY", "frame", "pathIterator" })
+        "centerX", "centerY", "frame", "pathIterator", "cornerPoints" })
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = Rectangle.class, name = "rectangle"),
+        @JsonSubTypes.Type(value = OldUnstyledRectangle.class, name = "rectangle"),
+        @JsonSubTypes.Type(value = Rectangle.class, name = "rect"),
         @JsonSubTypes.Type(value = Circle.class, name = "circle"),
         @JsonSubTypes.Type(value = ArrowHeadTriangle.class, name = "arrowHeadTriangle"),
 })
@@ -29,7 +31,6 @@ public interface Shape extends Cloneable {
      * Default values
      *==========*/
 
-    Color DEFAULT_COLOR = Color.BLACK;
     double UNDEFINED_LENGTH = java.lang.Double.NaN;
     double UNDEFINED_POSITION = java.lang.Double.NaN;
 
@@ -40,9 +41,9 @@ public interface Shape extends Cloneable {
 
     double getXPosition();
     double getYPosition();
+    ShapeStyle getShapeStyle();
+    void setShapeStyle(ShapeStyle shapeStyle);
     Rectangle2D getBoundingBox();
-    Color getColor();
-    void setColor(Color c);
     Shape clone();
     void translate(double xOffset, double yOffset);
 }

@@ -2,6 +2,7 @@ package de.uniwue.informatik.praline.datastructure.paths;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import de.uniwue.informatik.praline.datastructure.styles.PathStyle;
 
 /**
  * A {@link Path} is some type of curve/course connecting two endpoints.
@@ -21,20 +22,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 public abstract class Path {
 
     /*==========
-     * Default values
-     *==========*/
-
-    public static final double UNSPECIFIED_THICKNESS = -1;
-
-
-    /*==========
      * Instance variables
      *==========*/
 
-    /**
-     * -1 for unspecified
-     */
-    private double thickness;
+    private PathStyle pathStyle;
 
 
     /*==========
@@ -42,11 +33,11 @@ public abstract class Path {
      *==========*/
 
     protected Path() {
-        this(Path.UNSPECIFIED_THICKNESS);
+        this(null);
     }
 
-    protected Path(double thickness) {
-        this.thickness = thickness;
+    protected Path(PathStyle pathStyle) {
+        this.pathStyle = pathStyle == null ? PathStyle.DEFAULT_PATH_STYLE : pathStyle;
     }
 
 
@@ -54,12 +45,12 @@ public abstract class Path {
      * Getters & Setters
      *==========*/
 
-    public double getThickness() {
-        return thickness;
+    public PathStyle getPathStyle() {
+        return pathStyle;
     }
 
-    public void setThickness(double thickness) {
-        this.thickness = thickness;
+    public void setPathStyle(PathStyle pathStyle) {
+        this.pathStyle = pathStyle;
     }
 
     /*==========

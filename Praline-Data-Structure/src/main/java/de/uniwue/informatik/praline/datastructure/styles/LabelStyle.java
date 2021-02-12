@@ -1,4 +1,4 @@
-package de.uniwue.informatik.praline.datastructure.labels.styles;
+package de.uniwue.informatik.praline.datastructure.styles;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
@@ -9,23 +9,25 @@ import de.uniwue.informatik.praline.datastructure.placements.Placement;
 import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
 
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
-public class LabelStyle {
+public class LabelStyle extends Style {
 
     /*==========
      * Default values
      *==========*/
 
-    public static final String DEFAULT_DESCRIPTION = "no description";
     public static final boolean DEFAULT_SHOW_LABEL = true;
     public static final Placement DEFAULT_PLACEMENT = Placement.FREE;
     public static final HorizontalPlacement DEFAULT_HORIZONTAL_PLACEMENT = HorizontalPlacement.FREE;
     public static final VerticalPlacement DEFAULT_VERTICAL_PLACEMENT = VerticalPlacement.FREE;
 
+    private static final String TEMPLATE_DESCRIPTION = "default label style";
+    public static final LabelStyle DEFAULT_LABEL_STYLE = new LabelStyle(TEMPLATE_DESCRIPTION, DEFAULT_SHOW_LABEL,
+            DEFAULT_PLACEMENT, DEFAULT_HORIZONTAL_PLACEMENT, DEFAULT_VERTICAL_PLACEMENT);
+
     /*==========
      * Instance variables
      *==========*/
 
-    private String description;
     private boolean showLabel;
     private Placement placement;
     private HorizontalPlacement horizontalPlacement;
@@ -49,7 +51,7 @@ public class LabelStyle {
             @JsonProperty("horizontalPlacement") final HorizontalPlacement horizontalPlacement,
             @JsonProperty("verticalPlacement") final VerticalPlacement verticalPlacement
     ) {
-        this.description = description == null ? DEFAULT_DESCRIPTION : description;
+        super(description);
         this.showLabel = showLabel;
         this.placement = placement == null ? DEFAULT_PLACEMENT : placement;
         this.horizontalPlacement = horizontalPlacement == null ? DEFAULT_HORIZONTAL_PLACEMENT : horizontalPlacement;
@@ -60,14 +62,6 @@ public class LabelStyle {
     /*==========
      * Getters & Setters
      *==========*/
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 
     public boolean isShowLabel() {
         return showLabel;

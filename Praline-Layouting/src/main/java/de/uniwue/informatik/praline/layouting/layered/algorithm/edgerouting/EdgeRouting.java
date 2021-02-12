@@ -627,9 +627,7 @@ public class EdgeRouting {
     private void shiftUp (double shiftUpValue, int rank) {
         for (Vertex node : sortingOrder.getNodeOrder().get(rank)) {
             Rectangle currentShape = (Rectangle) node.getShape();
-            Rectangle newShape = new Rectangle(currentShape.getX(), (currentShape.getY() + shiftUpValue),
-                    currentShape.getWidth(), currentShape.getHeight(), currentShape.getColor());
-            node.setShape(newShape);
+            currentShape.y += shiftUpValue;
             for (PortComposition portComposition : node.getPortCompositions()) {
                 shiftUp(shiftUpValue, portComposition);
             }
@@ -639,9 +637,7 @@ public class EdgeRouting {
     private void shiftUp (double shiftUpValue, PortComposition portComposition) {
         if (portComposition instanceof Port) {
             Rectangle currentShape = (Rectangle) ((Port)portComposition).getShape();
-            Rectangle newShape = new Rectangle(currentShape.getX(), (currentShape.getY() + shiftUpValue),
-                    currentShape.getWidth(), currentShape.getHeight(), currentShape.getColor());
-            ((Port)portComposition).setShape(newShape);
+            currentShape.y += shiftUpValue;
         } else if (portComposition instanceof PortGroup) {
             for (PortComposition member : ((PortGroup)portComposition).getPortCompositions()) {
                 shiftUp(shiftUpValue, member);

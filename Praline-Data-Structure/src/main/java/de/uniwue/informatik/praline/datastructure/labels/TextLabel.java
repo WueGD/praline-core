@@ -2,7 +2,7 @@ package de.uniwue.informatik.praline.datastructure.labels;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.uniwue.informatik.praline.datastructure.labels.styles.TextLabelStyle;
+import de.uniwue.informatik.praline.datastructure.styles.TextLabelStyle;
 import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
 import de.uniwue.informatik.praline.datastructure.placements.Placement;
 import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
@@ -48,20 +48,13 @@ public class TextLabel extends Label<TextLabelStyle> {
         this(inputText, labelStyle, null);
     }
 
-    public TextLabel(String inputText, Font font, boolean noBreak, Color color, boolean showLabel, Placement placement,
-                     HorizontalPlacement horizontalPlacement, VerticalPlacement verticalPlacement,
-                     Shape shape) {
-        this(inputText, new TextLabelStyle(null, font, noBreak, color, showLabel, placement, horizontalPlacement,
-                verticalPlacement), shape);
-    }
-
     @JsonCreator
     public TextLabel(
             @JsonProperty("inputText") final String inputText,
             @JsonProperty("labelStyle") final TextLabelStyle labelStyle,
             @JsonProperty("shape") final Shape shape
     ) {
-        super(labelStyle == null ? new TextLabelStyle() : labelStyle, shape);
+        super(labelStyle == null ? TextLabelStyle.DEFAULT_TEXT_LABEL_STYLE : labelStyle, shape);
         this.inputText = inputText;
     }
 

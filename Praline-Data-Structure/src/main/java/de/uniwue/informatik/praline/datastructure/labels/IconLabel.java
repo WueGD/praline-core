@@ -1,9 +1,6 @@
 package de.uniwue.informatik.praline.datastructure.labels;
 
-import de.uniwue.informatik.praline.datastructure.labels.styles.LabelStyle;
-import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
-import de.uniwue.informatik.praline.datastructure.placements.Placement;
-import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 
 /**
@@ -16,6 +13,6 @@ public abstract class IconLabel extends Label<LabelStyle> {
     }
 
     public IconLabel(LabelStyle labelStyle, Shape shape) {
-        super(labelStyle == null ? new LabelStyle() : labelStyle, shape);
+        super(labelStyle == null ? LabelStyle.DEFAULT_LABEL_STYLE : labelStyle, shape);
     }
 }
