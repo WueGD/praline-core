@@ -28,8 +28,6 @@ public class SVGDrawer {
 
     public static final double EMPTY_MARGIN_WIDTH = 20.0;
 
-    public static final double BOTTOM_PORT_LABEL_OFFSET = -5.0; //todo: found this value by trying :(
-
 
     private final Graph graph;
 
@@ -105,8 +103,8 @@ public class SVGDrawer {
             for (PortComposition pc : node.getPortCompositions()) {
                 drawPortComposition(pc, g2d, (Rectangle) node.getShape());
             }
-            //draw node label
-            if (drawInfo.isShowVertexLabels()) {
+            //draw node label or label frame
+            if (drawInfo.isShowVertexLabels() || drawInfo.isShowVertexLabelFrames()) {
                 drawNodeLabel(g2d, node);
             }
         }
@@ -146,10 +144,21 @@ public class SVGDrawer {
         Label mainLabel = node.getLabelManager().getMainLabel(); //TODO: draw all labels, not only main label
         if (mainLabel instanceof TextLabel) {
             g2d.setFont(FontManager.fontOf((TextLabel) mainLabel));
-            g2d.drawString(((TextLabel) mainLabel).getLayoutText(),
-                    (float) ((nodeRectangle).getX() + drawInfo.getHorizontalVertexLabelOffset()),
-                    (float) (((nodeRectangle).getY() + (nodeRectangle).getHeight()
-                            + drawInfo.getVerticalVertexLabelOffset())));
+            String text = ((TextLabel) mainLabel).getLayoutText();
+            double xCoordinate = nodeRectangle.getX() + drawInfo.getHorizontalVertexLabelOffset();
+            double yCoordinate = nodeRectangle.getY() + 0.5 * nodeRectangle.getHeight()
+                    - 0.5 *g2d.getFontMetrics().getStringBounds(text, g2d).getHeight()
+                    - g2d.getFontMetrics().getStringBounds(text, g2d).getY()
+                    + drawInfo.getVerticalVertexLabelOffset();
+            if (drawInfo.isShowVertexLabels()) {
+                g2d.drawString(text, (float) xCoordinate, (float) yCoordinate);
+            }
+
+            if (drawInfo.isShowVertexLabelFrames()) {
+                g2d.draw(new Rectangle(xCoordinate, yCoordinate + g2d.getFontMetrics().getStringBounds(text, g2d).getY(),
+                        g2d.getFontMetrics().getStringBounds(text, g2d).getWidth(),
+                        g2d.getFontMetrics().getStringBounds(text, g2d).getHeight()));
+            }
         }
     }
 
@@ -209,8 +218,8 @@ public class SVGDrawer {
             }
             g2d.draw(portRectangle);
 
-            //draw port label
-            if (drawInfo.isShowPortLabels()) {
+            //draw port label or label frame
+            if (drawInfo.isShowPortLabels() || drawInfo.isShowPortLabelFrames()) {
                 drawPortLabel((Port) pc, g2d, nodeRectangle, portRectangle);
             }
             return portRectangle;
@@ -223,14 +232,22 @@ public class SVGDrawer {
         if (mainLabel instanceof TextLabel) {
             g2d.setFont(FontManager.fontOf((TextLabel) mainLabel));
             String text = ((TextLabel) mainLabel).getLayoutText();
-            double yCoordinate = portRectangle.getY() +
+
+            double xCoordinate = portRectangle.getX() + drawInfo.getHorizontalPortLabelOffset();
+            double yCoordinate = portRectangle.getY() - g2d.getFontMetrics().getStringBounds(text, g2d).getY() +
                     (portRectangle.getY() < nodeRectangle.getY() ?
-                            portRectangle.getHeight() + drawInfo.getVerticalPortLabelOffset()
-                                    + g2d.getFontMetrics().getStringBounds(text, g2d).getHeight()
-                                    + BOTTOM_PORT_LABEL_OFFSET:
-                            0 - drawInfo.getVerticalPortLabelOffset());
-            g2d.drawString(text, ((float) (portRectangle.getX() + drawInfo.getHorizontalPortLabelOffset())),
-                    (float) yCoordinate);
+                            portRectangle.getHeight() + drawInfo.getVerticalPortLabelOffset() :
+                            - g2d.getFontMetrics().getStringBounds(text, g2d).getHeight()
+                                    - drawInfo.getVerticalPortLabelOffset());
+            if (drawInfo.isShowPortLabels()) {
+                g2d.drawString(text, (float) xCoordinate, (float) yCoordinate);
+            }
+
+            if (drawInfo.isShowPortLabelFrames()) {
+                g2d.draw(new Rectangle(xCoordinate, yCoordinate + g2d.getFontMetrics().getStringBounds(text, g2d).getY(),
+                        g2d.getFontMetrics().getStringBounds(text, g2d).getWidth(),
+                        g2d.getFontMetrics().getStringBounds(text, g2d).getHeight()));
+            }
         }
     }
 

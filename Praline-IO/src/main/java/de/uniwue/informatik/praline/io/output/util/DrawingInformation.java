@@ -25,13 +25,15 @@ public class DrawingInformation {
     public final static double DEFAULT_EDGE_DISTANCE_VERTICAL = 10;
     public final static double DEFAULT_DISTANCE_BETWEEN_LAYERS = 20;
     public final static double DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET = 2;
-    public final static double DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET = -12;
+    public final static double DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET = 0;
     public final static double DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET = -2;
-    public final static double DEFAULT_VERTICAL_PORT_LABEL_OFFSET = 2.0;
+    public final static double DEFAULT_VERTICAL_PORT_LABEL_OFFSET = 0;
     public final static Color DEFAULT_PORT_PAIRING_COLOR = Color.DARK_GRAY;
     public final static boolean DEFAULT_SHOW_PORT_PAIRINGS = true;
     public static final boolean DEFAULT_SHOW_VERTEX_LABELS = true;
     public static final boolean DEFAULT_SHOW_PORT_LABELS = true;
+    public static final boolean DEFAULT_SHOW_VERTEX_LABEL_FRAMES = false;
+    public static final boolean DEFAULT_SHOW_PORT_LABEL_FRAMES = false;
     public final static Color DEFAULT_PORT_GROUP_COLOR = Color.LIGHT_GRAY;
     public final static double DEFAULT_PORT_GROUP_BORDER = 2;
     public final static boolean DEFAULT_SHOW_PORT_GROUPS = false;
@@ -61,6 +63,8 @@ public class DrawingInformation {
     private Color portPairingColor;
     private boolean showVertexLabels;
     private boolean showPortLabels;
+    private boolean showVertexLabelFrames;
+    private boolean showPortLabelFrames;
     private boolean showPortPairings;
     private Color portGroupColor;
     private double portGroupBorder;
@@ -73,8 +77,9 @@ public class DrawingInformation {
                 DEFAULT_EDGE_DISTANCE_VERTICAL, DEFAULT_DISTANCE_BETWEEN_LAYERS,
                 DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET, DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET,
                 DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET, DEFAULT_VERTICAL_PORT_LABEL_OFFSET, DEFAULT_PORT_PAIRING_COLOR,
-                DEFAULT_SHOW_VERTEX_LABELS, DEFAULT_SHOW_PORT_LABELS, DEFAULT_SHOW_PORT_PAIRINGS,
-                DEFAULT_PORT_GROUP_COLOR, DEFAULT_PORT_GROUP_BORDER, DEFAULT_SHOW_PORT_GROUPS);
+                DEFAULT_SHOW_VERTEX_LABELS, DEFAULT_SHOW_PORT_LABELS, DEFAULT_SHOW_VERTEX_LABEL_FRAMES,
+                DEFAULT_SHOW_PORT_LABEL_FRAMES, DEFAULT_SHOW_PORT_PAIRINGS, DEFAULT_PORT_GROUP_COLOR,
+                DEFAULT_PORT_GROUP_BORDER, DEFAULT_SHOW_PORT_GROUPS);
     }
 
     public DrawingInformation(double borderWidth, double vertexHeight, double vertexMinimumWidth,
@@ -84,7 +89,8 @@ public class DrawingInformation {
                               double horizontalVertexLabelOffset, double verticalVertexLabelOffset,
                               double horizontalPortLabelOffset, double verticalPortLabelOffset,
                               Color portPairingColor, boolean showVertexLabels, boolean showPortLabels,
-                              boolean showPortPairings, Color portGroupColor, double portGroupBorder,
+                              boolean showVertexLabelFrames, boolean showPortLabelFrames, boolean showPortPairings,
+                              Color portGroupColor, double portGroupBorder,
                               boolean showPortGroups) {
         this.borderWidth = borderWidth;
         this.vertexHeight = vertexHeight;
@@ -105,6 +111,8 @@ public class DrawingInformation {
         this.portPairingColor = portPairingColor;
         this.showVertexLabels = showVertexLabels;
         this.showPortLabels = showPortLabels;
+        this.showVertexLabelFrames = showVertexLabelFrames;
+        this.showPortLabelFrames = showPortLabelFrames;
         this.showPortPairings = showPortPairings;
         this.portGroupColor = portGroupColor;
         this.portGroupBorder = portGroupBorder;
@@ -113,13 +121,14 @@ public class DrawingInformation {
 
     public double getMinVertexWidth(Vertex vertex) {
         double labelWidth = getMinLabelWidth(vertex.getLabelManager().getLabels());
+        double labelWithBufferWidth = labelWidth + 2.0 * this.horizontalVertexLabelOffset;
 
         double givenWidth = vertex.getShape() != null && vertex.getShape() instanceof Rectangle &&
                 ((de.uniwue.informatik.praline.datastructure.shapes.Rectangle) vertex.getShape()).getWidth() >= 0 ?
                 ((de.uniwue.informatik.praline.datastructure.shapes.Rectangle) vertex.getShape()).getWidth() :
                 getVertexMinimumWidth();
 
-        return Math.max(labelWidth, givenWidth);
+        return Math.max(labelWithBufferWidth, givenWidth);
     }
 
     private double getMinLabelWidth(Collection<Label> labels) {
@@ -319,6 +328,14 @@ public class DrawingInformation {
 
     public void setShowPortLabels(boolean showPortLabels) {
         this.showPortLabels = showPortLabels;
+    }
+
+    public boolean isShowVertexLabelFrames() {
+        return showVertexLabelFrames;
+    }
+
+    public boolean isShowPortLabelFrames() {
+        return showPortLabelFrames;
     }
 
     public void setShowPortPairings(boolean showPortPairings) {
