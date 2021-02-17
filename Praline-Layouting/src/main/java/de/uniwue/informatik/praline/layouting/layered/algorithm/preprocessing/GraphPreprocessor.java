@@ -224,14 +224,18 @@ public class GraphPreprocessor {
         }
 
         for (VertexGroup group : new ArrayList<>(sugy.getGraph().getVertexGroups())) {
-            boolean stickTogether = false;
+            if (group.getContainedVertices().isEmpty()) {
+                continue;
+            }
+
+            boolean stickTogether = false; //todo revisit distinguishing between sticking together and not later
             Map<Port, Set<Port>> allPairings = new LinkedHashMap<>();
-            if (group.getContainedVertices().size() == (group.getTouchingPairs().size() + 1)) {
+//            if (group.getContainedVertices().size() == (group.getTouchingPairs().size() + 1)) {
                 stickTogether = true;
 
                 // fill allPairings
                 fillAllPairings(allPairings, group);
-            }
+//            }
 
             List<Vertex> groupVertices = group.getAllRecursivelyContainedVertices();
             Vertex representative = new Vertex();
@@ -253,7 +257,7 @@ public class GraphPreprocessor {
 
             for (Vertex containedVertex : groupVertices) {
                 for (Port port : containedVertex.getPorts()) {
-                    if (!sugy.getDeviceVertices().contains(containedVertex) || !port.getEdges().isEmpty()) {
+                    if (!sugy.getDeviceVertices().contains(containedVertex)) {//) || !port.getEdges().isEmpty()) {
                         // create new port at unification vertex and remove old one on original vertex,
                         // hang the edges from the old to the new port
                         Port replacePort = new Port();
@@ -266,18 +270,17 @@ public class GraphPreprocessor {
                         }
 
 
-                        if (stickTogether) {
-                            sugy.getReplacedPorts().put(replacePort, port);
-                            originalPort2representative.put(port, replacePort);
-                        } else {
+                        sugy.getReplacedPorts().put(replacePort, port);
+                        originalPort2representative.put(port, replacePort);
+//                        if (!stickTogether) {
                             representative.addPortComposition(replacePort);
-                        }
+//                        }
                     }
                 }
             }
 
             // create portGroups if stickTogether
-            if (stickTogether) {
+//            if (stickTogether) {
                 for (Vertex groupNode : group.getContainedVertices()) {
                     PortGroup replacePortGroup = new PortGroup();
                     representative.addPortComposition(keepPortGroupsRecursive(replacePortGroup,
@@ -290,9 +293,9 @@ public class GraphPreprocessor {
                 } else {
                     sugy.getVertexGroups().put(representative, group);
                 }
-            } else {
-                sugy.getVertexGroups().put(representative, group);
-            }
+//            } else {
+//                sugy.getVertexGroups().put(representative, group);
+//            }
 
             //remove group and its vertices
             sugy.getGraph().removeVertexGroup(group);

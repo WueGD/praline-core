@@ -2,13 +2,9 @@ package de.uniwue.informatik.praline.datastructure.labels;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.uniwue.informatik.praline.datastructure.styles.TextLabelStyle;
-import de.uniwue.informatik.praline.datastructure.placements.HorizontalPlacement;
-import de.uniwue.informatik.praline.datastructure.placements.Placement;
-import de.uniwue.informatik.praline.datastructure.placements.VerticalPlacement;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
+import de.uniwue.informatik.praline.datastructure.styles.TextLabelStyle;
 
-import java.awt.*;
 import java.util.Objects;
 
 /**

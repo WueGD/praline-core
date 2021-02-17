@@ -57,6 +57,8 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/generated_2020-08-20_04-42-39/praline-pseudo-plan-a7118c7293f015c8.json";
 //            "Praline-Layouting/data/example-very-small/praline-a0b0b5a2-2c23-43b0-bb87-4ddeb34d5a02.json";
 //            "Praline-Layouting/data/example-very-small/praline-pseudo-plan-0e59d04df679e020.json";
+//            "Praline-Layouting/data/fabian-problemgraphen/send-johannes.json";
+//            "Praline-Layouting/data/fabian-problemgraphen/send-johannes2.json";
 
     private static final String TARGET_PATH =
             "Praline-Layouting/results/singleTest.svg";
