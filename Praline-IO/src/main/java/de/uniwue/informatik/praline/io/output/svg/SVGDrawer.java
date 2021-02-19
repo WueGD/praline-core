@@ -232,6 +232,10 @@ public class SVGDrawer {
         if (mainLabel instanceof TextLabel) {
             g2d.setFont(FontManager.fontOf((TextLabel) mainLabel));
             String text = ((TextLabel) mainLabel).getLayoutText();
+            if (text == null) {
+                System.out.println("Warning! No layout text found for label " + mainLabel + " of " + port);
+                return;
+            }
 
             double xCoordinate = portRectangle.getX() + drawInfo.getHorizontalPortLabelOffset();
             double yCoordinate = portRectangle.getY() - g2d.getFontMetrics().getStringBounds(text, g2d).getY() +

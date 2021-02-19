@@ -34,7 +34,8 @@ public class DrawingPreparation {
     public void initialize(DrawingInformation drawInfo, SortingOrder sortingOrder,
                            Map<Vertex, Set<Port>> dummyPortsForLabelPadding, List<Port> dummyPortsForNodesWithoutPort) {
         this.drawInfo = drawInfo;
-        this.delta = Math.max(drawInfo.getEdgeDistanceHorizontal(), drawInfo.getPortWidth() + drawInfo.getPortSpacing());
+        this.delta = Math.max(drawInfo.getEdgeDistanceHorizontal() - drawInfo.getPortWidth(),
+                drawInfo.getPortSpacing());
         this.sortingOrder = sortingOrder;
         this.dummyPortsForLabelPadding = dummyPortsForLabelPadding;
         this.dummyPortsForNodesWithoutPort = dummyPortsForNodesWithoutPort;
@@ -1040,17 +1041,12 @@ public class DrawingPreparation {
             maxL = nodeShape.getXPosition() + nodeShape.getWidth();
             minR = minL;
             maxR = maxL;
-            boolean hasVisiblePorts = false;
             for (Port port : node.getPorts()) {
-                if (!Double.isNaN(port.getShape().getXPosition())) {
-                    maxL = Math.min(maxL, port.getShape().getXPosition());
-                    minR = Math.max(minR, port.getShape().getXPosition());
-                    hasVisiblePorts = true;
+                Rectangle portShape = (Rectangle) port.getShape();
+                if (!Double.isNaN(portShape.getXPosition())) {
+                    maxL = Math.min(maxL, portShape.getXPosition() -  delta / 2.0);
+                    minR = Math.max(minR, portShape.getXPosition() + portShape.getWidth() + delta / 2.0);
                 }
-            }
-            if (hasVisiblePorts) {
-                maxL -= ((drawInfo.getPortWidth() + delta) / 2);
-                minR += ((drawInfo.getPortWidth() + delta) / 2);
             }
             return this;
         }

@@ -1,6 +1,7 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm;
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
+import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.io.output.svg.SVGDrawer;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.io.output.util.DrawingUtils;
@@ -842,16 +843,56 @@ public class SugiyamaLayouter implements PralineLayouter {
                 double minWidth = Double.POSITIVE_INFINITY;
                 VertexGroup vertexGroup = isPlug(node) ? plugs.get(node) : vertexGroups.get(node);
                 for (Vertex originalVertex : vertexGroup.getAllRecursivelyContainedVertices()) {
-                    minWidth = Math.min(minWidth, drawInfo.getMinVertexWidth(originalVertex));
+                    minWidth = Math.min(minWidth, drawInfo.computeMinVertexWidth(originalVertex));
                 }
                 return minWidth;
             }
-            return drawInfo.getMinVertexWidth(node);
+            return drawInfo.computeMinVertexWidth(node);
         }
         else {
             for (SugiyamaLayouter componentLayouter : componentLayouters) {
                 if (componentLayouter.getGraph().getVertices().contains(node)) {
                     return componentLayouter.getMinWidthForNode(node);
+                }
+            }
+            return -1;
+        }
+    }
+
+    public double getWidthForPort(Port port) {
+        if (isSingleComponent) {
+            //first find original port
+            Port originalPort = port;
+            while (replacedPorts.containsKey(originalPort)) {
+                originalPort = replacedPorts.get(originalPort);
+            }
+            double width = drawInfo.computePortWidth(originalPort);//compute the width of the original port
+            //potentially this port is connected within a port group to a port that does not have access to the
+            // outside any more, but it may be broad port to make this port also wider
+            if (vertexGroups.containsKey(port.getVertex())) {
+                VertexGroup vertexGroup = vertexGroups.get(port.getVertex());
+                PortPairing portPairing = PortUtils.getPortPairing(originalPort, vertexGroup);
+                if (portPairing != null) {
+                    Port otherPortOfPortPairing = PortUtils.getOtherPortOfPortPairing(portPairing, originalPort);
+                    width = Math.max(width, drawInfo.computePortWidth(otherPortOfPortPairing));
+                }
+            }
+            // then check replacements of single ports by multiple ports because they divide the width
+            if (multipleEdgePort2replacePorts.containsKey(originalPort)) {
+                int numberOfReplacePorts = multipleEdgePort2replacePorts.get(originalPort).size();
+                width -= (numberOfReplacePorts - 1) * drawInfo.getPortSpacing();
+                width = Math.max(width, 0); //forbid negative values
+                width /= (double) numberOfReplacePorts;
+                //we also have to make sure that we have enough edge spacing
+                width = Math.max(width, drawInfo.getEdgeDistanceHorizontal() - drawInfo.getPortSpacing());
+            }
+            return width;
+        }
+        else {
+            Vertex vertex = port.getVertex();
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                if (componentLayouter.getGraph().getVertices().contains(vertex)) {
+                    return componentLayouter.getWidthForPort(port);
                 }
             }
             return -1;

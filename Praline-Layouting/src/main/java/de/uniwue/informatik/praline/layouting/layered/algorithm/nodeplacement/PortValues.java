@@ -19,6 +19,7 @@ public class PortValues {
     private List<Double> xValues; //all x positions in the intermediate runs.
     private int position;
     private int layer;
+    private double width = 0;
 
     public PortValues(Port port) {
         this(port, null, -1, -1);
@@ -125,6 +126,14 @@ public class PortValues {
 
     public int getLayer() {
         return layer;
+    }
+
+    public double getWidth() {
+        return width;
+    }
+
+    public void setWidth(double width) {
+        this.width = width;
     }
 
     @Override

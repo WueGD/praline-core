@@ -688,9 +688,9 @@ public class EdgeRouting {
         for (Vertex vertex : sugy.getGraph().getVertices()) {
             for (Port port : vertex.getPorts()) {
                 Rectangle portShape = (Rectangle) port.getShape();
-                portShape.x = portShape.getXPosition() - (drawInfo.getPortWidth() / 2);
+                portShape.x = portShape.getXPosition() - (portShape.getWidth() / 2.0);
                 if (!sugy.isTopPort(port)) {
-                    portShape.y = portShape.getYPosition() - drawInfo.getPortHeight();
+                    portShape.y = portShape.getYPosition() - portShape.getHeight();
                 }
             }
         }

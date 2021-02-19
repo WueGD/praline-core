@@ -1,5 +1,6 @@
 package de.uniwue.informatik.praline.io.output.util;
 
+import de.uniwue.informatik.praline.datastructure.graphs.Port;
 import de.uniwue.informatik.praline.datastructure.graphs.Vertex;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
@@ -90,8 +91,7 @@ public class DrawingInformation {
                               double horizontalPortLabelOffset, double verticalPortLabelOffset,
                               Color portPairingColor, boolean showVertexLabels, boolean showPortLabels,
                               boolean showVertexLabelFrames, boolean showPortLabelFrames, boolean showPortPairings,
-                              Color portGroupColor, double portGroupBorder,
-                              boolean showPortGroups) {
+                              Color portGroupColor, double portGroupBorder, boolean showPortGroups) {
         this.borderWidth = borderWidth;
         this.vertexHeight = vertexHeight;
         this.vertexMinimumWidth = vertexMinimumWidth;
@@ -119,14 +119,26 @@ public class DrawingInformation {
         this.showPortGroups = showPortGroups;
     }
 
-    public double getMinVertexWidth(Vertex vertex) {
+    public double computeMinVertexWidth(Vertex vertex) {
         double labelWidth = getMinLabelWidth(vertex.getLabelManager().getLabels());
         double labelWithBufferWidth = labelWidth + 2.0 * this.horizontalVertexLabelOffset;
 
         double givenWidth = vertex.getShape() != null && vertex.getShape() instanceof Rectangle &&
                 ((de.uniwue.informatik.praline.datastructure.shapes.Rectangle) vertex.getShape()).getWidth() >= 0 ?
                 ((de.uniwue.informatik.praline.datastructure.shapes.Rectangle) vertex.getShape()).getWidth() :
-                getVertexMinimumWidth();
+                this.vertexMinimumWidth;
+
+        return Math.max(labelWithBufferWidth, givenWidth);
+    }
+
+    public double computePortWidth(Port port) {
+        double labelWidth = getMinLabelWidth(port.getLabelManager().getLabels());
+        double labelWithBufferWidth = labelWidth + 2.0 * this.horizontalPortLabelOffset - this.portSpacing;
+
+        double givenWidth = port.getShape() != null && port.getShape() instanceof Rectangle &&
+                ((de.uniwue.informatik.praline.datastructure.shapes.Rectangle) port.getShape()).getWidth() >= 0 ?
+                ((de.uniwue.informatik.praline.datastructure.shapes.Rectangle) port.getShape()).getWidth() :
+                this.portWidth;
 
         return Math.max(labelWithBufferWidth, givenWidth);
     }
@@ -136,14 +148,16 @@ public class DrawingInformation {
         for (Label label : labels) {
             if (label instanceof TextLabel) {
                 g2d.setFont(FontManager.fontOf((TextLabel) label));
-                minWidth = Math.max(minWidth, g2d.getFontMetrics().getStringBounds(
-                        ((TextLabel) label).getLayoutText(), g2d).getWidth());
+                if (((TextLabel) label).getLayoutText() != null) {
+                    minWidth = Math.max(minWidth,
+                            g2d.getFontMetrics().getStringBounds(((TextLabel) label).getLayoutText(), g2d).getWidth());
+                }
             }
         }
         return minWidth;
     }
 
-    public double getVertexHeight(Vertex vertex) {
+    public double computeVertexHeight(Vertex vertex) {
         double labelHeight = getMinLabelHeight(vertex.getLabelManager().getLabels());
 
         double givenWidth = vertex.getShape() != null && vertex.getShape() instanceof Rectangle &&

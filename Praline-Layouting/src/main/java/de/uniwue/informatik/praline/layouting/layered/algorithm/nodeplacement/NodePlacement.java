@@ -76,8 +76,6 @@ public class NodePlacement {
             horizontalCompaction();
             //we often don't want arbitrarily broad vertices
             closeRemainingGapsWithinNodes();
-            // change to positive x-values and align to smallest width
-            makePositiveAndAligned(i);
             // add to xValues
             switch (i) {
                 case 0:
@@ -99,6 +97,8 @@ public class NodePlacement {
                     }
             }
         }
+        // change to positive x-values and align to smallest width
+        makePositiveAndAligned();
         //set final x
         for (List<PortValues> portLayer : structure) {
             for (PortValues portValues : portLayer) {
@@ -108,6 +108,8 @@ public class NodePlacement {
                 portValues.setX((xValues.get(1) + xValues.get(2)) / 2.0);
             }
         }
+        //the medians may still be negative
+        makeFinalDrawingPositive();
         // bring back original order
         for (List<PortValues> order : structure) {
             Collections.reverse(order);
@@ -122,9 +124,8 @@ public class NodePlacement {
     public void initialize() {
         structure = new ArrayList<>();
         port2portValues = new LinkedHashMap<>();
-        delta = Math.max(drawInfo.getEdgeDistanceHorizontal(), drawInfo.getPortWidth() + drawInfo.getPortSpacing());
-        maxPortSpacing = Math.max(delta,
-                (drawInfo.getPortWidth() + drawInfo.getPortSpacing()) * drawInfo.getVertexWidthMaxStretchFactor());
+        delta = Math.max(drawInfo.getEdgeDistanceHorizontal() - drawInfo.getPortWidth(), drawInfo.getPortSpacing());
+        maxPortSpacing = Math.max(delta, drawInfo.getPortSpacing() * drawInfo.getVertexWidthMaxStretchFactor());
         heightOfLayers = new ArrayList<>();
         dummyPorts = new LinkedHashMap<>();
         dummyPort2unionNode = new LinkedHashMap<>();
@@ -150,7 +151,7 @@ public class NodePlacement {
             // crate a List with all bottomPorts and one with all topPorts
             for (Vertex node : rankNodes) {
                 for (Port port : sortingOrder.getBottomPortOrder().get(node)) {
-                    rankBottomPorts.add(createNewPortValues(port));
+                    rankBottomPorts.add(createNewPortValues(port, sugy.getWidthForPort(port)));
 
                     // add new Edge for each PortPairing
                     if (sugy.isPaired(port)) {
@@ -170,7 +171,7 @@ public class NodePlacement {
 
                 }
                 for (Port port : sortingOrder.getTopPortOrder().get(node)) {
-                    rankTopPorts.add(createNewPortValues(port));
+                    rankTopPorts.add(createNewPortValues(port, sugy.getWidthForPort(port)));
                 }
                 addDividingNodePair(rankBottomPorts, rankTopPorts);
             }
@@ -179,9 +180,10 @@ public class NodePlacement {
         }
     }
 
-    private PortValues createNewPortValues(Port port) {
+    private PortValues createNewPortValues(Port port, double width) {
         PortValues portValues = new PortValues(port);
         port2portValues.put(port, portValues);
+        portValues.setWidth(width);
         return portValues;
     }
 
@@ -215,8 +217,8 @@ public class NodePlacement {
         ports.add(p1);
         ports.add(p2);
         new Edge(ports);
-        rankBottomPorts.add(createNewPortValues(p1));
-        rankTopPorts.add(createNewPortValues(p2));
+        rankBottomPorts.add(createNewPortValues(p1, drawInfo.getPortWidth()));
+        rankTopPorts.add(createNewPortValues(p2, drawInfo.getPortWidth()));
         dummyVertex.addPortComposition(p1);
         dummyVertex.addPortComposition(p2);
     }
@@ -234,38 +236,39 @@ public class NodePlacement {
             Vertex currentUnionNode = null;
             int nodePosition = 0;
             for (int position = 1; position < order.size(); position++) {
+                PortValues portValues = order.get(position);
                 if (currentNode.equals(dummyVertex)) {
-                    currentNode = order.get(position).getPort().getVertex();
+                    currentNode = portValues.getPort().getVertex();
                     //special case: if current node is a union node, consider the single parts
                     if (sugy.isUnionNode(currentNode)) {
                         currentUnionNode = currentNode;
-                        currentWidthUnionNode = (delta);
-                        currentNode = sugy.getReplacedPorts().get(order.get(position).getPort()).getVertex();
+                        currentWidthUnionNode = delta + portValues.getWidth();
+                        currentNode = sugy.getReplacedPorts().get(portValues.getPort()).getVertex();
                     }
                     nodePosition = position;
-                    currentWidth = (delta);
+                    currentWidth = delta + portValues.getWidth();
                     minWidth = 0;
                     if (currentNode.equals(dummyVertex)) {
-                        newOrder.add(order.get(position));
+                        newOrder.add(portValues);
                     } else if (!sugy.getDeviceVertices().contains(currentNode)) {
                         //we will handle device vertices in the end via the union node
                         minWidth = sugy.getMinWidthForNode(currentNode);
                     }
-                } else if (order.get(position).getPort().getVertex().equals(currentNode)
-                        || (sugy.getReplacedPorts().containsKey(order.get(position).getPort()) && sugy.
-                        getReplacedPorts().get(order.get(position).getPort()).getVertex().equals(currentNode))) {
-                    currentWidth += (delta);
-                    currentWidthUnionNode += (delta);
-                } else if (order.get(position).getPort().getVertex().equals(currentUnionNode)) {
+                } else if (portValues.getPort().getVertex().equals(currentNode)
+                        || (sugy.getReplacedPorts().containsKey(portValues.getPort()) && sugy.
+                        getReplacedPorts().get(portValues.getPort()).getVertex().equals(currentNode))) {
+                    currentWidth += delta + portValues.getWidth();
+                    currentWidthUnionNode += delta + portValues.getWidth();
+                } else if (portValues.getPort().getVertex().equals(currentUnionNode)) {
                     //still the same union node but different sub-node
                     List<PortValues> nodeOrder = addDummyPortsAndGetNewOrder(order, currentWidth, minWidth,
                             currentUnionNode, currentNode, nodePosition, position);
                     newOrder.addAll(nodeOrder);
 
-                    currentNode = sugy.getReplacedPorts().get(order.get(position).getPort()).getVertex();
+                    currentNode = sugy.getReplacedPorts().get(portValues.getPort()).getVertex();
                     nodePosition = position;
-                    currentWidth = (delta);
-                    currentWidthUnionNode += (delta);
+                    currentWidth = delta + portValues.getWidth();
+                    currentWidthUnionNode += delta + portValues.getWidth();
                     minWidth = sugy.getMinWidthForNode(currentNode);
                 } else {
                     List<PortValues> nodeOrder = addDummyPortsAndGetNewOrder(order, currentWidth, minWidth,
@@ -293,13 +296,13 @@ public class NodePlacement {
                                 dummyPorts.putIfAbsent(deviceVertex, new LinkedHashSet<>());
                                 dummyPorts.get(deviceVertex).add(p);
                                 dummyPort2unionNode.put(p, currentUnionNode);
-                                newOrder.add(createNewPortValues(p));
-                                currentWidthUnionNode += (delta);
+                                newOrder.add(createNewPortValues(p, drawInfo.getPortWidth()));
+                                currentWidthUnionNode += delta + portValues.getWidth();
                             }
                         }
                         currentUnionNode = null;
                     }
-                    newOrder.add(order.get(position));
+                    newOrder.add(portValues);
                 }
             }
             structure.set(layer, newOrder);
@@ -338,12 +341,12 @@ public class NodePlacement {
             dummyPort2unionNode.put(p, currentUnionNode);
             if (first) {
                 first = false;
-                nodeOrder.addFirst(createNewPortValues(p));
+                nodeOrder.addFirst(createNewPortValues(p, drawInfo.getPortWidth()));
             } else {
                 first = true;
-                nodeOrder.addLast(createNewPortValues(p));
+                nodeOrder.addLast(createNewPortValues(p, drawInfo.getPortWidth()));
             }
-            currentWidth += (delta);
+            currentWidth += delta + order.get(position).getWidth();
         }
         return nodeOrder;
     }
@@ -550,7 +553,8 @@ public class NodePlacement {
                 PortValues sinkV = v.getSink();
 
                 //apply shift
-                sinkU.setShift(Math.min(sinkU.getShift(), sinkV.getShift() + v.getX() - (u.getX() + delta)));
+                sinkU.setShift(Math.min(sinkU.getShift(),
+                        sinkV.getShift() + v.getX() - (u.getX() + (u.getWidth() + v.getWidth()) / 2.0 + delta)));
             }
         }
 
@@ -569,13 +573,15 @@ public class NodePlacement {
             PortValues w = v;
             do {
                 if (w.getPosition() > 0) {
-                    PortValues u = w.getPredecessor().getRoot();
-                    placeBlock(u);
+                    PortValues u = w.getPredecessor(); //we consider here the real neighbor and not its root, hereunder
+                    // we may explicitly consider u's root then. This is different from the paper to incorporate the
+                    // width of every vertex
+                    placeBlock(u.getRoot());
                     if (v.getSink().equals(v)) {
-                        v.setSink(u.getSink());
+                        v.setSink(u.getRoot().getSink());
                     }
-                    if (v.getSink().equals(u.getSink())) {
-                        v.setX(Math.max(v.getX(),(u.getX() + delta)));
+                    if (v.getSink().equals(u.getRoot().getSink())) {
+                        v.setX(Math.max(v.getX(),(u.getX() + (u.getWidth() + w.getWidth()) / 2.0 + delta)));
                     }
                 }
                 w = w.getAlign();
@@ -595,7 +601,7 @@ public class NodePlacement {
 
                 if (predW != null && w.getAlign() != w && nodeOfW.equals(nodeOfPredW) && !nodeOfW.equals(dummyVertex)
                         && !sugy.isDummy(nodeOfW) && v.getSink().equals(predW.getRoot().getSink())
-                        && v.getX() - predW.getX() > maxPortSpacing) {
+                        && v.getX() - predW.getX() - (v.getWidth() + predW.getWidth()) / 2.0 > maxPortSpacing) {
                     //remove alignments
                     //usually we cut to the top of u, but when it is the first of its block, i.e., v, or if it has a
                     // port paring to to the top, then we cut to the bottom
@@ -678,7 +684,8 @@ public class NodePlacement {
                 Vertex nodeOfV = dummyPort2unionNode.getOrDefault(v.getPort(), v.getPort().getVertex());
                 //also align it to the right border, i.e., v belongs to the
                 if (nodeOfU != dummyVertex && (nodeOfU.equals(nodeOfV) || nodeOfV.equals(dummyVertex))
-                        && !sugy.isDummy(nodeOfU) && v.getX() - u.getX() > maxPortSpacing) {
+                        && !sugy.isDummy(nodeOfU)
+                        && v.getX() - u.getX() - (v.getWidth() + u.getWidth()) / 2.0 > maxPortSpacing) {
                     moveToTheRight(u, nodeOfU);
                 }
             }
@@ -708,8 +715,8 @@ public class NodePlacement {
         for (PortValues v : portsToBeMoved) {
             double freeSpaceToTheRight = v.getSuccessor() == null ? Double.POSITIVE_INFINITY :
                     v.getSuccessor().getX() - v.getX();
-            //we need to leave at least delta distance between neighborings -> also subtract delta once
-            moveValue = Math.min(moveValue, freeSpaceToTheRight - delta);
+            //we need to leave at least delta distance between neighborings -> also subtract width and delta once
+            moveValue = Math.min(moveValue, freeSpaceToTheRight - v.getWidth() - delta);
         }
 
         //if we can't move -> abort
@@ -727,61 +734,83 @@ public class NodePlacement {
             PortValues predU = u.getPredecessor();
             Vertex nodeOfPredU = predU == null ? null :
                     dummyPort2unionNode.getOrDefault(predU.getPort(), predU.getPort().getVertex());
-            if (predU != null && nodeOfU.equals(nodeOfPredU) & u.getX() - predU.getX() > maxPortSpacing) {
+            if (predU != null && nodeOfU.equals(nodeOfPredU)
+                    && u.getX() - predU.getX() - (u.getWidth() + predU.getWidth()) / 2.0 > maxPortSpacing) {
                 moveToTheRight(predU, nodeOfPredU);
             }
         }
     }
 
-    private void makePositiveAndAligned(int iteration) {
-        double maxXCorrespondingRun = Double.NEGATIVE_INFINITY;
-
-        double minX = Double.POSITIVE_INFINITY;
-        double maxX = Double.NEGATIVE_INFINITY;
-
-        for (List<PortValues> portLayer : structure) {
-            for (PortValues portValues : portLayer) {
-                if (portValues.getX() < minX) {
-                    minX = portValues.getX();
-                }
-                if (portValues.getX() > maxX) {
-                    maxX = portValues.getX();
-                }
-                if (iteration == 3) { //the last 2 must be right aligned, so we must track the extend of the 2nd
-                    double correspondingX = portValues.getXValues().get(iteration - 1);
-                    if (correspondingX > maxXCorrespondingRun) {
-                        maxXCorrespondingRun = correspondingX;
-                    }
-                }
-            }
-        }
-
-        //first shift acc to minX
-        double xShiftValue =
-                -minX + drawInfo.getPortSpacing() + drawInfo.getBorderWidth() + drawInfo.getEdgeDistanceHorizontal();
-        maxX += xShiftValue;
-        for (List<PortValues> portLayer : structure) {
-            for (PortValues portValues : portLayer) {
-                portValues.setX(portValues.getX() + xShiftValue);
-            }
-        }
-
-        //now align this or the previous depending on iteration and on the width
-        //we align the 0th and 1st to the left (this is already done by shifting it to postive values) and we align
-        // the 2nd and 3rd to the right of the smaller one; for that we must record the extensions of the 2nd and 3rd
-        // run
-        if (iteration == 3 && maxX != maxXCorrespondingRun) {
-            boolean prevIsSmaller = maxXCorrespondingRun < maxX;
-            double xAlignShiftValue = maxXCorrespondingRun - maxX;
-
-
+    private void makePositiveAndAligned() {
+        //find min and max x for each round
+        List<Double> minX = new ArrayList<>(4);
+        List<Double> maxX = new ArrayList<>(4);
+        for (int iteration = 0; iteration < 4; iteration++) {
+            double currMinX = Double.POSITIVE_INFINITY;
+            double currMaxX = Double.NEGATIVE_INFINITY;
             for (List<PortValues> portLayer : structure) {
                 for (PortValues portValues : portLayer) {
-                    if (prevIsSmaller) {
-                        portValues.setX(portValues.getX() + xAlignShiftValue);
-                    } else {
-                        portValues.getXValues().set(2, portValues.getXValues().get(2) - xAlignShiftValue);
-                    }
+                    currMinX = Math.min(currMinX, portValues.getXValues().get(iteration));
+                    currMaxX = Math.max(currMaxX, portValues.getXValues().get(iteration));
+                }
+            }
+            minX.add(currMinX);
+            maxX.add(currMaxX);
+        }
+
+        //determine width for each round
+        List<Double> width = new ArrayList<>(4);
+        //find run with smallest width
+        double smallestWidth = Double.POSITIVE_INFINITY;
+        int indexBestRun = -1; //best means smallest here
+        for (int iteration = 0; iteration < 4; iteration++) {
+            double widthThisRun = maxX.get(iteration) - minX.get(iteration);
+            width.add(widthThisRun);
+            if (widthThisRun < smallestWidth) {
+                smallestWidth = widthThisRun;
+                indexBestRun = iteration;
+            }
+        }
+
+        //make best run positive
+        double shiftBestRun = - minX.get(indexBestRun);
+        minX.set(indexBestRun, minX.get(indexBestRun) + shiftBestRun);
+        maxX.set(indexBestRun, maxX.get(indexBestRun) + shiftBestRun);
+        shiftXValuesOfPortValues(indexBestRun, shiftBestRun);
+
+        //align the other runs to the best run
+        for (int iteration = 0; iteration < 4; iteration++) {
+            if (iteration != indexBestRun) {
+                double shift = iteration < 2  ? minX.get(indexBestRun) - minX.get(iteration) :
+                        maxX.get(indexBestRun) - maxX.get(iteration);
+                shiftXValuesOfPortValues(iteration, shift);
+            }
+        }
+    }
+
+    private void makeFinalDrawingPositive() {
+        //find min
+        double minX = Double.POSITIVE_INFINITY;
+        for (List<PortValues> portLayer : structure) {
+            for (PortValues portValues : portLayer) {
+                minX = Math.min(minX, portValues.getX());
+            }
+        }
+        //determine shift and apply it
+        double shift = -minX;
+        shiftXValuesOfPortValues(-1, shift);
+    }
+
+    /**
+     * iteration = -1 to change the value of .getX()
+     */
+    private void shiftXValuesOfPortValues(int iteration, double shift) {
+        for (List<PortValues> portLayer : structure) {
+            for (PortValues portValues : portLayer) {
+                if (iteration == -1) {
+                    portValues.setX(portValues.getX() + shift);
+                } else {
+                    portValues.getXValues().set(iteration, portValues.getXValues().get(iteration) + shift);
                 }
             }
         }
@@ -789,33 +818,35 @@ public class NodePlacement {
 
     private void draw(boolean addDummyPortsForPaddingToOrders) {
         double currentY = drawInfo.getPortHeight();
-        for (int layer = 0; layer < structure.size(); layer++) {
+        for (int layerIndex = 0; layerIndex < structure.size(); layerIndex++) {
+            List<PortValues> layer = structure.get(layerIndex);
             // x1, y1, x2, y2
             int nodePosition = 0;
             // initialize shape of first node
-            double xPos = addDummyPortsForPaddingToOrders ? 0.0 : (structure.get(layer).get(0)).getX() + delta / 2.0;
+            double xPos = addDummyPortsForPaddingToOrders ? 0.0 :
+                    layer.get(0).getX() + (layer.get(0).getWidth() + delta) / 2.0;
             double yPos = currentY;
             Vertex nodeInTheGraph = null;
             int portIndexAtVertex = 0;
-            for (int pos = 0; pos < structure.get(layer).size(); pos++) {
-                PortValues portValues = structure.get(layer).get(pos);
+            for (int pos = 0; pos < layer.size(); pos++) {
+                PortValues portValues = layer.get(pos);
                 Port port = portValues.getPort();
                 if (port.getVertex().equals(dummyVertex)) {
                     portIndexAtVertex = 0;
                     // one node done - create Rectangle
                     if (!addDummyPortsForPaddingToOrders && nodeInTheGraph != null) {
-                        double width = (portValues.getX() - (delta / 2.0)) - xPos;
-                        double height = heightOfLayers.get(layer / 2) * layerHeight +
-                                Math.min(1.0, heightOfLayers.get(layer / 2)) * 2.0 * drawInfo.getBorderWidth();
+                        double width = portValues.getX() - (portValues.getWidth() + delta) / 2.0 - xPos;
+                        double height = heightOfLayers.get(layerIndex / 2) * layerHeight +
+                                Math.min(1.0, heightOfLayers.get(layerIndex / 2)) * 2.0 * drawInfo.getBorderWidth();
                         Rectangle nodeShape = new Rectangle(xPos, yPos, width, height, null);
                         nodeInTheGraph.setShape(nodeShape);
 
                         // initialize shape of next node
-                        xPos = (portValues.getX() + (delta / 2.0));
+                        xPos = portValues.getX() + (portValues.getWidth() + delta) / 2.0;
                         yPos = currentY;
                     }
-                    if (nodePosition < sortingOrder.getNodeOrder().get(layer / 2).size()) {
-                        nodeInTheGraph = sortingOrder.getNodeOrder().get(layer / 2).get(nodePosition++);
+                    if (nodePosition < sortingOrder.getNodeOrder().get(layerIndex / 2).size()) {
+                        nodeInTheGraph = sortingOrder.getNodeOrder().get(layerIndex / 2).get(nodePosition++);
                     }
                 } else {
                     createPortShape(currentY, portValues, true, nodeInTheGraph, portIndexAtVertex,
@@ -824,12 +855,13 @@ public class NodePlacement {
                 }
             }
 
-            currentY += heightOfLayers.get(layer / 2) * layerHeight
-                    + Math.min(1.0, heightOfLayers.get(layer / 2)) * 2.0 * drawInfo.getBorderWidth();
-            layer++;
+            currentY += heightOfLayers.get(layerIndex / 2) * layerHeight
+                    + Math.min(1.0, heightOfLayers.get(layerIndex / 2)) * 2.0 * drawInfo.getBorderWidth();
+            layerIndex++;
+            layer = structure.get(layerIndex);
 
-            for (int pos = 1; pos < structure.get(layer).size(); pos++) {
-                PortValues portValues = structure.get(layer).get(pos);
+            for (int pos = 1; pos < layer.size(); pos++) {
+                PortValues portValues = layer.get(pos);
                 if (!portValues.getPort().getVertex().equals(dummyVertex)) {
                     Vertex currentNode = createPortShape(currentY, portValues, false, nodeInTheGraph,
                             portIndexAtVertex, addDummyPortsForPaddingToOrders);
@@ -853,7 +885,7 @@ public class NodePlacement {
         }
 
         if (!addDummyPortsForPaddingToOrders) {
-            Rectangle portShape = new Rectangle(portValues.getX(), currentY, drawInfo.getPortWidth(),
+            Rectangle portShape = new Rectangle(portValues.getX(), currentY, portValues.getWidth(),
                     drawInfo.getPortHeight(), null);
             port.setShape(portShape);
         }
