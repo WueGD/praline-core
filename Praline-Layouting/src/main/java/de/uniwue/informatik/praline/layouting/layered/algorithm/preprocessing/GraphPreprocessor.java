@@ -257,7 +257,7 @@ public class GraphPreprocessor {
 
             for (Vertex containedVertex : groupVertices) {
                 for (Port port : containedVertex.getPorts()) {
-                    if (!sugy.getDeviceVertices().contains(containedVertex)) {//) || !port.getEdges().isEmpty()) {
+                    if (!sugy.getDeviceVertices().contains(containedVertex) || !port.getEdges().isEmpty()) {
                         // create new port at unification vertex and remove old one on original vertex,
                         // hang the edges from the old to the new port
                         Port replacePort = new Port();
