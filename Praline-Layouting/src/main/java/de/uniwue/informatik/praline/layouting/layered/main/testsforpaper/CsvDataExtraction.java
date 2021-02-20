@@ -47,7 +47,9 @@ public class CsvDataExtraction {
 //                    "2021-02-09_20-27-21"; //rr with smaller vertices: max stretch = 4.0
 //                    "2021-02-09_23-38-16"; //same as before but unbounded stretch
 //                    "2021-02-10_00-16-05"; //same as 2 before but gaps btw. real ports and bounding ports are not closed
-                    "2021-02-10_00-49-22"; //rr with smaller vertices: max stretch = 8.0
+//                    "2021-02-10_00-49-22"; //rr with smaller vertices: max stretch = 8.0
+//                    "2021-02-19_10-24-13"; //rr with individual-size ports & smaller dummy vertices in NodePlacement
+                    "2021-02-20_02-51-39"; //separating pairs in NodePlacement only at non-dummy nodes
 
     private static final String[] DATA_DIRS =
             {

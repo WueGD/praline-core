@@ -340,7 +340,7 @@ public class SugiyamaLayouter implements PralineLayouter {
             NodePlacement np = new NodePlacement(this, orders, drawInfo);
             np.initialize();
             np.initializeStructure();
-            dummyPortsForLabelPadding = np.dummyPortsForWidth();
+            dummyPortsForLabelPadding = np.dummyPortsForWidth(true);
             np.reTransformStructure(true);
         }
         else {
@@ -690,7 +690,11 @@ public class SugiyamaLayouter implements PralineLayouter {
     public boolean isDummy(Vertex node) {
         return isDummyNodeOfLongEdge(node) || isDummyNodeOfSelfLoop(node) || isDummyTurningNode(node) ||
                 isDummyNodeForEdgesOfDeg1or0(node) || isDummyNodeForNodelessPorts(node) ||
-                getHyperEdges().containsKey(node);
+                isHyperEdgeDummy(node);
+    }
+
+    public boolean isHyperEdgeDummy(Vertex node) {
+        return getHyperEdges().containsKey(node);
     }
 
     public Map<Vertex, Edge> getDummyNodesLongEdges() {

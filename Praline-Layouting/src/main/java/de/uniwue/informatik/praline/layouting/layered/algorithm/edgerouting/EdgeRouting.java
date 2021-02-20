@@ -69,10 +69,10 @@ public class EdgeRouting {
                 removeDummyLayer(rank + 1);
             }
             else {
-                outlineContourBB.add(new ContourPoint(-1,Double.MIN_VALUE));
-                outlineContourBB.add(new ContourPoint(-1, Double.MAX_VALUE));
-                outlineContourTT.add(new ContourPoint(-1,Double.MIN_VALUE));
-                outlineContourTT.add(new ContourPoint(-1, Double.MAX_VALUE));
+                outlineContourBB.add(new ContourPoint(-1,Double.NEGATIVE_INFINITY));
+                outlineContourBB.add(new ContourPoint(-1, Double.POSITIVE_INFINITY));
+                outlineContourTT.add(new ContourPoint(-1,Double.NEGATIVE_INFINITY));
+                outlineContourTT.add(new ContourPoint(-1, Double.POSITIVE_INFINITY));
             }
 
             List<ContourPoint> outlineContourTop = new LinkedList<>();
@@ -139,14 +139,13 @@ public class EdgeRouting {
     }
 
     private void handleDummyLayer(List<Vertex> layer, boolean top, Map<Edge, Integer> edgeToLayer, List<ContourPoint> outlineContour) {
-        outlineContour.add(new ContourPoint(-1,Double.MIN_VALUE));
+        outlineContour.add(new ContourPoint(-1,Double.NEGATIVE_INFINITY));
         List<ContourPoint> lastPositions = new LinkedList<>();
-        lastPositions.add(new ContourPoint(-1, Double.MAX_VALUE));
-        lastPositions.add(new ContourPoint(-1, Double.MAX_VALUE));
+        lastPositions.add(new ContourPoint(-1, Double.POSITIVE_INFINITY));
+        lastPositions.add(new ContourPoint(-1, Double.POSITIVE_INFINITY));
         // search for turning dummies which are routed through the active edge layer and handle them
         List<Double> activeCandidates = new ArrayList<>();
         for (Vertex node : layer) {
-            //todo: it seems like there are 2 versions of each self loop drawn (and 1 is later removed) -> check this
             if (sugy.isDummyTurningNode(node) || sugy.isDummyNodeOfSelfLoop(node)) {
                 List<Port> ports = (top) ? sortingOrder.getTopPortOrder().get(node) : sortingOrder.getBottomPortOrder().get(node);
                 if (!ports.isEmpty()) {
@@ -340,9 +339,9 @@ public class EdgeRouting {
         List<Double> activeCandidates = new ArrayList<>();
         List<ContourPoint> lastPositions = new LinkedList<>();
 
-        lastPositions.add(new ContourPoint(-1, Double.MAX_VALUE));
-        lastPositions.add(new ContourPoint(-1, Double.MAX_VALUE));
-        outlineContourLR.add(new ContourPoint(-1, Double.MIN_VALUE));
+        lastPositions.add(new ContourPoint(-1, Double.POSITIVE_INFINITY));
+        lastPositions.add(new ContourPoint(-1, Double.POSITIVE_INFINITY));
+        outlineContourLR.add(new ContourPoint(-1, Double.NEGATIVE_INFINITY));
 
         int[] position = {0};
 
@@ -369,7 +368,7 @@ public class EdgeRouting {
                                     // place edge at new level
                                     int newContourPointCase = 1;
                                     int minLevel = findMinLevel(bottomPort.getShape().getXPosition(), topPort.getShape().getXPosition(), outlineContourTD, position);
-                                    while (activeCandidates.size() < minLevel) activeCandidates.add(Double.MIN_VALUE);
+                                    while (activeCandidates.size() < minLevel) activeCandidates.add(Double.NEGATIVE_INFINITY);
                                     int level = activeCandidates.size();
                                     // find new level
                                     for (int i = (activeCandidates.size() - 1); i >= minLevel; i--) {
@@ -482,9 +481,9 @@ public class EdgeRouting {
         LinkedList<Double> activeCandidates = new LinkedList<>();
         List<ContourPoint> lastPositions = new LinkedList<>();
 
-        lastPositions.add(new ContourPoint(-1, Double.MAX_VALUE));
-        lastPositions.add(new ContourPoint(-1, Double.MAX_VALUE));
-        outlineContourRL.add(new ContourPoint(-1, Double.MIN_VALUE));
+        lastPositions.add(new ContourPoint(-1, Double.POSITIVE_INFINITY));
+        lastPositions.add(new ContourPoint(-1, Double.POSITIVE_INFINITY));
+        outlineContourRL.add(new ContourPoint(-1, Double.NEGATIVE_INFINITY));
 
         int[] position = {0};
         // for all nodes
@@ -507,7 +506,7 @@ public class EdgeRouting {
                                     // place edge at new level
                                     int newContourPointCase = 1;
                                     int minLevel = findMinLevel(topPort.getShape().getXPosition(), bottomPort.getShape().getXPosition(), outlineContourTD, position);
-                                    while (activeCandidates.size() < minLevel) activeCandidates.add(Double.MIN_VALUE);
+                                    while (activeCandidates.size() < minLevel) activeCandidates.add(Double.NEGATIVE_INFINITY);
                                     int level = activeCandidates.size();
                                     // find new level
                                     for (int i = (activeCandidates.size() - 1); i >= minLevel; i--) {

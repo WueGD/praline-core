@@ -454,11 +454,11 @@ public class KielerLayouter implements PralineLayouter {
     }
 
     private void createPort(LinkedHashMap<Port, ElkPort> ports, ElkGraphFactory elkGraphFactory,
-                            ArrayList<ElkPort> portList, Port pralinePort, PortSide portSi) {
+                            ArrayList<ElkPort> portList, Port pralinePort, PortSide portSide) {
         ElkPort port = elkGraphFactory.createElkPort();
         port.setWidth(drawInfo.getPortWidth());
         port.setHeight(drawInfo.getPortHeight());
-        port.setProperty(CoreOptions.PORT_SIDE, portSi);
+        port.setProperty(CoreOptions.PORT_SIDE, portSide);
         ports.put(pralinePort, port);
         portList.add(port);
     }

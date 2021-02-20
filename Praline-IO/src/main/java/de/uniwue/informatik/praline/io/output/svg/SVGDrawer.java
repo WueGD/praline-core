@@ -145,9 +145,13 @@ public class SVGDrawer {
         if (mainLabel instanceof TextLabel) {
             g2d.setFont(FontManager.fontOf((TextLabel) mainLabel));
             String text = ((TextLabel) mainLabel).getLayoutText();
+            if (text == null) {
+                System.out.println("Warning! No layout text found for label " + mainLabel + " of " + node);
+                return;
+            }
             double xCoordinate = nodeRectangle.getX() + drawInfo.getHorizontalVertexLabelOffset();
             double yCoordinate = nodeRectangle.getY() + 0.5 * nodeRectangle.getHeight()
-                    - 0.5 *g2d.getFontMetrics().getStringBounds(text, g2d).getHeight()
+                    - 0.5 * g2d.getFontMetrics().getStringBounds(text, g2d).getHeight()
                     - g2d.getFontMetrics().getStringBounds(text, g2d).getY()
                     + drawInfo.getVerticalVertexLabelOffset();
             if (drawInfo.isShowVertexLabels()) {
