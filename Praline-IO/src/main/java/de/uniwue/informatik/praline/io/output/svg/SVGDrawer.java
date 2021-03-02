@@ -19,6 +19,7 @@ import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -27,6 +28,7 @@ public class SVGDrawer {
     //TODO was created for the specific use for the layered drawing algo --> change to make it general usable
 
     public static final double EMPTY_MARGIN_WIDTH = 20.0;
+    private static final boolean USE_CSS = true; // we want to use CSS style attributes
 
 
     private final Graph graph;
@@ -39,6 +41,29 @@ public class SVGDrawer {
 
     public void draw(String savePath, DrawingInformation drawInfo) {
         this.drawInfo = drawInfo;
+        SVGGraphics2D svgGenerator = this.getSvgGenerator();
+
+        // Finally, stream out SVG to a file using UTF-8 encoding.
+        try {
+            svgGenerator.stream(savePath, USE_CSS);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void draw(Writer writer, DrawingInformation drawInfo) {
+        this.drawInfo = drawInfo;
+        SVGGraphics2D svgGenerator = this.getSvgGenerator();
+
+        // Finally, stream out SVG to a writer using UTF-8 encoding.
+        try {
+            svgGenerator.stream(writer, USE_CSS);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private SVGGraphics2D getSvgGenerator() {
         // Get a DOMImplementation.
         DOMImplementation domImpl =
                 GenericDOMImplementation.getDOMImplementation();
@@ -53,14 +78,7 @@ public class SVGDrawer {
         // Ask the test to render into the SVG Graphics2D implementation.
         paint(svgGenerator);
 
-        // Finally, stream out SVG to the standard output using
-        // UTF-8 encoding.
-        boolean useCSS = true; // we want to use CSS style attributes
-        try {
-            svgGenerator.stream(savePath, useCSS);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return svgGenerator;
     }
 
     public void paint(SVGGraphics2D g2d) {
