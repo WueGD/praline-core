@@ -794,7 +794,7 @@ public class NodePlacement {
             PortValues predU = u.getPredecessor();
             Vertex nodeOfPredU = predU == null ? null :
                     dummyPort2unionNode.getOrDefault(predU.getPort(), predU.getPort().getVertex());
-            if (predU != null && nodeOfU.equals(nodeOfPredU)
+            if (predU != null && !nodeOfU.equals(dummyVertex) && nodeOfU.equals(nodeOfPredU)
                     && u.getX() - predU.getX() - (u.getWidth() + predU.getWidth()) / 2.0 > maxPortSpacing) {
                 moveToTheRight(predU, nodeOfPredU);
             }
