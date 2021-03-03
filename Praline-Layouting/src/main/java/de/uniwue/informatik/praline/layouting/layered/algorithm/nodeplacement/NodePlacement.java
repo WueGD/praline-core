@@ -51,9 +51,11 @@ public class NodePlacement {
         // create lists of ports for layers
         initializeStructure();
         // create dummyPorts to have enough space for labels
-        dummyPortsForWidth(false);
+        dummyPortsForWidth(true);
         //late initialization of port values - now that we have the overall structure constructed
         initializePortValueParams();
+        //find alignments
+        List<LinkedList<PortValues[]>> alignments = findAlignments();
 
         for (int i = 0; i < 4; i++) {
             switch (i) {
@@ -72,7 +74,7 @@ public class NodePlacement {
             // initialize datastructure portValues
             resetPortValues();
             // mark conflicts (crossing edges)
-            handleCrossings();
+            handleCrossings(alignments, i == 1 || i == 2);
             // make compact
             horizontalCompaction();
             //we often don't want arbitrarily broad vertices
@@ -421,11 +423,18 @@ public class NodePlacement {
         }
     }
 
-    private void handleCrossings() {
+    /**
+     *
+     * @return
+     *      finds alignments
+     */
+    private List<LinkedList<PortValues[]>> findAlignments() {
         //determine for all long edges, over how many dummy vertices they go, i.e., their length.
         //later, longer edges will be preferred for making them straight compared to shorter edges
         Map<Edge, Integer> lengthOfLongEdge = new LinkedHashMap<>();
         determineLengthOfLongEdges(lengthOfLongEdge);
+
+        List<LinkedList<PortValues[]>> stacksOfAlignments = new ArrayList<>(structure.size() - 1);
 
         for (int layer = 0; layer < (structure.size() - 1); layer++) {
             LinkedList<PortValues[]> stack = new LinkedList<>(); //stack of edges that are made straight
@@ -440,8 +449,21 @@ public class NodePlacement {
                     }
                 }
             }
+            stacksOfAlignments.add(stack);
+        }
+        return stacksOfAlignments;
+    }
+
+    private void handleCrossings(List<LinkedList<PortValues[]>> stacksOfAlignments, boolean reverseOrder) {
+        if (reverseOrder) {
+            Collections.reverse(stacksOfAlignments);
+        }
+        for (LinkedList<PortValues[]> stack : stacksOfAlignments) {
             // initialize root and align according to Alg. 2 from paper
-            verticalAlignment(stack);
+            verticalAlignment(stack, reverseOrder);
+        }
+        if (reverseOrder) {
+            Collections.reverse(stacksOfAlignments);
         }
     }
 
@@ -535,12 +557,37 @@ public class NodePlacement {
         }
     }
 
-    private void verticalAlignment(List<PortValues[]> edges) {
+    private void verticalAlignment(List<PortValues[]> edges, boolean reverseOrder) {
         for (PortValues[] entry : edges) {
-            if (entry[1].getAlign() == entry[1]) {
-                entry[0].setAlign(entry[1]);
-                entry[1].setRoot(entry[0].getRoot());
-                entry[1].setAlign(entry[1].getRoot());
+            PortValues bottomPort = reverseOrder ? entry[1] : entry[0];
+            PortValues topPort = reverseOrder ? entry[0] : entry[1];
+            if (topPort.getAlign() == topPort) {
+                bottomPort.setAlign(topPort);
+                topPort.setRoot(bottomPort.getRoot());
+                topPort.setAlign(topPort.getRoot());
+            }
+        }
+    }
+
+    private void setFlagsForFirstPortsInNodes() {
+        for (List<PortValues> layer : structure) {
+            Vertex currentNode = dummyVertex;
+            boolean isFirst = true;
+            for (PortValues v : layer) {
+                Vertex nodeOfV = v.getPort().getVertex();
+                if (nodeOfV.equals(dummyVertex)) {
+                    //boundary of node -> reset
+                    isFirst = true;
+                }
+                else {
+                    if (v.getAlign().getPort().getVertex() != nodeOfV ||
+                            v.getAlignRe().getPort().getVertex() != nodeOfV) {
+                        //found an align to the outside -> not first any more
+                        isFirst = false;
+                    }
+                }
+                v.setInNodeBeforeFirstAlignToTheOutside(isFirst);
+                currentNode = nodeOfV;
             }
         }
     }
@@ -548,6 +595,11 @@ public class NodePlacement {
     //Alg. 3b (alternative) from Brandes, Walter, Zink - Erratum: Fast and Simple Horizontal Coordinate Assignment
     // https://arxiv.org/abs/2008.01252
     private void horizontalCompaction() {
+
+        //additional operation to mark the beginnings of nodes. For them, no alginments are removed because
+        //in the end we can simply shift them to the right in closeRemainingGapsWithinNodes()
+        setFlagsForFirstPortsInNodes();
+
         // coordinates relative to sink
         //we have to go through the structure with increasing indices in both layers and port indices on layers
         for (List<PortValues> layer : structure) {
@@ -595,7 +647,7 @@ public class NodePlacement {
 
                 //apply shift
                 sinkU.setShift(Math.min(sinkU.getShift(),
-                        sinkV.getShift() + v.getX() - (u.getX() + (u.getWidth() + v.getWidth()) / 2.0 + delta)));
+                        sinkV.getShift() + v.getX() - (u.getX() + getMinPortDistance(u, v))));
             }
         }
 
@@ -606,6 +658,41 @@ public class NodePlacement {
                 v.setX(v.getX() + sinkV.getShift());
             }
         }
+    }
+
+    /**
+     * In the original Brandes-Koepf algorithm, this would return delta.
+     * Here, we have individual port width that comes on top of the delta.
+     * This makes it more difficult: by different widths, we lose the grid-like structure, i.e.,
+     * that all coordinates assigned are multiples of delta.
+     *
+     * For optical reasons, we should still try to provide a grid like structure.
+     * Hence, this method returns for the aimed spacing, the next multiple of (delta + default port width)
+     * to provide again a grid like structure
+     *
+     * @param u
+     * @param v
+     * @return
+     */
+    private double getMinPortDistance(PortValues u, PortValues v) {
+        double idealPortDistance = (u.getWidth() + v.getWidth()) / 2.0 + delta;
+        return getMinGridDistance(idealPortDistance, true);
+    }
+
+    /**
+     * see {@link NodePlacement#getMinPortDistance(PortValues, PortValues)}
+     *
+     * this value is rounded up or down to get a multiple of (delta + default port width)
+     * to achieve an overall grid like placement of ports
+     *
+     * @param idealPortDistance
+     * @return
+     */
+    private double getMinGridDistance(double idealPortDistance, boolean roundUp) {
+        double multiplesOfDeltaPlusPortWidth = idealPortDistance / (delta + drawInfo.getPortWidth());
+        multiplesOfDeltaPlusPortWidth = roundUp ? Math.ceil(multiplesOfDeltaPlusPortWidth) :
+                Math.floor(multiplesOfDeltaPlusPortWidth);
+        return multiplesOfDeltaPlusPortWidth * (delta + drawInfo.getPortWidth());
     }
 
     private void placeBlock(PortValues v) {
@@ -622,7 +709,7 @@ public class NodePlacement {
                         v.setSink(u.getRoot().getSink());
                     }
                     if (areInTheSameClass(v, u.getRoot())) {
-                        v.setX(Math.max(v.getX(),(u.getX() + (u.getWidth() + w.getWidth()) / 2.0 + delta)));
+                        v.setX(Math.max(v.getX(), (u.getX() + getMinPortDistance(u, w))));
                     }
                 }
                 w = w.getAlign();
@@ -640,8 +727,8 @@ public class NodePlacement {
                 Vertex nodeOfPredW = predW == null ? null :
                         dummyPort2unionNode.getOrDefault(predW.getPort(), predW.getPort().getVertex());
 
-                if (predW != null && w.getAlign() != w && areInTheSameNonDummyNode(nodeOfW, nodeOfPredW) &&
-                        areInTheSameClass(v, predW.getRoot()) &&
+                if (predW != null && !predW.isInNodeBeforeFirstAlignToTheOutside() && w.getAlign() != w &&
+                        areInTheSameNonDummyNode(nodeOfW, nodeOfPredW) && areInTheSameClass(v, predW.getRoot()) &&
                         v.getX() - predW.getX() - (v.getWidth() + predW.getWidth()) / 2.0 > maxPortSpacing) {
                     //remove alignments
                     //usually we cut to the top of u, but when it is the first of its block, i.e., v, or if it has a
@@ -778,6 +865,9 @@ public class NodePlacement {
             //we need to leave at least delta distance between neighborings -> also subtract width and delta once
             moveValue = Math.min(moveValue, freeSpaceToTheRight - v.getWidth() - delta);
         }
+
+        //make move value a grid conform number
+        moveValue = getMinGridDistance(moveValue, false);
 
         //if we can't move -> abort
         if (moveValue <= 0) {

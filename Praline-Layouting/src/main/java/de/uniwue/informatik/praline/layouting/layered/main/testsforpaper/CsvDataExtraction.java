@@ -49,7 +49,11 @@ public class CsvDataExtraction {
 //                    "2021-02-10_00-16-05"; //same as 2 before but gaps btw. real ports and bounding ports are not closed
 //                    "2021-02-10_00-49-22"; //rr with smaller vertices: max stretch = 8.0
 //                    "2021-02-19_10-24-13"; //rr with individual-size ports & smaller dummy vertices in NodePlacement
-                    "2021-02-20_02-51-39"; //separating pairs in NodePlacement only at non-dummy nodes
+//                    "2021-02-20_02-51-39"; //separating pairs in NodePlacement only at non-dummy nodes
+//                    "2021-03-02_17-45-56"; //NodePlacement only top-left, variable width padding ports
+//                    "2021-03-02_17-46-51"; //NodePlacement only top-left, unit width padding ports
+//                    "2021-03-03_03-23-24"; //rr with NodePlacement back to grid-like arrangement + unit width padding ports
+                    "2021-03-03_04-24-45"; //same as before + in NodePlacement use flags for first ports of nodes
 
     private static final String[] DATA_DIRS =
             {

@@ -20,6 +20,7 @@ public class PortValues {
     private int position;
     private int layer;
     private double width = 0;
+    private boolean isInNodeBeforeFirstAlignToTheOutside; //flag to prevent class-internal closing of gaps in placeBlock
 
     public PortValues(Port port) {
         this(port, null, -1, -1);
@@ -134,6 +135,14 @@ public class PortValues {
 
     public void setWidth(double width) {
         this.width = width;
+    }
+
+    public boolean isInNodeBeforeFirstAlignToTheOutside() {
+        return isInNodeBeforeFirstAlignToTheOutside;
+    }
+
+    public void setInNodeBeforeFirstAlignToTheOutside(boolean inNodeBeforeFirstAlignToTheOutside) {
+        isInNodeBeforeFirstAlignToTheOutside = inNodeBeforeFirstAlignToTheOutside;
     }
 
     @Override
