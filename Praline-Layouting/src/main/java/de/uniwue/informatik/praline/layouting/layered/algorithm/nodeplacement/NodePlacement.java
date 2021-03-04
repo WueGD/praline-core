@@ -314,7 +314,7 @@ public class NodePlacement {
                                                 drawInfo.getPortWidth():
                                                 Math.max(0,minWidthUnionNode - currentWidthUnionNode - delta));
                                 newOrder.add(dummyPortValues);
-                                currentWidthUnionNode += delta + portValues.getWidth();
+                                currentWidthUnionNode += delta + dummyPortValues.getWidth();
                             }
                         }
                         currentUnionNode = null;
