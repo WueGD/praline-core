@@ -1147,7 +1147,14 @@ public class NodePlacement {
         }
 
         if (!addDummyPortsForPaddingToOrders) {
-            Rectangle portShape = new Rectangle(portValues.getX(), currentY, portValues.getWidth(),
+            //if not width is set, use the default width
+            double drawnWidth =
+                    port.getShape() instanceof Rectangle && !Double.isNaN(((Rectangle) port.getShape()).getWidth()) ?
+                            ((Rectangle) port.getShape()).width : drawInfo.getPortWidth();
+            //this width may differ from the width used here because we may use broader ports because of broad port
+            // labels
+
+            Rectangle portShape = new Rectangle(portValues.getX(), currentY, drawnWidth,
                     drawInfo.getPortHeight(), null);
             port.setShape(portShape);
         }

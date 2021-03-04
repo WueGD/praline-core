@@ -27,7 +27,7 @@ public class DrawingInformation {
     public final static double DEFAULT_DISTANCE_BETWEEN_LAYERS = 20;
     public final static double DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET = 2;
     public final static double DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET = 0;
-    public final static double DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET = -2;
+    public final static double DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET = -1;
     public final static double DEFAULT_VERTICAL_PORT_LABEL_OFFSET = 0;
     public final static Color DEFAULT_PORT_PAIRING_COLOR = Color.DARK_GRAY;
     public final static boolean DEFAULT_SHOW_PORT_PAIRINGS = true;
@@ -133,7 +133,7 @@ public class DrawingInformation {
 
     public double computePortWidth(Port port) {
         double labelWidth = getMinLabelWidth(port.getLabelManager().getLabels());
-        double labelWithBufferWidth = labelWidth + 2.0 * this.horizontalPortLabelOffset - this.portSpacing;
+        double labelWithBufferWidth = labelWidth + 2.0 * this.horizontalPortLabelOffset;
 
         double givenWidth = port.getShape() != null && port.getShape() instanceof Rectangle &&
                 ((de.uniwue.informatik.praline.datastructure.shapes.Rectangle) port.getShape()).getWidth() >= 0 ?
