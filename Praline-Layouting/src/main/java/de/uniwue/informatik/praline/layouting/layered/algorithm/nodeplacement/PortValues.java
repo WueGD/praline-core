@@ -20,7 +20,10 @@ public class PortValues {
     private int position;
     private int layer;
     private double width = 0;
-    private boolean isInNodeBeforeFirstAlignToTheOutside; //flag to prevent class-internal closing of gaps in placeBlock
+    private boolean isNodeStartBeforeAlign; //before align to the outside: flag to prevent class-internal closing of
+    // gaps in placeBlock
+    private double nodeSideShortness; //determines how much shorter this side is of the node is compared to the other
+    // side. If this port is on the longer side of a node (i.e. with more/longer ports) then this value is 0
 
     public PortValues(Port port) {
         this(port, null, -1, -1);
@@ -137,12 +140,20 @@ public class PortValues {
         this.width = width;
     }
 
-    public boolean isInNodeBeforeFirstAlignToTheOutside() {
-        return isInNodeBeforeFirstAlignToTheOutside;
+    public boolean isNodeStartBeforeAlign() {
+        return isNodeStartBeforeAlign;
     }
 
-    public void setInNodeBeforeFirstAlignToTheOutside(boolean inNodeBeforeFirstAlignToTheOutside) {
-        isInNodeBeforeFirstAlignToTheOutside = inNodeBeforeFirstAlignToTheOutside;
+    public void setNodeStartBeforeAlign(boolean nodeStartBeforeAlign) {
+        isNodeStartBeforeAlign = nodeStartBeforeAlign;
+    }
+
+    public double getNodeSideShortness() {
+        return nodeSideShortness;
+    }
+
+    public void setNodeSideShortness(double nodeSideShortness) {
+        this.nodeSideShortness = nodeSideShortness;
     }
 
     @Override

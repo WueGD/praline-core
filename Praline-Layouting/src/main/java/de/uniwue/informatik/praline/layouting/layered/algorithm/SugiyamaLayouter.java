@@ -31,6 +31,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     public static final CrossingMinimizationMethod DEFAULT_CROSSING_MINIMIZATION_METHOD =
             CrossingMinimizationMethod.PORTS;
     public static final int DEFAULT_NUMBER_OF_CM_ITERATIONS = 5; //iterations for crossing minimization
+    public static final boolean DEFAULT_DETERMINE_SIDE_LENGTHS_OF_NODES = false; //for NodePlacement; see there
 
 
 
@@ -323,7 +324,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     public void nodePositioning() {
         if (isSingleComponent) {
             NodePlacement np = new NodePlacement(this, orders, drawInfo);
-            dummyPortsForLabelPadding = np.placeNodes();
+            dummyPortsForLabelPadding = np.placeNodes(DEFAULT_DETERMINE_SIDE_LENGTHS_OF_NODES);
         }
         else {
             for (SugiyamaLayouter componentLayouter : componentLayouters) {

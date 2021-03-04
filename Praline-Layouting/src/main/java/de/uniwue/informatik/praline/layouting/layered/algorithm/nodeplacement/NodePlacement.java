@@ -46,7 +46,7 @@ public class NodePlacement {
      *      Map linking to all dummy ports that were inserted for padding the width of a vertex due to a (long) label.
      *      These ports are still in the data structure and should be removed later.
      */
-    public Map<Vertex, Set<Port>> placeNodes () {
+    public Map<Vertex, Set<Port>> placeNodes (boolean determineSideLengthsOfNodes) {
         initialize();
         // create lists of ports for layers
         initializeStructure();
@@ -54,6 +54,12 @@ public class NodePlacement {
         dummyPortsForWidth(true);
         //late initialization of port values - now that we have the overall structure constructed
         initializePortValueParams();
+        //determine side lengths of nodes, that is, check how many ports are on the top and on the bottom side of
+        // each node. For the side with fewer ports, save how much shorter it is. Later when closing gaps within
+        // nodes, the shorter side has a "bonus" of this extra length before its gaps are closed by shifting its ports
+        if (determineSideLengthsOfNodes) {
+            determineSideLengthsOfNodes();
+        }
         //find alignments
         List<LinkedList<PortValues[]>> alignments = findAlignments();
 
@@ -253,10 +259,10 @@ public class NodePlacement {
                     //special case: if current node is a union node, consider the single parts
                     if (sugy.isUnionNode(currentNode)) {
                         currentUnionNode = currentNode;
-                        currentWidthUnionNode = portValues.getWidth();
+                        currentWidthUnionNode = delta + portValues.getWidth();
                         currentNode = sugy.getReplacedPorts().get(port).getVertex();
                     }
-                    currentWidth = portValues.getWidth();
+                    currentWidth = delta + portValues.getWidth();
                     minWidth = 0;
                     if (currentNode.equals(dummyVertex)) {
                         newOrder.add(portValues);
@@ -284,6 +290,8 @@ public class NodePlacement {
                     currentWidthUnionNode += delta + portValues.getWidth();
                     minWidth = sugy.getMinWidthForNode(currentNode);
                 } else {
+                    currentWidth += delta;
+                    currentWidthUnionNode += delta;
                     List<PortValues> nodeOrder = addDummyPortsAndGetNewOrder(order, currentWidth, minWidth,
                             currentUnionNode, currentNode, nodePosition, position, useMultipleRegularSizeDummyPorts);
                     newOrder.addAll(nodeOrder);
@@ -412,6 +420,85 @@ public class NodePlacement {
         }
         else {
             topLevelPortGroup.addPortComposition(p);
+        }
+    }
+
+    private void determineSideLengthsOfNodes() {
+        //assumes that on each two consecutive layers, there is the top and the bottom side of a node, so 0nd and 1st
+        // layer are corresponding, then 2nd and 3rd, 4th and 5th, and so on. If this is changed in the future, you
+        // must also adjust this method
+
+        for (int i = 0; i < structure.size(); i = i + 2) {
+            List<PortValues> bottomLayer = structure.get(i);
+            List<PortValues> topLayer = structure.get(i + 1);
+
+            //go simultaneously through both top and bottom layer and remember the lengths of each side
+            int j = -1; //index bottom
+            int k = -1; //index top
+            Vertex currentNode = dummyVertex;
+            double currentWidthBottom = delta;
+            double currentWidthTop = delta;
+            List<PortValues> portsOfThisNodeBottom = new ArrayList<>();
+            List<PortValues> portsOfThisNodeTop = new ArrayList<>();
+            while (j < bottomLayer.size() || k < topLayer.size()) {
+                //look if the next port is still of this vertex
+                //if yes, extend width and save port
+                boolean jChanged = false;
+                if (!currentNode.equals(dummyVertex) && j + 1 < bottomLayer.size()
+                        && bottomLayer.get(j + 1).getPort().getVertex().equals(currentNode)) {
+                    ++j;
+                    jChanged = true;
+                    PortValues portJ = bottomLayer.get(j);
+                    currentWidthBottom += portJ.getWidth() + delta;
+                    portsOfThisNodeBottom.add(portJ);
+                }
+                boolean kChanged = false;
+                if (!currentNode.equals(dummyVertex) && k + 1 < topLayer.size()
+                        && topLayer.get(k + 1).getPort().getVertex().equals(currentNode)) {
+                    ++k;
+                    kChanged = true;
+                    PortValues portK = topLayer.get(k);
+                    currentWidthTop += portK.getWidth() + delta;
+                    portsOfThisNodeTop.add(portK);
+                }
+
+                //if there is no port of this node remaining -> compute widths
+                if (!jChanged && !kChanged) {
+                    //save difference for each port of the shorter side
+                    if (!currentNode.equals(dummyVertex)) {
+                        boolean topIsLonger = currentWidthBottom > currentWidthTop;
+                        double lengthDiff = Math.abs(currentWidthBottom - currentWidthTop);
+                        if (lengthDiff > 0) {
+                            List<PortValues> portsOfShorterSide = topIsLonger ? portsOfThisNodeTop : portsOfThisNodeBottom;
+                            for (PortValues port : portsOfShorterSide) {
+                                port.setNodeSideShortness(lengthDiff);
+                            }
+                        }
+                        //reset
+                        currentWidthBottom = 0;
+                        currentWidthTop = 0;
+                        portsOfThisNodeBottom.clear();
+                        portsOfThisNodeTop.clear();
+                    }
+                    //find next indices + next node
+                    boolean currentNodeChanged = false;
+                    //first try to move to next "regular" vertex
+                    if (j + 1 < bottomLayer.size() && !bottomLayer.get(j + 1).getPort().getVertex().equals(dummyVertex)) {
+                        currentNode = bottomLayer.get(j + 1).getPort().getVertex();
+                        currentNodeChanged = true;
+                    }
+                    if (!currentNodeChanged && k + 1 < topLayer.size() && !topLayer.get(k + 1).getPort().getVertex().equals(dummyVertex)) {
+                        currentNode = topLayer.get(k + 1).getPort().getVertex();
+                        currentNodeChanged = true;
+                    }
+                    //if no regular one, move to dummy vertex
+                    if (!currentNodeChanged) {
+                        currentNode = dummyVertex;
+                        ++j;
+                        ++k;
+                    }
+                }
+            }
         }
     }
 
@@ -571,7 +658,6 @@ public class NodePlacement {
 
     private void setFlagsForFirstPortsInNodes() {
         for (List<PortValues> layer : structure) {
-            Vertex currentNode = dummyVertex;
             boolean isFirst = true;
             for (PortValues v : layer) {
                 Vertex nodeOfV = v.getPort().getVertex();
@@ -586,8 +672,7 @@ public class NodePlacement {
                         isFirst = false;
                     }
                 }
-                v.setInNodeBeforeFirstAlignToTheOutside(isFirst);
-                currentNode = nodeOfV;
+                v.setNodeStartBeforeAlign(isFirst);
             }
         }
     }
@@ -727,9 +812,10 @@ public class NodePlacement {
                 Vertex nodeOfPredW = predW == null ? null :
                         dummyPort2unionNode.getOrDefault(predW.getPort(), predW.getPort().getVertex());
 
-                if (predW != null && !predW.isInNodeBeforeFirstAlignToTheOutside() && w.getAlign() != w &&
+                if (predW != null && !predW.isNodeStartBeforeAlign() && w.getAlign() != w &&
                         areInTheSameNonDummyNode(nodeOfW, nodeOfPredW) && areInTheSameClass(v, predW.getRoot()) &&
-                        v.getX() - predW.getX() - (v.getWidth() + predW.getWidth()) / 2.0 > maxPortSpacing) {
+                        v.getX() - predW.getX() - (v.getWidth() + predW.getWidth()) / 2.0
+                                - Math.max(predW.getNodeSideShortness(), w.getNodeSideShortness()) > maxPortSpacing) {
                     //remove alignments
                     //usually we cut to the top of u, but when it is the first of its block, i.e., v, or if it has a
                     // port paring to to the top, then we cut to the bottom
@@ -832,7 +918,7 @@ public class NodePlacement {
                 Vertex nodeOfV = dummyPort2unionNode.getOrDefault(v.getPort(), v.getPort().getVertex());
                 //also align it to the right border, i.e., v belongs to the
                 if (areInTheSameNonDummyNode(nodeOfV, nodeOfU)
-                        && v.getX() - u.getX() - (v.getWidth() + u.getWidth()) / 2.0 > maxPortSpacing) {
+                        && v.getX() - u.getX() - (v.getWidth() + u.getWidth()) / 2.0 - Math.max(v.getNodeSideShortness(), u.getNodeSideShortness()) > maxPortSpacing) {
                     moveToTheRight(u, nodeOfU);
                 }
             }
@@ -885,7 +971,7 @@ public class NodePlacement {
             Vertex nodeOfPredU = predU == null ? null :
                     dummyPort2unionNode.getOrDefault(predU.getPort(), predU.getPort().getVertex());
             if (predU != null && !nodeOfU.equals(dummyVertex) && nodeOfU.equals(nodeOfPredU)
-                    && u.getX() - predU.getX() - (u.getWidth() + predU.getWidth()) / 2.0 > maxPortSpacing) {
+                    && u.getX() - predU.getX() - (u.getWidth() + predU.getWidth()) / 2.0 - Math.max(predU.getNodeSideShortness(), u.getNodeSideShortness()) > maxPortSpacing) {
                 moveToTheRight(predU, nodeOfPredU);
             }
         }
