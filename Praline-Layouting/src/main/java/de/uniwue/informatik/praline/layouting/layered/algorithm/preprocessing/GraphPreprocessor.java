@@ -212,18 +212,18 @@ public class GraphPreprocessor {
     private void handleVertexGroups() {
         int indexVG = -1;
         Set<VertexGroup> connectors = new LinkedHashSet<>();
-        for (VertexGroup vertexGroup : sugy.getGraph().getVertexGroups()) {
-            if (ImplicitCharacteristics.isConnector(vertexGroup, sugy.getGraph())) {
-                connectors.add(vertexGroup);
+        for (VertexGroup group : new ArrayList<>(sugy.getGraph().getVertexGroups())) {
+            boolean isDeviceConnector = false;
+            if (ImplicitCharacteristics.isConnector(group, sugy.getGraph())) {
+                connectors.add(group);
             }
-            for (Vertex containedVertex : vertexGroup.getContainedVertices()) {
+            for (Vertex containedVertex : group.getContainedVertices()) {
                 if (ImplicitCharacteristics.isDeviceVertex(containedVertex, sugy.getGraph())) {
                     sugy.getDeviceVertices().add(containedVertex);
+                    isDeviceConnector = true;
                 }
             }
-        }
 
-        for (VertexGroup group : new ArrayList<>(sugy.getGraph().getVertexGroups())) {
             if (group.getContainedVertices().isEmpty()) {
                 continue;
             }
@@ -257,7 +257,7 @@ public class GraphPreprocessor {
 
             for (Vertex containedVertex : groupVertices) {
                 for (Port port : containedVertex.getPorts()) {
-                    if (!sugy.getDeviceVertices().contains(containedVertex) || !port.getEdges().isEmpty()) {
+                    if (!(isDeviceConnector && port.getEdges().isEmpty())) {
                         // create new port at unification vertex and remove old one on original vertex,
                         // hang the edges from the old to the new port
                         Port replacePort = new Port();
@@ -283,8 +283,9 @@ public class GraphPreprocessor {
 //            if (stickTogether) {
                 for (Vertex groupNode : group.getContainedVertices()) {
                     PortGroup replacePortGroup = new PortGroup();
-                    representative.addPortComposition(keepPortGroupsRecursive(replacePortGroup,
-                            groupNode.getPortCompositions(), originalPort2representative));
+                    keepPortGroupsRecursive(replacePortGroup, groupNode.getPortCompositions(),
+                            originalPort2representative);
+                    representative.addPortComposition(replacePortGroup);
                     sugy.getOrigVertex2replacePortGroup().put(groupNode, replacePortGroup);
                 }
                 if (connectors.contains(group)) {
@@ -303,7 +304,9 @@ public class GraphPreprocessor {
                 sugy.getGraph().removeVertex(groupVertex);
             }
 
-            for (PortComposition portComposition : new LinkedHashSet<>(representative.getPortCompositions())) {
+            //remove port groups without ports
+            for (PortComposition portComposition :
+                    new LinkedHashSet<>(PortUtils.getAllRecursivelyContainedPortGroups(representative))) {
                 if (findPort(portComposition) == null) representative.removePortComposition(portComposition);
             }
         }
@@ -342,17 +345,18 @@ public class GraphPreprocessor {
         }
     }
 
-    private PortGroup keepPortGroupsRecursive (PortGroup superiorRepGroup, List<PortComposition> originalMembers, Map<Port, Port> portToRepresentative) {
+    private void keepPortGroupsRecursive (PortGroup superiorRepGroup, List<PortComposition> originalMembers,
+                                          Map<Port, Port> portToRepresentative) {
         for (PortComposition originalMember : originalMembers) {
             if (originalMember instanceof PortGroup) {
-                PortGroup newThisLevelGroup = keepPortGroupsRecursive(new PortGroup(((PortGroup) originalMember).isOrdered()),
-                        ((PortGroup) originalMember).getPortCompositions(), portToRepresentative);
+                PortGroup newThisLevelGroup = new PortGroup(((PortGroup) originalMember).isOrdered());
+                keepPortGroupsRecursive(newThisLevelGroup, ((PortGroup) originalMember).getPortCompositions(),
+                        portToRepresentative);
                 if (!newThisLevelGroup.getPortCompositions().isEmpty()) superiorRepGroup.addPortComposition(newThisLevelGroup);
             } else if (portToRepresentative.containsKey(originalMember)) {
                 superiorRepGroup.addPortComposition(portToRepresentative.get(originalMember));
             }
         }
-        return superiorRepGroup;
     }
 
     private void keepPortPairings (Map<Port, Port> portRepMap, Map<Port, Set<Port>> allPairings) {
