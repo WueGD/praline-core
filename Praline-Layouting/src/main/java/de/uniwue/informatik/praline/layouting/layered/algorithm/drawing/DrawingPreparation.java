@@ -88,10 +88,14 @@ public class DrawingPreparation {
         //first determine start points for bottom and top vertices
         double yMin = Double.POSITIVE_INFINITY;
         double yMax = Double.NEGATIVE_INFINITY;
+        double xMin = Double.POSITIVE_INFINITY;
+        double xMax = Double.NEGATIVE_INFINITY;
         for (Vertex node : vertexGroup.getContainedVertices()) {
             Rectangle nodeShape = (Rectangle) node.getShape();
             yMin = Math.min(yMin, nodeShape.y);
             yMax = Math.max(yMax, nodeShape.y);
+            xMin = Math.min(xMin, nodeShape.x);
+            xMax = Math.max(xMax, nodeShape.x + nodeShape.getWidth());
         }
 
         //now determine port positions
@@ -113,12 +117,12 @@ public class DrawingPreparation {
 
             if (nodeShape.y == yMin) {
                 yMin = nodeShape.y;
-                if (vertexPortBounds.getMinL() < minLBottom) {
+                if (vertexPortBounds.getMinL() == xMin) {
                     vLBottom = node;
                     minLBottom = vertexPortBounds.getMinL();
                     maxLBottom = vertexPortBounds.getMaxL();
                 }
-                if (vertexPortBounds.getMaxR() > maxRBottom) {
+                if (vertexPortBounds.getMaxR() == xMax) {
                     vRBottom = node;
                     minRBottom = vertexPortBounds.getMinR();
                     maxRBottom = vertexPortBounds.getMaxR();
@@ -126,12 +130,12 @@ public class DrawingPreparation {
             }
             if (nodeShape.y == yMax) {
                 yMax = nodeShape.y;
-                if (vertexPortBounds.getMinL() < minLTop) {
+                if (vertexPortBounds.getMinL() == xMin) {
                     vLTop = node;
                     minLTop = vertexPortBounds.getMinL();
                     maxLTop = vertexPortBounds.getMaxL();
                 }
-                if (vertexPortBounds.getMaxR() > maxRTop) {
+                if (vertexPortBounds.getMaxR() == xMax) {
                     vRTop = node;
                     minRTop = vertexPortBounds.getMinR();
                     maxRTop = vertexPortBounds.getMaxR();
@@ -166,12 +170,19 @@ public class DrawingPreparation {
         }
 
         //determine left border
-        double newL = Math.min(idealShapeLBottom.x, idealShapeLTop.x);
+        double xIdealLB = idealShapeLBottom == null ? Double.POSITIVE_INFINITY : idealShapeLBottom.x;
+        double xidealLT = idealShapeLTop == null ? Double.POSITIVE_INFINITY : idealShapeLTop.x;
+        double xIdealRB = idealShapeRBottom == null ? Double.NEGATIVE_INFINITY :
+                idealShapeRBottom.x + idealShapeRBottom.width;
+        double xIdealRT = idealShapeRTop == null ? Double.NEGATIVE_INFINITY :
+                idealShapeRTop.x + idealShapeRTop.width;
+
+        double newL = Math.min(xIdealLB, xidealLT);
         if (idealShapeDevice != null) {
             newL = Math.min(newL, idealShapeDevice.x);
         }
         //determine right border
-        double newR = Math.max(idealShapeRBottom.x + idealShapeRBottom.width, idealShapeRTop.x + idealShapeRTop.width);
+        double newR = Math.max(xIdealRB, xIdealRT);
         if (idealShapeDevice != null) {
             newR = Math.max(newR, idealShapeDevice.x + idealShapeDevice.width);
         }
@@ -184,11 +195,15 @@ public class DrawingPreparation {
     }
 
     private void applyBorders(Vertex vL, Vertex vR, double newL, double newR) {
-        Rectangle realShapeL = (Rectangle) vL.getShape();
-        realShapeL.width -= Math.max(0, newL - realShapeL.x); //do not increase width (hence max)
-        realShapeL.x = newL;
-        Rectangle realShapeR = (Rectangle) vR.getShape();
-        realShapeR.width -= Math.max(0, (realShapeR.x + realShapeR.width) - newR); //do not increase width (hence max)
+        if (vL != null) {
+            Rectangle realShapeL = (Rectangle) vL.getShape();
+            realShapeL.width -= Math.max(0, newL - realShapeL.x); //do not increase width (hence max)
+            realShapeL.x = newL;
+        }
+        if (vR != null) {
+            Rectangle realShapeR = (Rectangle) vR.getShape();
+            realShapeR.width -= Math.max(0, (realShapeR.x + realShapeR.width) - newR); //do not increase width (hence max)
+        }
     }
 
     /**
@@ -205,6 +220,9 @@ public class DrawingPreparation {
      */
     private Rectangle getReducedShape(Vertex node, double minL, double maxL, double minR, double maxR,
                                       boolean tightenLeft, boolean tightenRight) {
+        if (node == null) {
+            return null;
+        }
         Rectangle nodeShape = (Rectangle) node.getShape();
         //check that mins and maxs are in scope of the node
         minL = Math.max(minL, nodeShape.x);
@@ -1047,8 +1065,12 @@ public class DrawingPreparation {
             for (Port port : node.getPorts()) {
                 Rectangle portShape = (Rectangle) port.getShape();
                 if (!Double.isNaN(portShape.getXPosition())) {
-                    maxL = Math.min(maxL, portShape.getXPosition() -  delta / 2.0);
-                    minR = Math.max(minR, portShape.getXPosition() + portShape.getWidth() + delta / 2.0);
+                    //either the port shape or the port label determines the required width
+                    maxL = Math.min(maxL, portShape.getXPosition() -
+                            Math.min(0, drawInfo.getHorizontalPortLabelOffset()) - delta);
+                    minR = Math.max(minR, portShape.getXPosition() + Math.max(portShape.getWidth(),
+                            drawInfo.computePortWidth(port) + Math.max(0, -drawInfo.getHorizontalPortLabelOffset()))
+                                    + delta);
                 }
             }
             return this;

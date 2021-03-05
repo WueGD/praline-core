@@ -27,7 +27,7 @@ public class DrawingInformation {
     public final static double DEFAULT_DISTANCE_BETWEEN_LAYERS = 20;
     public final static double DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET = 2;
     public final static double DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET = 0;
-    public final static double DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET = -1;
+    public final static double DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET = -2;
     public final static double DEFAULT_VERTICAL_PORT_LABEL_OFFSET = 0;
     public final static Color DEFAULT_PORT_PAIRING_COLOR = Color.DARK_GRAY;
     public final static boolean DEFAULT_SHOW_PORT_PAIRINGS = true;
