@@ -70,6 +70,9 @@ public class DrawingPreparation {
     }
 
     private void tightenNode(Vertex node) {
+        //TODO: currently some port labels are cut-off when they are broader than the port shape; make sure that this
+        // does not happen in the future
+
         // tighten node to smallest width possible
         // find leftmost and rightmost Port
         VertexPortBounds vertexPortBounds = new VertexPortBounds(node).determine();
@@ -83,8 +86,8 @@ public class DrawingPreparation {
 
     private void tightenUnionNode(VertexGroup vertexGroup) {
         //first determine start points for bottom and top vertices
-        double yMin = Double.MAX_VALUE;
-        double yMax = Double.MIN_VALUE;
+        double yMin = Double.POSITIVE_INFINITY;
+        double yMax = Double.NEGATIVE_INFINITY;
         for (Vertex node : vertexGroup.getContainedVertices()) {
             Rectangle nodeShape = (Rectangle) node.getShape();
             yMin = Math.min(yMin, nodeShape.y);
@@ -92,17 +95,17 @@ public class DrawingPreparation {
         }
 
         //now determine port positions
-        double minLBottom = Double.MAX_VALUE;
-        double maxLBottom = Double.MAX_VALUE;
+        double minLBottom = Double.POSITIVE_INFINITY;
+        double maxLBottom = Double.POSITIVE_INFINITY;
         Vertex vLBottom = null;
-        double minLTop = Double.MAX_VALUE;
-        double maxLTop = Double.MAX_VALUE;
+        double minLTop = Double.POSITIVE_INFINITY;
+        double maxLTop = Double.POSITIVE_INFINITY;
         Vertex vLTop = null;
-        double minRBottom = Double.MIN_VALUE;
-        double maxRBottom = Double.MIN_VALUE;
+        double minRBottom = Double.NEGATIVE_INFINITY;
+        double maxRBottom = Double.NEGATIVE_INFINITY;
         Vertex vRBottom = null;
-        double minRTop = Double.MIN_VALUE;
-        double maxRTop = Double.MIN_VALUE;
+        double minRTop = Double.NEGATIVE_INFINITY;
+        double maxRTop = Double.NEGATIVE_INFINITY;
         Vertex vRTop = null;
         for (Vertex node : vertexGroup.getContainedVertices()) {
             VertexPortBounds vertexPortBounds = new VertexPortBounds(node).determine();
@@ -182,10 +185,10 @@ public class DrawingPreparation {
 
     private void applyBorders(Vertex vL, Vertex vR, double newL, double newR) {
         Rectangle realShapeL = (Rectangle) vL.getShape();
-        realShapeL.width -= newL - realShapeL.x;
+        realShapeL.width -= Math.max(0, newL - realShapeL.x); //do not increase width (hence max)
         realShapeL.x = newL;
         Rectangle realShapeR = (Rectangle) vR.getShape();
-        realShapeR.width -= (realShapeR.x + realShapeR.width) - newR;
+        realShapeR.width -= Math.max(0, (realShapeR.x + realShapeR.width) - newR); //do not increase width (hence max)
     }
 
     /**
@@ -827,8 +830,8 @@ public class DrawingPreparation {
     private void replaceHyperEdgeDummyVertex(Vertex hyperEdgeDummyVertex) {
         Rectangle vertexShape = (Rectangle) hyperEdgeDummyVertex.getShape();
         Edge hyperEdge = sugy.getHyperEdges().get(hyperEdgeDummyVertex);
-        double minX = Double.MAX_VALUE;
-        double maxX = Double.MIN_VALUE;
+        double minX = Double.POSITIVE_INFINITY;
+        double maxX = Double.NEGATIVE_INFINITY;
         double y = Double.NaN;
         Path firstPath = null;
         Path lastPath = null;
