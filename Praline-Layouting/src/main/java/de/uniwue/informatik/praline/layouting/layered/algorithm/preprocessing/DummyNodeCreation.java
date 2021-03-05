@@ -7,6 +7,8 @@ import de.uniwue.informatik.praline.datastructure.placements.Orientation;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.PortSideAssignment;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
+import org.eclipse.elk.core.util.Pair;
 
 import java.util.*;
 
@@ -23,6 +25,7 @@ public class DummyNodeCreation {
     private Map<Edge, Edge> dummyEdge2RealEdge;
     private List<PortGroup> allWrongBottom;
     private List<PortGroup> allWrongTop;
+    private List<Pair<Edge, Collection<Port>>> layerInternalEdgesTakenOut;
     //when we move a port temporary to the other side, save old location of that port
     private Map<Port, PortGroup> oldContainerCorrectSide;
     private PortSideAssignment psaInternal;
@@ -39,6 +42,7 @@ public class DummyNodeCreation {
         this.dummyEdge2RealEdge = new LinkedHashMap<>();
         this.allWrongBottom = new ArrayList<>();
         this.allWrongTop = new ArrayList<>();
+        this.layerInternalEdgesTakenOut = new ArrayList<>();
         this.oldContainerCorrectSide = new LinkedHashMap<>();
         this.psaInternal = new PortSideAssignment(sugy);
     }
@@ -51,9 +55,14 @@ public class DummyNodeCreation {
 
             List<Port> wrongBottomPorts = new ArrayList<>();
             for (Port bottomPort : bottomPortOrder) {
-                for (Edge edge : bottomPort.getEdges()) {
+                for (Edge edge : new ArrayList<>(bottomPort.getEdges())) {
+                    //check if layer internal, take it out for now
+                    if (sugy.staysOnSameLayer(edge)) {
+                        layerInternalEdgesTakenOut.add(new Pair<>(edge, new ArrayList<>(edge.getPorts())));
+                        sugy.getGraph().removeEdge(edge);
+                    }
                     //check if edge points upwards -> if yes move it
-                    if (sugy.getStartNode(edge).equals(node)) {
+                    else if (sugy.getStartNode(edge).equals(node)) {
                         oldContainerCorrectSide.put(bottomPort, bottomPort.getPortGroup());
                         wrongBottomPorts.add(bottomPort);
                     }
@@ -61,9 +70,14 @@ public class DummyNodeCreation {
             }
             List<Port> wrongTopPorts = new ArrayList<>();
             for (Port topPort : topPortOrder) {
-                for (Edge edge : topPort.getEdges()) {
+                for (Edge edge : new ArrayList<>(topPort.getEdges())) {
+                    //check if layer internal, take it out for now
+                    if (sugy.staysOnSameLayer(edge)) {
+                        layerInternalEdgesTakenOut.add(new Pair<>(edge, new ArrayList<>(edge.getPorts())));
+                        sugy.getGraph().removeEdge(edge);
+                    }
                     //check if edge points downwards -> if yes move it
-                    if (!sugy.getStartNode(edge).equals(node)) {
+                    else if (!sugy.getStartNode(edge).equals(node)) {
                         oldContainerCorrectSide.put(topPort, topPort.getPortGroup());
                         wrongTopPorts.add(topPort);
                     }
@@ -82,11 +96,18 @@ public class DummyNodeCreation {
     }
 
     public void undoAssigningPortsTemporaryToOtherSide() {
+        //re-assign wrong side ports
         for (PortGroup wrongBottom : this.allWrongBottom) {
             removePortGroupForWrongSidePorts(wrongBottom, false);
         }
         for (PortGroup wrongTop : this.allWrongTop) {
             removePortGroupForWrongSidePorts(wrongTop, true);
+        }
+        //re-add edges that stay on the same layer which we have taken out before
+        for (Pair<Edge, Collection<Port>> edgeData : this.layerInternalEdgesTakenOut) {
+            Edge edge = edgeData.getFirst();
+            sugy.getGraph().addEdge(edge);
+            edge.addPorts(edgeData.getSecond());
         }
         //clean up
         this.allWrongBottom.clear();
@@ -101,8 +122,8 @@ public class DummyNodeCreation {
                 createAllDummyNodesForEdge(edge);
             }
         }
-        psaInternal.assignPortsToVertexSides(dummyNodesLongEdges.keySet());
         sugy.changeRanksAccordingToSortingOrder();
+        psaInternal.assignPortsToVertexSides(dummyNodesLongEdges.keySet());
     }
 
     /**
@@ -219,8 +240,8 @@ public class DummyNodeCreation {
                                 new LinkedHashSet<>(sugy.getLoopEdges().get(node));
                         for (Port topPort : sugy.getOrders().getTopPortOrder().get(node)) {
                             for (Edge edge : topPort.getEdges()) {
-                                //check if edge points downwards -> if yes insert turning dummy
-                                if (!sugy.getStartNode(edge).equals(node)) {
+                                //check if edge points downwards or stays on same layer -> if yes insert turning dummy
+                                if (!sugy.getStartNode(edge).equals(node) || sugy.staysOnSameLayer(edge)) {
                                     //create turning dummy vertex on intermediate layer
                                     Vertex upperDummyTurningNode = getDummyTurningNodeForVertex(node, false,
                                             intermediateLayer);
@@ -273,8 +294,8 @@ public class DummyNodeCreation {
                                 new LinkedHashSet<>(sugy.getLoopEdges().get(node));
                         for (Port bottomPort : sugy.getOrders().getBottomPortOrder().get(node)) {
                             for (Edge edge : bottomPort.getEdges()) {
-                                //check if edge points upwards -> if yes insert turning dummy
-                                if (sugy.getStartNode(edge).equals(node)) {
+                                //check if edge points upwards or stays on same layer -> if yes insert turning dummy
+                                if (sugy.getStartNode(edge).equals(node) || sugy.staysOnSameLayer(edge)) {
                                     //create turning dummy vertex on intermediate layer
                                     Vertex lowerDummyTurningNode =
                                             getDummyTurningNodeForVertex(node, true, intermediateLayer);
@@ -315,11 +336,11 @@ public class DummyNodeCreation {
             for (Port port : portOrder.get(node)) {
                 for (Edge edge : port.getEdges()) {
                     //need lower turning dummy
-                    if (isBottomSide && sugy.getStartNode(edge).equals(node)) {
+                    if (isBottomSide && (sugy.getStartNode(edge).equals(node) || sugy.staysOnSameLayer(edge))) {
                         return true;
                     }
                     //need upper turning dummy
-                    if (!isBottomSide && !sugy.getStartNode(edge).equals(node)) {
+                    if (!isBottomSide && (!sugy.getStartNode(edge).equals(node) || sugy.staysOnSameLayer(edge))) {
                         return true;
                     }
                 }
@@ -536,7 +557,7 @@ public class DummyNodeCreation {
                     "selfLoopEdge_" + loopEdge + "_#" + counter++)));
             sugy.getGraph().addEdge(dummyEdge2);
             sugy.assignDirection(dummyEdge2,
-                    port1TopSide ? vertex : additionalDummy, port0TopSide ? additionalDummy : vertex);
+                    port1TopSide ? vertex : additionalDummy, port1TopSide ? additionalDummy : vertex);
             sugy.getDummyEdge2RealEdge().put(dummyEdge2, loopEdge);
         }
     }
@@ -761,7 +782,15 @@ public class DummyNodeCreation {
         Vertex baseNode = this.dummyTurningNodes.get(turningDummy);
         for (Port adjacentPort : PortUtils.getAdjacentPorts(turningDummy)) {
             if (baseNode.getPorts().contains(adjacentPort)) {
-                return portOnWrongSideHasEdgeGoingOnTheLeftSideAroundNode.get(adjacentPort);
+                if (portOnWrongSideHasEdgeGoingOnTheLeftSideAroundNode.containsKey(adjacentPort)) {
+                    return portOnWrongSideHasEdgeGoingOnTheLeftSideAroundNode.get(adjacentPort);
+                }
+                else {
+                    //todo: this edge has been taken out before. so we don't know and return sth random. you may do
+                    // sth more clever in the future, e.g. return if the adjacent node is to the left or the right of
+                    // the base node and its turning dummy
+                    return Constants.random.nextBoolean();
+                }
             }
         }
         System.out.println("This line should never be printed (check in DummyNodeCreation.isOnTheLeftOfBaseNode())");

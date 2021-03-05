@@ -5,6 +5,7 @@ import de.uniwue.informatik.praline.datastructure.utils.Serialization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignmentMethod;
 import de.uniwue.informatik.praline.layouting.layered.main.util.BendsCounting;
 import de.uniwue.informatik.praline.layouting.layered.main.util.CrossingsCounting;
 
@@ -61,6 +62,8 @@ public class MainDrawKielerPlan {
 
     private static final DirectionMethod DIRECTION_METHOD = DirectionMethod.FORCE;
 
+    private static final LayerAssignmentMethod LAYER_ASSIGNMENT_METHOD = LayerAssignmentMethod.NETWORK_SIMPLEX;
+
     private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 1; //5;
 
     private static final int NUMBER_OF_FORCE_DIRECTED_ITERATIONS = 1; //10;
@@ -82,7 +85,8 @@ public class MainDrawKielerPlan {
             System.out.println();
 
             KielerLayouter kielerLayouter =
-                    new KielerLayouter(graph, DIRECTION_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS);
+                    new KielerLayouter(graph, DIRECTION_METHOD, LAYER_ASSIGNMENT_METHOD,
+                            NUMBER_OF_FORCE_DIRECTED_ITERATIONS);
 
             kielerLayouter.computeLayout();
             Graph resultGraph = kielerLayouter.getGraph();

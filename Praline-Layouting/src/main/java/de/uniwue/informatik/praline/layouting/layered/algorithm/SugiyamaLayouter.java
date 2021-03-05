@@ -12,8 +12,7 @@ import de.uniwue.informatik.praline.layouting.layered.algorithm.drawing.DrawingP
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionAssignment;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgerouting.EdgeRouting;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignment;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.PortSideAssignment;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.*;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.nodeplacement.NodePlacement;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.ConnectedComponentClusterer;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.DummyCreationResult;
@@ -27,6 +26,7 @@ import java.util.*;
 public class SugiyamaLayouter implements PralineLayouter {
 
     public static final DirectionMethod DEFAULT_DIRECTION_METHOD = DirectionMethod.FORCE;
+    public static final LayerAssignmentMethod DEFAULT_LAYER_ASSSIGNMENT_METHOD = LayerAssignmentMethod.NETWORK_SIMPLEX;
     public static final int DEFAULT_NUMBER_OF_FD_ITERATIONS = 10;
     public static final CrossingMinimizationMethod DEFAULT_CROSSING_MINIMIZATION_METHOD =
             CrossingMinimizationMethod.PORTS;
@@ -86,6 +86,9 @@ public class SugiyamaLayouter implements PralineLayouter {
     private boolean hasAssignedLayers;
     private Set<Object> deviceVertices;
 
+    //internal
+    private DirectionAssignment da;
+
     public SugiyamaLayouter(Graph graph) {
         this(graph, new DrawingInformation());
     }
@@ -128,13 +131,14 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     @Override
     public void computeLayout() {
-        computeLayout(DEFAULT_DIRECTION_METHOD, DEFAULT_NUMBER_OF_FD_ITERATIONS, DEFAULT_CROSSING_MINIMIZATION_METHOD,
-                DEFAULT_NUMBER_OF_CM_ITERATIONS);
+        computeLayout(DEFAULT_DIRECTION_METHOD, DEFAULT_LAYER_ASSSIGNMENT_METHOD, DEFAULT_NUMBER_OF_FD_ITERATIONS,
+                DEFAULT_CROSSING_MINIMIZATION_METHOD, DEFAULT_NUMBER_OF_CM_ITERATIONS);
     }
 
     /**
      *
-     * @param method
+     * @param directionMethod
+     * @param layerAssignmentMethod
      * @param numberOfIterationsFD
      *      when employing a force-directed algo, it uses so many iterations with different random start positions
      *      and takes the one that yields the fewest crossings.
@@ -144,11 +148,11 @@ public class SugiyamaLayouter implements PralineLayouter {
      *      for the crossing minimization phase you may have several independent random iterations of which the one
      *      that yields the fewest crossings of edges between layers is taken.
      */
-    public void computeLayout(DirectionMethod method, int numberOfIterationsFD,
-                               CrossingMinimizationMethod cmMethod, int numberOfIterationsCM) {
+    public void computeLayout(DirectionMethod directionMethod, LayerAssignmentMethod layerAssignmentMethod,
+                              int numberOfIterationsFD, CrossingMinimizationMethod cmMethod, int numberOfIterationsCM) {
         construct();
-        assignDirections(method, numberOfIterationsFD);
-        assignLayers();
+        assignDirections(directionMethod, numberOfIterationsFD);
+        assignLayers(layerAssignmentMethod);
         createDummyNodesAndDoCrossingMinimization(cmMethod, numberOfIterationsCM);
         nodePositioning();
         edgeRouting();
@@ -195,7 +199,7 @@ public class SugiyamaLayouter implements PralineLayouter {
      */
     public void assignDirections(DirectionMethod method, int numberOfIterationsForForceDirected) {
         if (isSingleComponent) {
-            DirectionAssignment da = new DirectionAssignment();
+            da = new DirectionAssignment();
             switch (method) {
                 case FORCE:
                     da.forceDirected(this, numberOfIterationsForForceDirected);
@@ -230,10 +234,16 @@ public class SugiyamaLayouter implements PralineLayouter {
 //        }
 //    }
 
-    public void assignLayers() {
+    public void assignLayers(LayerAssignmentMethod method) {
         if (isSingleComponent) {
-            LayerAssignment la = new LayerAssignment(this);
-            nodeToRank = la.networkSimplex();
+            LayerAssignment la = null;
+            if (method == LayerAssignmentMethod.NETWORK_SIMPLEX) {
+                la = new LayerAssignmentNetworkSimplex(this);
+            }
+            else if (method == LayerAssignmentMethod.FD_POSITION) {
+                la = new LayerAssignmentForceDirected(this, da);
+            }
+            nodeToRank = la.assignLayers();
             PortSideAssignment pa = new PortSideAssignment(this);
             pa.assignPortsToVertexSides();
             createRankToNodes();
@@ -241,7 +251,7 @@ public class SugiyamaLayouter implements PralineLayouter {
         }
         else {
             for (SugiyamaLayouter componentLayouter : componentLayouters) {
-                componentLayouter.assignLayers();
+                componentLayouter.assignLayers(method);
             }
         }
     }
@@ -529,6 +539,14 @@ public class SugiyamaLayouter implements PralineLayouter {
         return keptPortPairings.containsKey(port);
     }
 
+    public boolean staysOnSameLayer(Edge edge) {
+        int rank = getRank(getStartNode(edge));
+        int i = getRank(getEndNode(edge));
+        Vertex startNode = getStartNode(edge);
+        Vertex endNode = getEndNode(edge);
+        return getRank(getStartNode(edge)) == getRank(getEndNode(edge));
+    }
+
     public Vertex getStartNode(Edge edge) {
         return edgeToStart.get(edge);
     }
@@ -548,7 +566,9 @@ public class SugiyamaLayouter implements PralineLayouter {
     }
 
     public boolean assignDirection(Edge edge, Vertex start, Vertex end) {
-        if (edgeToStart.containsKey(edge)) return false;
+        if (edgeToStart.containsKey(edge)) {
+            removeDirection(edge);
+        }
         edgeToStart.put(edge, start);
         edgeToEnd.put(edge, end);
         if (!nodeToOutgoingEdges.containsKey(start)) {

@@ -813,7 +813,8 @@ public class NodePlacement {
                         dummyPort2unionNode.getOrDefault(predW.getPort(), predW.getPort().getVertex());
 
                 if (predW != null && !predW.isNodeStartBeforeAlign() && w.getAlign() != w &&
-                        areInTheSameNonDummyNode(nodeOfW, nodeOfPredW) && areInTheSameClass(v, predW.getRoot()) &&
+                        !nodeOfW.equals(dummyVertex) && areInTheSameNonDummyNode(nodeOfW, nodeOfPredW) &&
+                        areInTheSameClass(v, predW.getRoot()) &&
                         v.getX() - predW.getX() - (v.getWidth() + predW.getWidth()) / 2.0
                                 - Math.max(predW.getNodeSideShortness(), w.getNodeSideShortness()) > maxPortSpacing) {
                     //remove alignments
@@ -1063,6 +1064,7 @@ public class NodePlacement {
                 // x1, y1, x2, y2
                 // initialize shape of first node
                 double xPos = addDummyPortsForPaddingToOrders ? 0.0 : layer.get(0).getX();
+                double xPosOld = Double.NaN;
                 PortValues portValues = null;
                 for (int pos = 0; pos < layer.size(); pos++) {
                     portValues = layer.get(pos);
@@ -1078,10 +1080,12 @@ public class NodePlacement {
                                 createNodeShape(layerIndex, nodeInTheGraph, xPos, yPos, portValues);
                             }
                             nodeInTheGraph = portVertex.equals(dummyVertex) ? null : portVertex;
+                            xPosOld = xPos;
                             xPos = portValues.getX();
                         } else {
                             nodeInTheGraph = portVertex;
                             if (nodeInTheGraph.equals(dummyVertex)) {
+                                xPosOld = xPos;
                                 xPos = portValues.getX();
                                 if (pos + 1 < layer.size()) {
                                     nodeInTheGraph = layer.get(pos + 1).getPort().getVertex();
@@ -1106,7 +1110,7 @@ public class NodePlacement {
                 //for the last we may still need to create a node shape
                 if (nodeInTheGraph != null && !addDummyPortsForPaddingToOrders &&
                             (nodeInTheGraph.getShape() == null || isNanShape(nodeInTheGraph.getShape()))) {
-                    createNodeShape(layerIndex, nodeInTheGraph, xPos, yPos, portValues);
+                    createNodeShape(layerIndex, nodeInTheGraph, xPosOld, yPos, portValues);
                 }
             }
 
@@ -1134,8 +1138,15 @@ public class NodePlacement {
         double width = portValues.getX() - (portValues.getWidth() + delta) / 2.0 - xPos;
         double height = heightOfLayers.get(layerIndex / 2) * layerHeight +
                 Math.min(1.0, heightOfLayers.get(layerIndex / 2)) * 2.0 * drawInfo.getBorderWidth();
-        Rectangle nodeShape = new Rectangle(xPos, yPos, width, height, null);
-        nodeInTheGraph.setShape(nodeShape);
+        Rectangle nodeShape = (Rectangle) nodeInTheGraph.getShape();
+        if (nodeShape == null) {
+            nodeShape = new Rectangle();
+            nodeInTheGraph.setShape(nodeShape);
+        }
+        nodeShape.x = xPos;
+        nodeShape.y = yPos;
+        nodeShape.width = width;
+        nodeShape.height = height;
     }
 
     private Vertex createPortShape(double currentY, PortValues portValues, boolean isBottomSide, Vertex nodeInTheGraph,

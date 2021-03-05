@@ -55,7 +55,10 @@ public class CsvDataExtraction {
 //                    "2021-03-03_03-23-24"; //rr with NodePlacement back to grid-like arrangement + unit width padding ports
 //                    "2021-03-03_04-24-45"; //same as before + in NodePlacement use flags for first ports of nodes
 //                    "2021-03-04_00-52-49"; //same as before + allow broader gaps for the node side having fewer ports
-                    "2021-03-04_01-45-45"; //rr (without broader gaps for the node side having fewer ports)
+//                    "2021-03-04_01-45-45"; //rr (without broader gaps for the node side having fewer ports)
+//                    "2021-03-05_04-44-05"; //(slightly incomoplete run) force-directed layer assignment (kieler fd)
+//                    "2021-03-05_10-24-03"; //(slightly incomoplete run) force-directed layer assignment (kieler ns)
+                    "2021-03-05_19-14-46"; //(comoplete run) force-directed layer assignment (kieler ns)
 
     private static final String[] DATA_DIRS =
             {

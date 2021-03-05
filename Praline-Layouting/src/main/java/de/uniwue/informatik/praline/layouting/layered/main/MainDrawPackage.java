@@ -22,10 +22,10 @@ public class MainDrawPackage {
 
     public static final String PATH_DATA_SET =
 //            "Praline-Layouting/data/generated_2020-06-04_18-39-49";
-//            "Praline-Layouting/data/generated_2020-08-20_04-42-39";
+            "Praline-Layouting/data/generated_2020-08-20_04-42-39";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18";
 //            "Praline-Layouting/data/praline-package-2020-05-18";
-            "Praline-Layouting/data/praline-readable-2020-09-04";
+//            "Praline-Layouting/data/praline-readable-2020-09-04";
 //            "Praline-Layouting/data/5plansOriginalPseudo";
 
 
@@ -45,7 +45,7 @@ public class MainDrawPackage {
 
     private static final int NUMBER_OF_CROSSING_REDUCTION_ITERATIONS = 1; //3;
 
-    private static final int NUMBER_OF_PARALLEL_THREADS = 1; //8;
+    private static final int NUMBER_OF_PARALLEL_THREADS = 8;
 
 
     private static int progressCounter = 0;
@@ -106,8 +106,8 @@ public class MainDrawPackage {
 
             SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
 
-            sugy.computeLayout(DIRECTION_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS, CROSSING_MINIMIZATION_METHOD,
-                    NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
+//            sugy.computeLayout(DIRECTION_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS, CROSSING_MINIMIZATION_METHOD,
+//                    NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
 
             int numberOfCrossings = CrossingsCounting.countNumberOfCrossings(sugy.getGraph());
 

@@ -5,6 +5,7 @@ import de.uniwue.informatik.praline.datastructure.utils.Serialization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignmentMethod;
 import de.uniwue.informatik.praline.layouting.layered.main.util.BendsCounting;
 import de.uniwue.informatik.praline.layouting.layered.main.util.CrossingsCounting;
 
@@ -28,6 +29,7 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-a01bd68a-b853-480a-b2bc-58851f52c673.json";
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-d4cbdce2-3a35-4fc1-9ed8-69e196371ee5.json";
 //            "Praline-Layouting/data/praline-package-2020-05-18/praline-6fc3a807-fb4f-4108-a732-e91efc0872c7.json";
+//            "Praline-Layouting/data/praline-package-2020-05-18/praline-a18320ab-dfe2-4497-a62b-53002fb45baa.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0000-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0001-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0002-praline.json";
@@ -67,6 +69,8 @@ public class MainDrawSinglePlan {
 
     private static final DirectionMethod DIRECTION_METHOD = DirectionMethod.FORCE;
 
+    private static final LayerAssignmentMethod LAYER_ASSIGNMENT_METHOD = LayerAssignmentMethod.NETWORK_SIMPLEX;
+
     private static final CrossingMinimizationMethod CROSSING_MINIMIZATION_METHOD = CrossingMinimizationMethod.PORTS;
 
     private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 1; //5;
@@ -93,8 +97,8 @@ public class MainDrawSinglePlan {
 
             SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
 
-            sugy.computeLayout(DIRECTION_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS, CROSSING_MINIMIZATION_METHOD,
-                    NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
+            sugy.computeLayout(DIRECTION_METHOD, LAYER_ASSIGNMENT_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS,
+                    CROSSING_MINIMIZATION_METHOD, NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
 
             int crossings = CrossingsCounting.countNumberOfCrossings(graph);
             System.out.println("Computed drawing with " + crossings + " crossings " +

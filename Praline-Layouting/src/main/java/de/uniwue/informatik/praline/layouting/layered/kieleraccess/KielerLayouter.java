@@ -11,6 +11,7 @@ import de.uniwue.informatik.praline.layouting.PralineLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignmentMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 import de.uniwue.informatik.praline.layouting.layered.kieleraccess.util.ElkLayeredWithoutLayerRemoval;
 import org.eclipse.elk.alg.layered.graph.LGraph;
@@ -45,14 +46,16 @@ public class KielerLayouter implements PralineLayouter {
     }
 
     public KielerLayouter(Graph graph, DrawingInformation drawInfo) {
-        this(graph, DirectionMethod.FORCE, 1, drawInfo);
+        this(graph, DirectionMethod.FORCE, LayerAssignmentMethod.NETWORK_SIMPLEX, 1, drawInfo);
     }
 
-    public KielerLayouter(Graph graph, DirectionMethod directionMethod, int numberOfIterationsFD) {
-        this(graph, directionMethod, numberOfIterationsFD, new DrawingInformation());
+    public KielerLayouter(Graph graph, DirectionMethod directionMethod, LayerAssignmentMethod layerAssignmentMethod,
+                          int numberOfIterationsFD) {
+        this(graph, directionMethod, layerAssignmentMethod, numberOfIterationsFD, new DrawingInformation());
     }
 
-    public KielerLayouter(Graph graph, DirectionMethod directionMethod, int numberOfIterationsFD,
+    public KielerLayouter(Graph graph, DirectionMethod directionMethod,
+                          LayerAssignmentMethod layerAssignmentMethod, int numberOfIterationsFD,
                           DrawingInformation drawInfo) {
 
         this.drawInfo = drawInfo;
@@ -64,7 +67,7 @@ public class KielerLayouter implements PralineLayouter {
 
         sugiyForInternalUse.assignDirections(directionMethod, numberOfIterationsFD);
 
-        sugiyForInternalUse.assignLayers();
+        sugiyForInternalUse.assignLayers(layerAssignmentMethod);
 
         sugiyForInternalUse.nodePadding();
     }
@@ -82,7 +85,7 @@ public class KielerLayouter implements PralineLayouter {
         sugiyForInternalUse = sugiyWithPrecomputedDirectedGraph;
 
         if (!sugiyForInternalUse.hasAssignedLayers()) {
-            sugiyForInternalUse.assignLayers();
+            sugiyForInternalUse.assignLayers(LayerAssignmentMethod.NETWORK_SIMPLEX);
             sugiyForInternalUse.nodePadding();
         }
     }

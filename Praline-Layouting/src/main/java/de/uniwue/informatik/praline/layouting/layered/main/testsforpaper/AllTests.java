@@ -7,6 +7,7 @@ import de.uniwue.informatik.praline.datastructure.utils.Serialization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignmentMethod;
 import de.uniwue.informatik.praline.layouting.layered.kieleraccess.KielerLayouter;
 import de.uniwue.informatik.praline.layouting.layered.main.util.BendsCounting;
 import de.uniwue.informatik.praline.layouting.layered.main.util.CrossingsCounting;
@@ -258,7 +259,10 @@ public class AllTests {
 //                System.out.println("da: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
 
                 if (method.equals("kieler")) {
-                    KielerLayouter kielerLayouter = new KielerLayouter(sugiy);
+                    KielerLayouter kielerLayouter = new KielerLayouter(sugiy); //TODO: assign layers before to have
+                    // same situation for assigning the ports to sides -- currently NETWORK_SIMPLEX is chosen in
+                    // KielerLayouter as a default (hard coded; maybe change this, too)
+
 //                    System.out.println("kieler_init: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
                     kielerLayouter.computeLayout();
                     //save number of dummy nodes
@@ -268,7 +272,7 @@ public class AllTests {
 //                    System.out.println("kieler_draw: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
                 }
                 else {
-                    sugiy.assignLayers();
+                    sugiy.assignLayers(LayerAssignmentMethod.FD_POSITION); //TODO: move as option to top of the class
 
 //                    System.out.println("al: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
 

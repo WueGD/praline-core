@@ -5,6 +5,7 @@ import de.uniwue.informatik.praline.datastructure.utils.Serialization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignmentMethod;
 import de.uniwue.informatik.praline.layouting.layered.main.util.CrossingsCounting;
 
 import java.io.File;
@@ -36,6 +37,8 @@ public class MainDrawKielerPackage {
     private static final boolean CHECK_COMPLETENESS_OF_GRAPH = true;
 
     private static final DirectionMethod DIRECTION_METHOD = DirectionMethod.FORCE;
+
+    private static final LayerAssignmentMethod LAYER_ASSIGNMENT_METHOD = LayerAssignmentMethod.NETWORK_SIMPLEX;
 
     private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 1; //5;
 
@@ -101,7 +104,8 @@ public class MainDrawKielerPackage {
             numberOfVertices = graph.getVertices().size();
 
             KielerLayouter kielerLayouter =
-                    new KielerLayouter(graph, DIRECTION_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS);
+                    new KielerLayouter(graph, DIRECTION_METHOD, LAYER_ASSIGNMENT_METHOD,
+                            NUMBER_OF_FORCE_DIRECTED_ITERATIONS);
 
             kielerLayouter.computeLayout();
             Graph resultGraph = kielerLayouter.getGraph();

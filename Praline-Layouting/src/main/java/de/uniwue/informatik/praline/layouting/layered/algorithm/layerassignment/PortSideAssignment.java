@@ -158,7 +158,9 @@ public class PortSideAssignment {
         int score = 0;
         if (portComposition instanceof Port) {
             for (Edge edge : ((Port) portComposition).getEdges()) {
-                score += sugy.getStartNode(edge).equals(node) ? 1 : -1;
+                if (!sugy.staysOnSameLayer(edge)) {
+                    score += sugy.getStartNode(edge).equals(node) ? 1 : -1;
+                }
             }
         }
         else if (portComposition instanceof PortGroup) {

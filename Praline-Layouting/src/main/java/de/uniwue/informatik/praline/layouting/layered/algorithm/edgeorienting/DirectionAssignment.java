@@ -15,6 +15,9 @@ import java.util.*;
 
 public class DirectionAssignment {
 
+    public AbstractLayout<Long, Long> bestFDLayout = null;
+    public Map<Vertex, Long> nodeToLongBestFDLayout = null;
+
     public void randomDirected(SugiyamaLayouter sugy) {
         Map<Vertex, Integer> values = new LinkedHashMap<>();
         List<Vertex> vertices = new LinkedList<>(sugy.getGraph().getVertices());
@@ -47,8 +50,6 @@ public class DirectionAssignment {
      */
     public void forceDirected(SugiyamaLayouter sugy, int numberOfIterations) {
         //find the drawing with the fewest crossings
-        AbstractLayout<Long, Long> bestLayout = null;
-        Map<Vertex, Long> nodeToLongBestLayout = null;
         int fewestCrossings = Integer.MAX_VALUE;
 
         for (int i = 0; i < numberOfIterations; i++) {
@@ -94,8 +95,8 @@ public class DirectionAssignment {
             int crossings = crossingCounter.getNumberOfCrossings();
             if (crossings < fewestCrossings) {
                 fewestCrossings = crossings;
-                bestLayout = layout;
-                nodeToLongBestLayout = nodeToLong;
+                bestFDLayout = layout;
+                nodeToLongBestFDLayout = nodeToLong;
             }
         }
 
@@ -104,12 +105,12 @@ public class DirectionAssignment {
             // Fall mit gleichen Koordinaten wird nicht berücksichtigt
             Vertex node0 = edge.getPorts().get(0).getVertex();
             Vertex node1 = edge.getPorts().get(1).getVertex();
-            if (bestLayout.getY(nodeToLongBestLayout.get(node0)) > bestLayout.getY(nodeToLongBestLayout.get(node1))) {
+            if (bestFDLayout.getY(nodeToLongBestFDLayout.get(node0)) > bestFDLayout.getY(nodeToLongBestFDLayout.get(node1))) {
                 // direct edge from 1 to 0
                 sugy.assignDirection(edge, node1, node0);
-            } else if (bestLayout.getY(nodeToLongBestLayout.get(node0)) == bestLayout.getY(nodeToLongBestLayout.get(node1))
+            } else if (bestFDLayout.getY(nodeToLongBestFDLayout.get(node0)) == bestFDLayout.getY(nodeToLongBestFDLayout.get(node1))
                     // in case of same y-coordinate use x-coordinate
-                    && bestLayout.getX(nodeToLongBestLayout.get(node0)) > bestLayout.getX(nodeToLongBestLayout.get(node1))) {
+                    && bestFDLayout.getX(nodeToLongBestFDLayout.get(node0)) > bestFDLayout.getX(nodeToLongBestFDLayout.get(node1))) {
                 // direct edge from 1 to 0
                 sugy.assignDirection(edge, node1, node0);
             } else {
