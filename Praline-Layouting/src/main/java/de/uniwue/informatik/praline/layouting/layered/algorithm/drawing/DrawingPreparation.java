@@ -1066,7 +1066,7 @@ public class DrawingPreparation {
                 Rectangle portShape = (Rectangle) port.getShape();
                 if (!Double.isNaN(portShape.getXPosition())) {
                     //either the port shape or the port label determines the required width
-                    maxL = Math.min(maxL, portShape.getXPosition() -
+                    maxL = Math.min(maxL, portShape.getXPosition() +
                             Math.min(0, drawInfo.getHorizontalPortLabelOffset()) - delta);
                     minR = Math.max(minR, portShape.getXPosition() + Math.max(portShape.getWidth(),
                             drawInfo.computePortWidth(port) + Math.max(0, -drawInfo.getHorizontalPortLabelOffset()))
