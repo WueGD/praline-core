@@ -917,9 +917,10 @@ public class NodePlacement {
                 PortValues v = layer.get(j);
                 Vertex nodeOfU = dummyPort2unionNode.getOrDefault(u.getPort(), u.getPort().getVertex());
                 Vertex nodeOfV = dummyPort2unionNode.getOrDefault(v.getPort(), v.getPort().getVertex());
-                //also align it to the right border, i.e., v belongs to the
-                if (areInTheSameNonDummyNode(nodeOfV, nodeOfU)
-                        && v.getX() - u.getX() - (v.getWidth() + u.getWidth()) / 2.0 - Math.max(v.getNodeSideShortness(), u.getNodeSideShortness()) > maxPortSpacing) {
+                //also align it to the right border, i.e., v belongs to the right border
+                if (areInTheSameNonDummyNode(nodeOfV, nodeOfU) && !nodeOfU.equals(dummyVertex)
+                        && v.getX() - u.getX() - (v.getWidth() + u.getWidth()) / 2.0
+                        - Math.max(v.getNodeSideShortness(), u.getNodeSideShortness()) > maxPortSpacing) {
                     moveToTheRight(u, nodeOfU);
                 }
             }

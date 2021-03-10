@@ -58,7 +58,8 @@ public class CsvDataExtraction {
 //                    "2021-03-04_01-45-45"; //rr (without broader gaps for the node side having fewer ports)
 //                    "2021-03-05_04-44-05"; //(slightly incomoplete run) force-directed layer assignment (kieler fd)
 //                    "2021-03-05_10-24-03"; //(slightly incomoplete run) force-directed layer assignment (kieler ns)
-                    "2021-03-05_19-14-46"; //(comoplete run) force-directed layer assignment (kieler ns)
+//                    "2021-03-05_19-14-46"; //(comoplete run) force-directed layer assignment (kieler ns)
+                    "2021-03-10_03-49-45"; //rr (all ns)
 
     private static final String[] DATA_DIRS =
             {
