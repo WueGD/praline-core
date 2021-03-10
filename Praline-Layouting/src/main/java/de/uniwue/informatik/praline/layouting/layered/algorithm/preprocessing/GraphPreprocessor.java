@@ -256,8 +256,9 @@ public class GraphPreprocessor {
             Map<Port, Port> originalPort2representative = new LinkedHashMap<>();
 
             for (Vertex containedVertex : groupVertices) {
+                boolean isDeviceVertex = isDeviceConnector && sugy.getDeviceVertices().contains(containedVertex);
                 for (Port port : containedVertex.getPorts()) {
-                    if (!(isDeviceConnector && port.getEdges().isEmpty())) {
+                    if (!(isDeviceVertex && port.getEdges().isEmpty())) {
                         // create new port at unification vertex and remove old one on original vertex,
                         // hang the edges from the old to the new port
                         Port replacePort = new Port();

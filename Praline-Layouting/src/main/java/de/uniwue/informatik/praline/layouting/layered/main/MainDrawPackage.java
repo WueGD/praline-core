@@ -5,6 +5,7 @@ import de.uniwue.informatik.praline.datastructure.utils.Serialization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignmentMethod;
 import de.uniwue.informatik.praline.layouting.layered.main.util.CrossingsCounting;
 
 import java.io.File;
@@ -36,6 +37,8 @@ public class MainDrawPackage {
     private static final boolean CHECK_COMPLETENESS_OF_GRAPH = true;
 
     private static final DirectionMethod DIRECTION_METHOD = DirectionMethod.FORCE;
+
+    private static final LayerAssignmentMethod LAYER_ASSIGNMENT_METHOD = LayerAssignmentMethod.NETWORK_SIMPLEX;
 
     private static final CrossingMinimizationMethod CROSSING_MINIMIZATION_METHOD = CrossingMinimizationMethod.PORTS;
 
@@ -106,8 +109,8 @@ public class MainDrawPackage {
 
             SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
 
-//            sugy.computeLayout(DIRECTION_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS, CROSSING_MINIMIZATION_METHOD,
-//                    NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
+            sugy.computeLayout(DIRECTION_METHOD, LAYER_ASSIGNMENT_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS,
+                    CROSSING_MINIMIZATION_METHOD, NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
 
             int numberOfCrossings = CrossingsCounting.countNumberOfCrossings(sugy.getGraph());
 
