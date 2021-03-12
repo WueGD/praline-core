@@ -251,12 +251,6 @@ public class LayerAssignmentNetworkSimplex implements LayerAssignment {
                 incomingEdges.put(vertex, inDeg);
             }
         }
-        //sort by y-coordinate if fd layout is not null
-        if (fdBaseDirectionAssignment != null && fdBaseDirectionAssignment.bestFDLayout != null
-                && fdBaseDirectionAssignment.nodeToLongBestFDLayout != null) {
-            queue.sort(Comparator.comparingDouble(v -> fdBaseDirectionAssignment.bestFDLayout.apply(
-                        fdBaseDirectionAssignment.nodeToLongBestFDLayout.get(v)).getY()));
-        }
 
         Vertex startVertex = queue.get(0);
         while (!queue.isEmpty()) {
