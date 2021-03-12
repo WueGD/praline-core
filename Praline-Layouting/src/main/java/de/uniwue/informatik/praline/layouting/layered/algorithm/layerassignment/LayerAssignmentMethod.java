@@ -8,6 +8,12 @@ public enum LayerAssignmentMethod {
             return "ns";
         }
     },
+    OLD_NETWORK_SIMPLEX {
+        @Override
+        public String toString() {
+            return "ons";
+        }
+    },
     FD_POSITION {
         @Override
         public String toString() {

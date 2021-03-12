@@ -45,6 +45,24 @@ public class PortUtils {
         return otherEndPoints.iterator().next();
     }
 
+    /**
+     *
+     * @param edge
+     * @param vertex
+     * @return
+     *      some other endpoint (not being port) of this edge or null if there is no other endpoint
+     */
+    public static Port getOtherEndPoint(Edge edge, Vertex vertex) {
+        List<Port> ports = getPortsAtVertex(edge, vertex);
+        for (Port port : ports) {
+            Port otherEndPoint = getOtherEndPoint(edge, port);
+            if (otherEndPoint != null) {
+                return otherEndPoint;
+            }
+        }
+        return null;
+    }
+
     public static VertexGroup getTopLevelVertexGroup(Vertex vertex) {
         VertexGroup vertexGroup = vertex.getVertexGroup();
         VertexGroup topLevelVertexGroup = null;
@@ -63,6 +81,14 @@ public class PortUtils {
             edgeBundle = edgeBundle.getEdgeBundle();
         }
         return topLevelEdgeBundle;
+    }
+
+    public static Set<Vertex> getIncidentVertices(Edge edge) {
+        Set<Vertex> incidentVertices = new LinkedHashSet<>();
+        for (Port port : edge.getPorts()) {
+            incidentVertices.add(port.getVertex());
+        }
+        return incidentVertices;
     }
 
     public static List<Port> getAdjacentPorts(Vertex vertex) {
@@ -349,6 +375,24 @@ public class PortUtils {
             }
         }
         return null;
+    }
+
+    /**
+     * Just for the rare case when this edge is incident to more than one port at this vertex.
+     * Usually it is enough to call {@link PortUtils#getPortAtVertex(Edge, Vertex)} instead.
+     *
+     * @param edge
+     * @param vertex
+     * @return
+     */
+    public static List<Port> getPortsAtVertex(Edge edge, Vertex vertex) {
+        List<Port> returnList = new ArrayList<>();
+        for (Port port : edge.getPorts()) {
+            if (vertex.getPorts().contains(port)) {
+                returnList.add(port);
+            }
+        }
+        return returnList;
     }
 
     public static int countPorts(Collection<PortComposition> portCompositionsTop) {

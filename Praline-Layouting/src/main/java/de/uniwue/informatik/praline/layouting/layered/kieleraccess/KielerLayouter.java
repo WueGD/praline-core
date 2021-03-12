@@ -33,6 +33,9 @@ import java.util.*;
 
 public class KielerLayouter implements PralineLayouter {
 
+    public static final DirectionMethod DEFAULT_DIRECTION_METHOD = DirectionMethod.FORCE;
+    public static final LayerAssignmentMethod DEFAULT_LAYER_ASSIGNMENT_METHOD = LayerAssignmentMethod.NETWORK_SIMPLEX;
+
     private SugiyamaLayouter sugiyForInternalUse;
     private DrawingInformation drawInfo;
     private LinkedHashMap<Vertex, ElkNode> vertices;
@@ -46,7 +49,7 @@ public class KielerLayouter implements PralineLayouter {
     }
 
     public KielerLayouter(Graph graph, DrawingInformation drawInfo) {
-        this(graph, DirectionMethod.FORCE, LayerAssignmentMethod.NETWORK_SIMPLEX, 1, drawInfo);
+        this(graph, DEFAULT_DIRECTION_METHOD, DEFAULT_LAYER_ASSIGNMENT_METHOD, 1, drawInfo);
     }
 
     public KielerLayouter(Graph graph, DirectionMethod directionMethod, LayerAssignmentMethod layerAssignmentMethod,
@@ -67,7 +70,7 @@ public class KielerLayouter implements PralineLayouter {
 
         sugiyForInternalUse.assignDirections(directionMethod, numberOfIterationsFD);
 
-        sugiyForInternalUse.assignLayers(layerAssignmentMethod);
+        sugiyForInternalUse.assignLayers(layerAssignmentMethod, directionMethod);
 
         sugiyForInternalUse.nodePadding();
     }
@@ -85,7 +88,7 @@ public class KielerLayouter implements PralineLayouter {
         sugiyForInternalUse = sugiyWithPrecomputedDirectedGraph;
 
         if (!sugiyForInternalUse.hasAssignedLayers()) {
-            sugiyForInternalUse.assignLayers(LayerAssignmentMethod.NETWORK_SIMPLEX);
+            sugiyForInternalUse.assignLayers(DEFAULT_LAYER_ASSIGNMENT_METHOD, DEFAULT_DIRECTION_METHOD);
             sugiyForInternalUse.nodePadding();
         }
     }

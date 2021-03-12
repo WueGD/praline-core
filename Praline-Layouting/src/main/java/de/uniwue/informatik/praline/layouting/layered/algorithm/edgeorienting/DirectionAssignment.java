@@ -102,7 +102,6 @@ public class DirectionAssignment {
 
         // assign directions to edges acc. to the best layout (the layout with the fewest crossings)
         for (Edge edge : sugy.getGraph().getEdges()) {
-            // Fall mit gleichen Koordinaten wird nicht berücksichtigt
             Vertex node0 = edge.getPorts().get(0).getVertex();
             Vertex node1 = edge.getPorts().get(1).getVertex();
             if (bestFDLayout.getY(nodeToLongBestFDLayout.get(node0)) > bestFDLayout.getY(nodeToLongBestFDLayout.get(node1))) {

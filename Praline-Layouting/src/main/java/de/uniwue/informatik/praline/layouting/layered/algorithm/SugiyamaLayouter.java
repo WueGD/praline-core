@@ -26,7 +26,7 @@ import java.util.*;
 public class SugiyamaLayouter implements PralineLayouter {
 
     public static final DirectionMethod DEFAULT_DIRECTION_METHOD = DirectionMethod.FORCE;
-    public static final LayerAssignmentMethod DEFAULT_LAYER_ASSSIGNMENT_METHOD = LayerAssignmentMethod.NETWORK_SIMPLEX;
+    public static final LayerAssignmentMethod DEFAULT_LAYER_ASSIGNMENT_METHOD = LayerAssignmentMethod.NETWORK_SIMPLEX;
     public static final int DEFAULT_NUMBER_OF_FD_ITERATIONS = 10;
     public static final CrossingMinimizationMethod DEFAULT_CROSSING_MINIMIZATION_METHOD =
             CrossingMinimizationMethod.PORTS;
@@ -87,6 +87,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     private Set<Object> deviceVertices;
 
     //internal
+    private boolean useFDLayoutForInitialNodeOrder;
     private DirectionAssignment da;
 
     public SugiyamaLayouter(Graph graph) {
@@ -131,7 +132,7 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     @Override
     public void computeLayout() {
-        computeLayout(DEFAULT_DIRECTION_METHOD, DEFAULT_LAYER_ASSSIGNMENT_METHOD, DEFAULT_NUMBER_OF_FD_ITERATIONS,
+        computeLayout(DEFAULT_DIRECTION_METHOD, DEFAULT_LAYER_ASSIGNMENT_METHOD, DEFAULT_NUMBER_OF_FD_ITERATIONS,
                 DEFAULT_CROSSING_MINIMIZATION_METHOD, DEFAULT_NUMBER_OF_CM_ITERATIONS);
     }
 
@@ -152,7 +153,7 @@ public class SugiyamaLayouter implements PralineLayouter {
                               int numberOfIterationsFD, CrossingMinimizationMethod cmMethod, int numberOfIterationsCM) {
         construct();
         assignDirections(directionMethod, numberOfIterationsFD);
-        assignLayers(layerAssignmentMethod);
+        assignLayers(layerAssignmentMethod, directionMethod);
         createDummyNodesAndDoCrossingMinimization(cmMethod, numberOfIterationsCM);
         nodePositioning();
         edgeRouting();
@@ -234,13 +235,18 @@ public class SugiyamaLayouter implements PralineLayouter {
 //        }
 //    }
 
-    public void assignLayers(LayerAssignmentMethod method) {
+    public void assignLayers(LayerAssignmentMethod layerAssignmentMethod, DirectionMethod directionMethod) {
         if (isSingleComponent) {
             LayerAssignment la = null;
-            if (method == LayerAssignmentMethod.NETWORK_SIMPLEX) {
-                la = new LayerAssignmentNetworkSimplex(this);
+            useFDLayoutForInitialNodeOrder = layerAssignmentMethod != LayerAssignmentMethod.OLD_NETWORK_SIMPLEX
+                    && directionMethod == DirectionMethod.FORCE;
+            if (layerAssignmentMethod == LayerAssignmentMethod.NETWORK_SIMPLEX) {
+                la = new LayerAssignmentNetworkSimplex(this, da);
             }
-            else if (method == LayerAssignmentMethod.FD_POSITION) {
+            else if (layerAssignmentMethod == LayerAssignmentMethod.OLD_NETWORK_SIMPLEX) {
+                la = new OldLayerAssignmentNetworkSimplex(this);
+            }
+            else if (layerAssignmentMethod == LayerAssignmentMethod.FD_POSITION) {
                 la = new LayerAssignmentForceDirected(this, da);
             }
             nodeToRank = la.assignLayers();
@@ -251,7 +257,7 @@ public class SugiyamaLayouter implements PralineLayouter {
         }
         else {
             for (SugiyamaLayouter componentLayouter : componentLayouters) {
-                componentLayouter.assignLayers(method);
+                componentLayouter.assignLayers(layerAssignmentMethod, directionMethod);
             }
         }
     }
@@ -293,8 +299,9 @@ public class SugiyamaLayouter implements PralineLayouter {
             dnc.assignWrongSidePortsTemporaryToOtherSide();
             dnc.createDummyNodesForEdges();
             CrossingMinimization cm1 = new CrossingMinimization(this);
-            SortingOrder result = cm1.layerSweepWithBarycenterHeuristic(cmMethod, orders, true,
-                    movePortsAdjToTurningDummiesToTheOutside, placeTurningDummiesNextToTheirVertex, false);
+            SortingOrder result = cm1.layerSweepWithBarycenterHeuristic(cmMethod, orders,
+                    !useFDLayoutForInitialNodeOrder, movePortsAdjToTurningDummiesToTheOutside,
+                    placeTurningDummiesNextToTheirVertex, false);
             orders = result;
             int crossings = countCrossings(result);
             for (int i = 1; i < numberOfIterations; i++) {

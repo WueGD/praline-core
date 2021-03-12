@@ -272,7 +272,8 @@ public class AllTests {
 //                    System.out.println("kieler_draw: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
                 }
                 else {
-                    sugiy.assignLayers(LayerAssignmentMethod.NETWORK_SIMPLEX); //TODO: move as option to top of the class
+                    sugiy.assignLayers(LayerAssignmentMethod.NETWORK_SIMPLEX, directionMethod); //TODO: move as option to top of the
+                    // class
 
 //                    System.out.println("al: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
 

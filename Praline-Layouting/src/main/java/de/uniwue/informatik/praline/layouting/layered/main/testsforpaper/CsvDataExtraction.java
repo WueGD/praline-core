@@ -59,7 +59,11 @@ public class CsvDataExtraction {
 //                    "2021-03-05_04-44-05"; //(slightly incomoplete run) force-directed layer assignment (kieler fd)
 //                    "2021-03-05_10-24-03"; //(slightly incomoplete run) force-directed layer assignment (kieler ns)
 //                    "2021-03-05_19-14-46"; //(comoplete run) force-directed layer assignment (kieler ns)
-                    "2021-03-10_03-49-45"; //rr (all ns)
+//                    "2021-03-10_03-49-45"; //rr (all ns)
+//                    "2021-03-11_20-27-30"; //rr with new network simplex
+//                    "2021-03-12_00-32-29"; //rr with new network simplex and sorting layers acc to fd layout
+//                    "2021-03-12_01-35-29"; //rr same as before but with node balancing in network simplex
+                    "2021-03-12_03-30-44"; //rr force-directed layer assignment (kieler ns)
 
     private static final String[] DATA_DIRS =
             {
