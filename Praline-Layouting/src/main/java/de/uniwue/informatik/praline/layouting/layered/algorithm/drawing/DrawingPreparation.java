@@ -116,7 +116,6 @@ public class DrawingPreparation {
             Rectangle nodeShape = (Rectangle) node.getShape();
 
             if (nodeShape.y == yMin) {
-                yMin = nodeShape.y;
                 if (vertexPortBounds.getMinL() == xMin) {
                     vLBottom = node;
                     minLBottom = vertexPortBounds.getMinL();
@@ -129,7 +128,6 @@ public class DrawingPreparation {
                 }
             }
             if (nodeShape.y == yMax) {
-                yMax = nodeShape.y;
                 if (vertexPortBounds.getMinL() == xMin) {
                     vLTop = node;
                     minLTop = vertexPortBounds.getMinL();
@@ -143,10 +141,14 @@ public class DrawingPreparation {
             }
         }
         //if there are no ports on the bottom or top side, take values from the other side
-        if (maxLTop == maxRTop) maxLTop = maxLBottom;
-        if (minRTop == minLTop) minRTop = minRBottom;
-        if (maxLBottom == maxRBottom) maxLBottom = maxLTop;
-        if (minRBottom == minLBottom) minRBottom = minRTop;
+        if (maxLTop == maxRTop || maxLTop == Double.POSITIVE_INFINITY) maxLTop = maxLBottom;
+        if (maxRTop == maxLTop || maxRTop == Double.NEGATIVE_INFINITY) maxRTop = maxRBottom;
+        if (minLTop == minRTop || minLTop == Double.POSITIVE_INFINITY) minLTop = minLBottom;
+        if (minRTop == minLTop || minRTop == Double.NEGATIVE_INFINITY) minRTop = minRBottom;
+        if (maxLBottom == maxRBottom || maxLBottom == Double.POSITIVE_INFINITY) maxLBottom = maxLTop;
+        if (maxRBottom == maxLBottom || maxRBottom == Double.NEGATIVE_INFINITY) maxRBottom = maxRTop;
+        if (minLBottom == minRBottom || minLBottom == Double.POSITIVE_INFINITY) minLBottom = minLTop;
+        if (minRBottom == minLBottom || minRBottom == Double.NEGATIVE_INFINITY) minRBottom = minRTop;
 
 
         // tighten to smallest width possible
@@ -163,21 +165,19 @@ public class DrawingPreparation {
         Rectangle idealShapeDevice = null;
         if (deviceVertex != null) {
             VertexPortBounds devicePortBounds = new VertexPortBounds(deviceVertex).determine();
-            double deviceMaxL = Math.min(devicePortBounds.getMaxL(), Math.min(maxLBottom, maxLTop));
-            double deviceMinR = Math.min(devicePortBounds.getMinR(), Math.min(minRBottom, minRTop));
-            idealShapeDevice = getReducedShape(deviceVertex, devicePortBounds.getMinL(), deviceMaxL,
-                    deviceMinR, devicePortBounds.getMaxR(), true, true);
+            idealShapeDevice = getReducedShape(deviceVertex, devicePortBounds.getMinL(), devicePortBounds.getMaxL(),
+                    devicePortBounds.getMinR(), devicePortBounds.getMaxR(), true, true);
         }
 
         //determine left border
         double xIdealLB = idealShapeLBottom == null ? Double.POSITIVE_INFINITY : idealShapeLBottom.x;
-        double xidealLT = idealShapeLTop == null ? Double.POSITIVE_INFINITY : idealShapeLTop.x;
+        double xIdealLT = idealShapeLTop == null ? Double.POSITIVE_INFINITY : idealShapeLTop.x;
         double xIdealRB = idealShapeRBottom == null ? Double.NEGATIVE_INFINITY :
                 idealShapeRBottom.x + idealShapeRBottom.width;
         double xIdealRT = idealShapeRTop == null ? Double.NEGATIVE_INFINITY :
                 idealShapeRTop.x + idealShapeRTop.width;
 
-        double newL = Math.min(xIdealLB, xidealLT);
+        double newL = Math.min(xIdealLB, xIdealLT);
         if (idealShapeDevice != null) {
             newL = Math.min(newL, idealShapeDevice.x);
         }
