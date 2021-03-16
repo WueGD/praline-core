@@ -30,6 +30,7 @@ public class JsForceGraphConverter
             node.setId(Integer.toString(this.jsIdCounter));
             this.jsIdCounter++;
             node.setName(vertex.getLabelManager().getMainLabel().toString());
+            this.addVertexAttributes(vertex, node);
             jsForceGraph.getNodes().add(node);
             this.vertexMap.put(vertex, node);
         }
@@ -43,6 +44,7 @@ public class JsForceGraphConverter
                 link.setSource(this.getVertexNodeId(edge.getPorts().get(1)));
             }
             link.setName(edge.getLabelManager().getMainLabel().toString());
+            this.addEdgeAttributes(edge, link);
             jsForceGraph.getLinks().add(link);
         }
 
@@ -54,4 +56,14 @@ public class JsForceGraphConverter
         Vertex vertex = port.getVertex();
         return this.vertexMap.get(vertex).getId();
     }
+
+    // Possibility to extend exported data using inheritance
+    @SuppressWarnings("unused")
+    protected void addVertexAttributes( Vertex vertex, Node node)
+    { }
+
+    // Possibility to extend exported data using inheritance
+    @SuppressWarnings("unused")
+    protected void addEdgeAttributes(Edge edge, Link link)
+    { }
 }
