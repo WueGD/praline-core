@@ -63,7 +63,11 @@ public class CsvDataExtraction {
 //                    "2021-03-11_20-27-30"; //rr with new network simplex
 //                    "2021-03-12_00-32-29"; //rr with new network simplex and sorting layers acc to fd layout
 //                    "2021-03-12_01-35-29"; //rr same as before but with node balancing in network simplex
-                    "2021-03-12_03-30-44"; //rr force-directed layer assignment (kieler ns)
+//                    "2021-03-12_03-30-44"; //rr force-directed layer assignment (kieler ns)
+//                    "2021-03-19_02-20-08"; //rr maximum independent set for determining alignments in node placement
+//                    "2021-03-19_02-47-52"; //rr same as before + arbitrary node width
+//                    "2021-03-19_03-04-21"; //rr with arbitrary node width
+                    "2021-03-19_17-05-45"; //rr same as 3 before, but as weighted is with edge weights by edge length
 
     private static final String[] DATA_DIRS =
             {
