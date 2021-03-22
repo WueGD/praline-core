@@ -27,8 +27,15 @@ public class JsForceGraphConverter
         for (Vertex vertex : graph.getVertices())
         {
             Node node = new Node();
-            node.setId(Integer.toString(this.jsIdCounter));
-            this.jsIdCounter++;
+            if (vertex.getReference() != null && !vertex.getReference().isBlank())
+            {
+                node.setId(vertex.getReference());
+            }
+            else
+            {
+                node.setId(Integer.toString(this.jsIdCounter));
+                this.jsIdCounter++;
+            }
             node.setName(vertex.getLabelManager().getMainLabel().toString());
             this.addVertexAttributes(vertex, node);
             jsForceGraph.getNodes().add(node);
