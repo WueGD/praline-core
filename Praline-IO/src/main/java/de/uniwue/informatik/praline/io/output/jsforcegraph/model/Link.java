@@ -20,6 +20,9 @@ public class Link {
     @SerializedName("tags")
     @Expose
     private Map<String, String> tags;
+    @SerializedName("state")
+    @Expose
+    private Map<String, String> state;
 
     public String getSource() {
         return this.source;
@@ -53,5 +56,15 @@ public class Link {
     public void setTags(Map<String, String> tags)
     {
         this.tags = tags;
+    }
+
+    public Map<String, String> getState()
+    {
+        return state;
+    }
+
+    public void setState(Map<String, String> state)
+    {
+        this.state = state;
     }
 }
