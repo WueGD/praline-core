@@ -17,7 +17,10 @@ public class OldUnstyledRectangle extends Rectangle {
             @JsonProperty("height") final double height,
             @JsonProperty("color") final Color color
     ) {
-        super(x, y, width, height, color.equals(ShapeStyle.DEFAULT_COLOR) ? ShapeStyle.DEFAULT_SHAPE_STYLE :
-                new ShapeStyle(null, color));
+        super(x, y, width, height,
+                (color == null || color.equals(ShapeStyle.DEFAULT_COLOR))
+                        ? ShapeStyle.DEFAULT_SHAPE_STYLE
+                        : new ShapeStyle(null, color)
+        );
     }
 }
