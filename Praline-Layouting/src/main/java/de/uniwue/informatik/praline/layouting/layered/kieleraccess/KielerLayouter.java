@@ -89,8 +89,8 @@ public class KielerLayouter implements PralineLayouter {
 
         if (!sugiyForInternalUse.hasAssignedLayers()) {
             sugiyForInternalUse.assignLayers(DEFAULT_LAYER_ASSIGNMENT_METHOD, DEFAULT_DIRECTION_METHOD);
-            sugiyForInternalUse.nodePadding();
         }
+        sugiyForInternalUse.nodePadding();
     }
 
     @Override

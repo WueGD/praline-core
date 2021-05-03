@@ -17,21 +17,6 @@ import java.util.*;
 
 public class NodePlacement {
 
-    //todo: maybe add these as input parameters for the central methods of this class
-
-    public enum AlignmentMethod {
-        FIRST_COMES,
-        MINIMUM_INDEPENDENT_SET;
-    }
-
-    public enum AlignmentPreference {
-        NOTHING,
-        LONG_EDGE;
-    }
-
-    private static final AlignmentMethod DEFAULT_ALIGNMENT_METHOD = AlignmentMethod.MINIMUM_INDEPENDENT_SET;
-    private static final AlignmentPreference DEFAULT_ALIGNMENT_PREFERENCE = AlignmentPreference.LONG_EDGE;
-
     private SugiyamaLayouter sugy;
     private DrawingInformation drawInfo;
     private List<List<PortValues>> structure;
@@ -43,7 +28,7 @@ public class NodePlacement {
     private Map<Vertex, Set<Port>> dummyPorts;
     private Map<Port, Vertex> dummyPort2unionNode;
     private List<Edge> dummyEdges;
-    private int portnumber;
+    private int portNumber;
     // spacing variable according to paper:
     private double delta;
     //new max port spacing within a vertex
@@ -61,7 +46,9 @@ public class NodePlacement {
      *      Map linking to all dummy ports that were inserted for padding the width of a vertex due to a (long) label.
      *      These ports are still in the data structure and should be removed later.
      */
-    public Map<Vertex, Set<Port>> placeNodes (boolean determineSideLengthsOfNodes) {
+    public Map<Vertex, Set<Port>> placeNodes (boolean determineSideLengthsOfNodes,
+                                              AlignmentParameters.Method alignmentMethod,
+                                              AlignmentParameters.Preference alignmentPreference) {
         initialize();
         // create lists of ports for layers
         initializeStructure();
@@ -76,7 +63,7 @@ public class NodePlacement {
             determineSideLengthsOfNodes();
         }
         //find alignments
-        List<LinkedList<Pair<PortValues>>> alignments = findAlignments();
+        List<LinkedList<Pair<PortValues>>> alignments = findAlignments(alignmentMethod, alignmentPreference);
 
         for (int i = 0; i < 4; i++) {
             switch (i) {
@@ -157,7 +144,7 @@ public class NodePlacement {
         dummyVertex = new Vertex();
         dummyVertex.getLabelManager().addLabel(new TextLabel("dummyVertex"));
         dummyVertex.getLabelManager().setMainLabel(dummyVertex.getLabelManager().getLabels().get(0));
-        portnumber = 0;
+        portNumber = 0;
     }
 
     public void initializeStructure() {
@@ -544,19 +531,22 @@ public class NodePlacement {
      *
      * @return
      *      finds alignments
+     * @param alignmentMethod
+     * @param alignmentPreference
      */
-    private List<LinkedList<Pair<PortValues>>> findAlignments() {
+    private List<LinkedList<Pair<PortValues>>> findAlignments(AlignmentParameters.Method alignmentMethod,
+                                                              AlignmentParameters.Preference alignmentPreference) {
 //        //determine for all long edges, over how many dummy vertices they go, i.e., their length.
 //        //later, longer edges will be preferred for making them straight compared to shorter edges
         Map<Edge, Integer> lengthOfLongEdge = new LinkedHashMap<>();
-        if (DEFAULT_ALIGNMENT_PREFERENCE == AlignmentPreference.LONG_EDGE) {
+        if (alignmentPreference == AlignmentParameters.Preference.LONG_EDGE) {
             determineLengthOfLongEdges(lengthOfLongEdge);
         }
 
         List<LinkedList<Pair<PortValues>>> stacksOfAlignments = new ArrayList<>(structure.size() - 1);
 
         for (int layer = 0; layer < (structure.size() - 1); layer++) {
-            LinkedList<Pair<PortValues>> layerAlignments = DEFAULT_ALIGNMENT_METHOD == AlignmentMethod.FIRST_COMES ?
+            LinkedList<Pair<PortValues>> layerAlignments = alignmentMethod == AlignmentParameters.Method.FIRST_COMES ?
                     findLayerAlignmentsClassically(layer, lengthOfLongEdge) :
                     findLayerAlignmentsByMIS(layer, lengthOfLongEdge);
             stacksOfAlignments.add(layerAlignments);
@@ -1303,7 +1293,7 @@ public class NodePlacement {
     }
 
     private void createMainLabel (LabeledObject lo) {
-        Label newLabel = new TextLabel("dummyPort" + portnumber++);
+        Label newLabel = new TextLabel("dummyPort" + portNumber++);
         lo.getLabelManager().addLabel(newLabel);
         lo.getLabelManager().setMainLabel(newLabel);
     }

@@ -6,6 +6,7 @@ import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignmentMethod;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.nodeplacement.AlignmentParameters;
 import de.uniwue.informatik.praline.layouting.layered.main.util.CrossingsCounting;
 
 import java.io.File;
@@ -24,10 +25,10 @@ public class MainDrawPackage {
     public static final String PATH_DATA_SET =
 //            "Praline-Layouting/data/generated_2020-06-04_18-39-49";
 //            "Praline-Layouting/data/generated_2020-08-20_04-42-39";
-            "Praline-Layouting/data/generated_2021-03-15_17-32-05";
+//            "Praline-Layouting/data/generated_2021-03-15_17-32-05";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18";
 //            "Praline-Layouting/data/praline-package-2020-05-18";
-//            "Praline-Layouting/data/praline-readable-2020-09-04";
+            "Praline-Layouting/data/praline-readable-2020-09-04";
 //            "Praline-Layouting/data/5plansOriginalPseudo";
 
 
@@ -42,6 +43,10 @@ public class MainDrawPackage {
     private static final LayerAssignmentMethod LAYER_ASSIGNMENT_METHOD = LayerAssignmentMethod.NETWORK_SIMPLEX;
 
     private static final CrossingMinimizationMethod CROSSING_MINIMIZATION_METHOD = CrossingMinimizationMethod.PORTS;
+
+    private static final AlignmentParameters.Method ALIGNMENT_METHOD = AlignmentParameters.Method.FIRST_COMES;
+
+    private static final AlignmentParameters.Preference ALIGNMENT_PREFERENCE = AlignmentParameters.Preference.LONG_EDGE;
 
     private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 1; //5;
 
@@ -111,7 +116,7 @@ public class MainDrawPackage {
             SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
 
             sugy.computeLayout(DIRECTION_METHOD, LAYER_ASSIGNMENT_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS,
-                    CROSSING_MINIMIZATION_METHOD, NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
+                    CROSSING_MINIMIZATION_METHOD, NUMBER_OF_CROSSING_REDUCTION_ITERATIONS, ALIGNMENT_METHOD, ALIGNMENT_PREFERENCE);
 
             int numberOfCrossings = CrossingsCounting.countNumberOfCrossings(sugy.getGraph());
 

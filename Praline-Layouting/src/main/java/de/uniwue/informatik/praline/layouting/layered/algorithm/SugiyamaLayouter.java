@@ -8,11 +8,13 @@ import de.uniwue.informatik.praline.io.output.util.DrawingUtils;
 import de.uniwue.informatik.praline.layouting.PralineLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.HandlingDeadEnds;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.drawing.DrawingPreparation;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionAssignment;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgerouting.EdgeRouting;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.*;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.nodeplacement.AlignmentParameters;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.nodeplacement.NodePlacement;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.ConnectedComponentClusterer;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.preprocessing.DummyCreationResult;
@@ -32,6 +34,10 @@ public class SugiyamaLayouter implements PralineLayouter {
             CrossingMinimizationMethod.PORTS;
     public static final int DEFAULT_NUMBER_OF_CM_ITERATIONS = 5; //iterations for crossing minimization
     public static final boolean DEFAULT_DETERMINE_SIDE_LENGTHS_OF_NODES = false; //for NodePlacement; see there
+    public static final AlignmentParameters.Method
+            DEFAULT_ALIGNMENT_METHOD = AlignmentParameters.Method.FIRST_COMES; //for NodePlacement; see there
+    public static final AlignmentParameters.Preference
+            DEFAULT_ALIGNMENT_PREFERENCE = AlignmentParameters.Preference.LONG_EDGE; //for NodePlacement; see there
 
 
 
@@ -133,29 +139,30 @@ public class SugiyamaLayouter implements PralineLayouter {
     @Override
     public void computeLayout() {
         computeLayout(DEFAULT_DIRECTION_METHOD, DEFAULT_LAYER_ASSIGNMENT_METHOD, DEFAULT_NUMBER_OF_FD_ITERATIONS,
-                DEFAULT_CROSSING_MINIMIZATION_METHOD, DEFAULT_NUMBER_OF_CM_ITERATIONS);
+                DEFAULT_CROSSING_MINIMIZATION_METHOD, DEFAULT_NUMBER_OF_CM_ITERATIONS, DEFAULT_ALIGNMENT_METHOD,
+                DEFAULT_ALIGNMENT_PREFERENCE);
     }
 
     /**
-     *
-     * @param directionMethod
+     *  @param directionMethod
      * @param layerAssignmentMethod
      * @param numberOfIterationsFD
-     *      when employing a force-directed algo, it uses so many iterations with different random start positions
-     *      and takes the one that yields the fewest crossings.
-     *      If you use anything different from {@link DirectionMethod#FORCE}, then this value will be ignored.
+ *      when employing a force-directed algo, it uses so many iterations with different random start positions
+ *      and takes the one that yields the fewest crossings.
+ *      If you use anything different from {@link DirectionMethod#FORCE}, then this value will be ignored.
      * @param cmMethod
      * @param numberOfIterationsCM
-     *      for the crossing minimization phase you may have several independent random iterations of which the one
-     *      that yields the fewest crossings of edges between layers is taken.
+*      for the crossing minimization phase you may have several independent random iterations of which the one
      */
     public void computeLayout(DirectionMethod directionMethod, LayerAssignmentMethod layerAssignmentMethod,
-                              int numberOfIterationsFD, CrossingMinimizationMethod cmMethod, int numberOfIterationsCM) {
+                              int numberOfIterationsFD, CrossingMinimizationMethod cmMethod, int numberOfIterationsCM,
+                              AlignmentParameters.Method alignmentMethod,
+                              AlignmentParameters.Preference alignmentPreference) {
         construct();
         assignDirections(directionMethod, numberOfIterationsFD);
         assignLayers(layerAssignmentMethod, directionMethod);
         createDummyNodesAndDoCrossingMinimization(cmMethod, numberOfIterationsCM);
-        nodePositioning();
+        nodePositioning(alignmentMethod, alignmentPreference);
         edgeRouting();
         prepareDrawing();
     }
@@ -280,7 +287,8 @@ public class SugiyamaLayouter implements PralineLayouter {
         if (isSingleComponent) {
             createDummyNodesAndDoCrossingMinimization(cmMethod,
                     CrossingMinimization.DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE,
-                    CrossingMinimization.DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX, numberOfIterations);
+                    CrossingMinimization.DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX,
+                    CrossingMinimization.DEFAULT_HANDLING_DEAD_ENDS, numberOfIterations);
         }
         else {
             for (SugiyamaLayouter componentLayouter : componentLayouters) {
@@ -292,6 +300,7 @@ public class SugiyamaLayouter implements PralineLayouter {
     public void createDummyNodesAndDoCrossingMinimization(CrossingMinimizationMethod cmMethod,
                                                           boolean movePortsAdjToTurningDummiesToTheOutside,
                                                           boolean placeTurningDummiesNextToTheirVertex,
+                                                          HandlingDeadEnds handlingDeadEnds,
                                                           int numberOfIterations) {
         if (isSingleComponent) {
             //first crossing minimization phase with all ports on the side of its edge direction
@@ -301,12 +310,13 @@ public class SugiyamaLayouter implements PralineLayouter {
             CrossingMinimization cm1 = new CrossingMinimization(this);
             SortingOrder result = cm1.layerSweepWithBarycenterHeuristic(cmMethod, orders,
                     !useFDLayoutForInitialNodeOrder, movePortsAdjToTurningDummiesToTheOutside,
-                    placeTurningDummiesNextToTheirVertex, false);
+                    placeTurningDummiesNextToTheirVertex, false, handlingDeadEnds);
             orders = result;
             int crossings = countCrossings(result);
             for (int i = 1; i < numberOfIterations; i++) {
                 result = cm1.layerSweepWithBarycenterHeuristic(cmMethod, orders, true,
-                        movePortsAdjToTurningDummiesToTheOutside, placeTurningDummiesNextToTheirVertex, false);
+                        movePortsAdjToTurningDummiesToTheOutside, placeTurningDummiesNextToTheirVertex, false,
+                        handlingDeadEnds);
                 int crossingsNew = countCrossings(result);
                 if (crossingsNew < crossings) {
                     crossings = crossingsNew;
@@ -327,31 +337,35 @@ public class SugiyamaLayouter implements PralineLayouter {
             }
             CrossingMinimization cm2 = new CrossingMinimization(this);
             orders = cm2.layerSweepWithBarycenterHeuristic(cmMethod, orders, false,
-                    movePortsAdjToTurningDummiesToTheOutside, placeTurningDummiesNextToTheirVertex, true);
+                    movePortsAdjToTurningDummiesToTheOutside, placeTurningDummiesNextToTheirVertex, true,
+                    handlingDeadEnds);
         }
         else {
             for (SugiyamaLayouter componentLayouter : componentLayouters) {
                 componentLayouter.createDummyNodesAndDoCrossingMinimization(cmMethod,
                         movePortsAdjToTurningDummiesToTheOutside, placeTurningDummiesNextToTheirVertex,
-                        numberOfIterations);
+                        handlingDeadEnds, numberOfIterations);
             }
         }
     }
 
-    public void nodePositioning() {
+    public void nodePositioning(AlignmentParameters.Method alignmentMethod,
+                                AlignmentParameters.Preference alignmentPreference) {
         if (isSingleComponent) {
             NodePlacement np = new NodePlacement(this, orders, drawInfo);
-            dummyPortsForLabelPadding = np.placeNodes(DEFAULT_DETERMINE_SIDE_LENGTHS_OF_NODES);
+            dummyPortsForLabelPadding = np.placeNodes(DEFAULT_DETERMINE_SIDE_LENGTHS_OF_NODES, alignmentMethod,
+                    alignmentPreference);
         }
         else {
             for (SugiyamaLayouter componentLayouter : componentLayouters) {
-                componentLayouter.nodePositioning();
+                componentLayouter.nodePositioning(alignmentMethod, alignmentPreference);
             }
         }
     }
 
     /**
-     * only needed if {@link SugiyamaLayouter#nodePositioning()} is not used.
+     * only needed if
+     * {@link SugiyamaLayouter#nodePositioning(AlignmentParameters.Method, AlignmentParameters.Preference)} is not used.
      */
     public void nodePadding() {
         if (isSingleComponent) {

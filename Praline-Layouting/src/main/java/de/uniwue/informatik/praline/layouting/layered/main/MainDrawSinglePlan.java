@@ -6,6 +6,7 @@ import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignmentMethod;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.nodeplacement.AlignmentParameters;
 import de.uniwue.informatik.praline.layouting.layered.main.util.BendsCounting;
 import de.uniwue.informatik.praline.layouting.layered.main.util.CrossingsCounting;
 
@@ -78,6 +79,10 @@ public class MainDrawSinglePlan {
 
     private static final CrossingMinimizationMethod CROSSING_MINIMIZATION_METHOD = CrossingMinimizationMethod.PORTS;
 
+    private static final AlignmentParameters.Method ALIGNMENT_METHOD = AlignmentParameters.Method.FIRST_COMES;
+
+    private static final AlignmentParameters.Preference ALIGNMENT_PREFERENCE = AlignmentParameters.Preference.LONG_EDGE;
+
     private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 1; //5;
 
     private static final int NUMBER_OF_FORCE_DIRECTED_ITERATIONS = 1; //10;
@@ -103,7 +108,7 @@ public class MainDrawSinglePlan {
             SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
 
             sugy.computeLayout(DIRECTION_METHOD, LAYER_ASSIGNMENT_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS,
-                    CROSSING_MINIMIZATION_METHOD, NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
+                    CROSSING_MINIMIZATION_METHOD, NUMBER_OF_CROSSING_REDUCTION_ITERATIONS, ALIGNMENT_METHOD, ALIGNMENT_PREFERENCE);
 
             int crossings = CrossingsCounting.countNumberOfCrossings(graph);
             System.out.println("Computed drawing with " + crossings + " crossings " +

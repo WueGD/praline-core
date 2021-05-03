@@ -24,6 +24,7 @@ public class CrossingMinimization {
             CrossingMinimizationMethod.MIXED;
     public static final boolean DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE = true;
     public static final boolean DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX = true;
+    public static final HandlingDeadEnds DEFAULT_HANDLING_DEAD_ENDS = HandlingDeadEnds.PREV_RELATIVE_POSITIONS;
 
     private SugiyamaLayouter sugy;
     private SortingOrder orders;
@@ -45,7 +46,7 @@ public class CrossingMinimization {
                                                           boolean handlePortPairings) {
         return layerSweepWithBarycenterHeuristic(method, orders, true,
                 DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE,
-                DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX, handlePortPairings);
+                DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX, handlePortPairings, DEFAULT_HANDLING_DEAD_ENDS);
     }
 
     public SortingOrder layerSweepWithBarycenterHeuristic(CrossingMinimizationMethod method, SortingOrder orders,
@@ -53,21 +54,22 @@ public class CrossingMinimization {
                                                           boolean handlePortPairings) {
         return layerSweepWithBarycenterHeuristic(method, orders, randomStartPermutation,
                 DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE,
-                DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX, handlePortPairings);
+                DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX, handlePortPairings, DEFAULT_HANDLING_DEAD_ENDS);
     }
 
     public SortingOrder layerSweepWithBarycenterHeuristic(CrossingMinimizationMethod method, SortingOrder orders,
                                                           boolean randomStartPermutation,
                                                           boolean movePortsAdjToTurningDummiesToTheOutside,
                                                           boolean placeTurningDummiesNextToTheirVertex,
-                                                          boolean handlePortPairings) {
+                                                          boolean handlePortPairings,
+                                                          HandlingDeadEnds handlingDeadEnds) {
         //init
         this.orders = new SortingOrder(orders);
         initialize(method, randomStartPermutation, movePortsAdjToTurningDummiesToTheOutside,
                 placeTurningDummiesNextToTheirVertex);
 
         //do sweeping and allow movement of ports
-        doSweeping(handlePortPairings, true);
+        doSweeping(handlePortPairings, true, handlingDeadEnds);
         //do several iterations because these 2 steps influence each other
         int iterations = 2;
         for (int i = 0; i < iterations; i++) {
@@ -77,7 +79,7 @@ public class CrossingMinimization {
 //      handleTurningVerticesFinally(true);
 
         //do sweeping while fixing the order of ports, this also eliminates multiple crossings of the same pair of edges
-        doSweeping(false, false);
+        doSweeping(false, false, handlingDeadEnds);
         iterations = 2;
         for (int i = 0; i < iterations; i++) {
             orderPortsFinally(i % 2 == 0, true, false, true);
@@ -153,7 +155,7 @@ public class CrossingMinimization {
         updateCurrentValues();
     }
 
-    private void doSweeping(boolean handlePortPairings, boolean allowPortPermuting) {
+    private void doSweeping(boolean handlePortPairings, boolean allowPortPermuting, HandlingDeadEnds handlingDeadEnds) {
         List<List<Vertex>> lastStepNodeOrder;
         Map<Vertex, List<Port>> lastStepTopPortOrder;
         Map<Vertex, List<Port>> lastStepBottomPortOrder;
@@ -186,14 +188,16 @@ public class CrossingMinimization {
                 List<SortingNode> currentLayer = getSortingNodeLayer(rank, upwards);
                 List<SortingNode> currentLayerWithEdges = new ArrayList<>(currentLayer.size());
                 List<SortingNode> adjacentPreviousLayer = getSortingNodeLayer(rank + (upwards ? -1 : 1), !upwards);
-//                int rankNextLayer = rank + (upwards ? 1 : -1);
-//                List<SortingNode> adjacentNextLayer = rankNextLayer < 0 || maxRank <= rankNextLayer ? null :
-//                        getSortingNodeLayer(rankNextLayer, upwards);
+                int rankNextLayer = rank + (upwards ? 1 : -1);
+                List<SortingNode> adjacentNextLayer = handlingDeadEnds == HandlingDeadEnds.BY_OTHER_SIDE ?
+                        rankNextLayer<0 || maxRank <= rankNextLayer ? null : getSortingNodeLayer(rankNextLayer, upwards)
+                        : null;
 
                 Map<SortingNode, Double> barycenters = new LinkedHashMap<>();
                 List<SortingNode> deadEnds = new ArrayList<>(); //nodes without edges in the considered direction
                 List<Integer> currPositionsOfDeadEnds = new ArrayList<>();
-//                Map<SortingNode, Double> barycentersFromOtherSide = new LinkedHashMap<>(); //we use barycenters from
+                Map<SortingNode, Double> barycentersFromOtherSide = handlingDeadEnds == HandlingDeadEnds.BY_OTHER_SIDE ?
+                        new LinkedHashMap<>() : null; //we use barycenters from
                 // the wrong direction as a second criterion for nodes that don't have edges in the considered direction
                 for (int i = 0; i < currentLayer.size(); i++) {
                     SortingNode node = currentLayer.get(i);
@@ -205,43 +209,49 @@ public class CrossingMinimization {
                     } else {
                         currentLayerWithEdges.add(node);
                     }
-//                    //we don't consider the barycenter in wrong direction if it is an outer layer or if it is the
-//                    // very first top-down swipe
-//                    if (adjacentNextLayer == null || (currentIteration == 0 && directedRank <= 0)) {
-//                        //special case: if dead end in current direction and this is the last layer, we use the current
-//                        // position as barycenter
-//                        for (SortingNode deadEnd : new ArrayList<>(deadEnds)) {
-//                            barycenter = (double) currentLayer.indexOf(node) / (double) (currentLayer.size())
-//                                * (double) (adjacentPreviousLayer.size() - 1);
-//                            currentLayerWithEdges.add(deadEnds.get(0));
-//                            deadEnds.remove(0);
-//                        }
-//                    }
-//                    else {
-//                        //barycenter in wrong direction
-//                        double barycenterFromOtherSide = getBarycenter(node, adjacentNextLayer);
-//                        if (Double.isNaN(barycenterFromOtherSide)) {
-//                            //special case: if dead end in wrong direction, use current position as barycenter
-//                            barycenterFromOtherSide = (double) currentLayer.indexOf(node) / (double) (currentLayer.size())
-//                                    * (double) (adjacentNextLayer.size() - 1);
-//                        }
-//                        barycentersFromOtherSide.put(node, barycenterFromOtherSide);
-//                    }
+                    if (handlingDeadEnds == HandlingDeadEnds.BY_OTHER_SIDE) {
+                        //we don't consider the barycenter in wrong direction if it is an outer layer or if it is the
+                        // very first top-down swipe
+                        if (adjacentNextLayer == null || (currentIteration == 0 && directedRank <= 0)) {
+                            //special case: if dead end in current direction and this is the last layer, we use the current
+                            // position as barycenter
+                            for (SortingNode deadEnd : new ArrayList<>(deadEnds)) {
+                                barycenter = (double) currentLayer.indexOf(node) / (double) (currentLayer.size()) *
+                                        (double) (adjacentPreviousLayer.size() - 1);
+                                currentLayerWithEdges.add(deadEnds.get(0));
+                                deadEnds.remove(0);
+                            }
+                        } else {
+                            //barycenter in wrong direction
+                            double barycenterFromOtherSide = getBarycenter(node, adjacentNextLayer);
+                            if (Double.isNaN(barycenterFromOtherSide)) {
+                                //special case: if dead end in wrong direction, use current position as barycenter
+                                barycenterFromOtherSide =
+                                        (double) currentLayer.indexOf(node) / (double) (currentLayer.size()) *
+                                                (double) (adjacentNextLayer.size() - 1);
+                            }
+                            barycentersFromOtherSide.put(node, barycenterFromOtherSide);
+                        }
+                    }
                     barycenters.put(node, barycenter);
                 }
                 currentLayerWithEdges.sort(Comparator.comparingDouble(barycenters::get));
 
                 List<SortingNode> combinedOrder;
                 if (!deadEnds.isEmpty()) {
-                    //TODO: make them 3 variants for the experiments!
                     //best: integrateDeadEndsViaOldRelativePosition, worst: integrateDeadEndsViaBarycentersFromOtherSide
-                    combinedOrder =
-//                            integrateDeadEndsViaPseudoBarycenters(currentLayer, barycenters, deadEnds,
-//                                    currPositionsOfDeadEnds, currentLayer.size());
-                            integrateDeadEndsViaOldRelativePosition(
-                                   currentLayerWithEdges, deadEnds, currPositionsOfDeadEnds);
-//                            integrateDeadEndsViaBarycentersFromOtherSide(currentLayer, currentLayerWithEdges,
-//                                  deadEnds, barycentersFromOtherSide);
+                    if (handlingDeadEnds == HandlingDeadEnds.PSEUDO_BARYCENTERS) {
+                        combinedOrder = integrateDeadEndsViaPseudoBarycenters(currentLayer, barycenters, deadEnds,
+                                currPositionsOfDeadEnds, currentLayer.size());
+                    }
+                    else if (handlingDeadEnds == HandlingDeadEnds.PREV_RELATIVE_POSITIONS) {
+                        combinedOrder = integrateDeadEndsViaOldRelativePosition(currentLayerWithEdges, deadEnds,
+                                currPositionsOfDeadEnds);
+                    }
+                    else { //handlingDeadEnds == HandlingDeadEnds.BY_OTHER_SIDE
+                        combinedOrder = integrateDeadEndsViaBarycentersFromOtherSide(currentLayer, currentLayerWithEdges,
+                                deadEnds, barycentersFromOtherSide);
+                    }
                 } else {
                     //if there are no dead ends, just take the order computed before
                     combinedOrder = currentLayerWithEdges;

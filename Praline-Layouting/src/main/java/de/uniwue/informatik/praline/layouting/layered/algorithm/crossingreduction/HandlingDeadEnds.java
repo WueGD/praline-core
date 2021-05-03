@@ -1,28 +1,28 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction;
 
-public enum CrossingMinimizationMethod {
+public enum HandlingDeadEnds {
 
-    VERTICES {
+    PSEUDO_BARYCENTERS {
         @Override
         public String toString() {
-            return "nodes";
+            return "pseudoBCs";
         }
     },
-    MIXED {
+    PREV_RELATIVE_POSITIONS {
         @Override
         public String toString() {
-            return "mixed";
+            return "relPos";
         }
     },
-    PORTS {
+    BY_OTHER_SIDE {
         @Override
         public String toString() {
-            return "ports";
+            return "otherSide";
         }
     };
 
-    public static CrossingMinimizationMethod string2Enum(String methodName) {
-        for (CrossingMinimizationMethod method : CrossingMinimizationMethod.values()) {
+    public static HandlingDeadEnds string2Enum(String methodName) {
+        for (HandlingDeadEnds method : HandlingDeadEnds.values()) {
             if (methodName.contains(method.toString())) {
                 return method;
             }

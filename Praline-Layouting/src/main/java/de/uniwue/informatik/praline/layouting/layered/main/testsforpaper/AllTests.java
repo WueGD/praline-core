@@ -6,8 +6,11 @@ import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.utils.Serialization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.HandlingDeadEnds;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignmentMethod;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.nodeplacement.AlignmentParameters;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
 import de.uniwue.informatik.praline.layouting.layered.kieleraccess.KielerLayouter;
 import de.uniwue.informatik.praline.layouting.layered.main.util.BendsCounting;
 import de.uniwue.informatik.praline.layouting.layered.main.util.CrossingsCounting;
@@ -50,7 +53,34 @@ public class AllTests {
 
     private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 1; //5; //10; //50 //200
 
+    private static final int NUMBER_OF_FORCE_DIRECTED_ITERATIONS = 1; //10;
+
     private static final int NUMBER_OF_CROSSING_REDUCTION_ITERATIONS = 1; //3; //10; //5; //50
+
+
+
+    //the following values are taken for CROSSING_MINIMIZATION_PHASE
+
+    private static final DirectionMethod DEFAULT_DIRECTION_METHOD = DirectionMethod.FORCE;
+
+    private static final LayerAssignmentMethod DEFAULT_LAYER_ASSIGNMENT_METHOD = LayerAssignmentMethod.NETWORK_SIMPLEX;
+
+
+    //the following values are taken for DIRECTION_ASSIGNMENT_PHASE
+
+    private static final CrossingMinimizationMethod DEFAULT_CROSSING_MINIMIZATION_METHOD =
+            CrossingMinimizationMethod.PORTS;
+
+    private static final boolean DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE = true;
+
+    private static final boolean DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX = true;
+
+    private static final HandlingDeadEnds DEFAULT_HANDLING_DEAD_ENDS = HandlingDeadEnds.PREV_RELATIVE_POSITIONS;
+
+    private static final AlignmentParameters.Method DEFAULT_ALIGNMENT_METHOD = AlignmentParameters.Method.FIRST_COMES;
+
+    private static final AlignmentParameters.Preference DEFAULT_ALIGNMENT_PREFERENCE =
+            AlignmentParameters.Preference.LONG_EDGE;
 
 
 
@@ -76,15 +106,32 @@ public class AllTests {
         public static List<String> getMethods(Test test) {
             switch (test) {
                 case DIRECTION_ASSIGNMENT_PHASE:
-                    return Arrays.asList(namesArray(DirectionMethod.values()));
+                    ArrayList<String> daMethods = new ArrayList<>();
+                    for (DirectionMethod dm : DirectionMethod.values()) {
+                        for (LayerAssignmentMethod lam : LayerAssignmentMethod.values()) {
+                            //we can use LayerAssignmentMethod.FD_POSITION only if DirectionMethod.FORCE is used
+                            if (!lam.equals(LayerAssignmentMethod.FD_POSITION) || dm.equals(DirectionMethod.FORCE)) {
+                                daMethods.add(dm + "-" + lam);
+                            }
+                        }
+                    }
+                    return daMethods;
                 case CROSSING_MINIMIZATION_PHASE:
                     ArrayList<String> methods = new ArrayList<>();
-                    String[] movePortsToTurningDummies = {"-noMove", "-move"}; //{"-noMove"};
-                    String[] placeTurningDummiesCloseToVertex = {"-noPlaceTurnings", "-placeTurnings"}; //{"-noPlaceTurnings"};
+                    String[] movePortsToTurningDummies = {"noMove", "move"}; //{"-noMove"};
+                    String[] placeTurningDummiesCloseToVertex = {"noPlaceTurnings", "placeTurnings"}; //{"-noPlaceTurnings"};
                     for (CrossingMinimizationMethod cmm : CrossingMinimizationMethod.values()) {
                         for (String m : movePortsToTurningDummies) {
                             for (String ptd : placeTurningDummiesCloseToVertex) {
-                                methods.add(cmm + m + ptd);
+                                for (HandlingDeadEnds hde : HandlingDeadEnds.values()) {
+                                    for (AlignmentParameters.Method alignMethod : AlignmentParameters.Method.values()) {
+                                        for (AlignmentParameters.Preference alignPref : AlignmentParameters.Preference
+                                                .values()) {
+                                            methods.add(cmm + "-" + m + "-" + ptd + "-" + hde + "-" + alignMethod +
+                                                            "-" + alignPref);
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -220,6 +267,11 @@ public class AllTests {
         int numberVtcs = 0;
         for (int i = 0; i < noi ; i++) {
 //            SugiyamaLayouter lastSugiy = null;
+
+            //go through the methods each time in a different order s.t. the first method has no disadvantages in the
+            // running time because of time-consuming swapinng/cleaning operations by the JVM and os in the background
+            Collections.shuffle(methods, Constants.random);
+
             for (String method : methods) {
                 System.out.println("Progress: " + progress() + "/" + totalSteps);
 //                System.out.println(method);
@@ -242,26 +294,24 @@ public class AllTests {
 //                    sugiy.copyDirections(lastSugiy);
 //                }
 //                else {
-                    DirectionMethod directionMethod = DirectionMethod.FORCE; //always use force for testing crossing minimization
+                    DirectionMethod directionMethod = DEFAULT_DIRECTION_METHOD;
+                    LayerAssignmentMethod layerAssignmentMethod = DEFAULT_LAYER_ASSIGNMENT_METHOD;
                     if (currentTest.equals(Test.DIRECTION_ASSIGNMENT_PHASE)) {
-                        if (DirectionMethod.FORCE.toString().equals(method)) {
-                            directionMethod = DirectionMethod.FORCE;
-                        } else if (DirectionMethod.BFS.toString().equals(method)) {
-                            directionMethod = DirectionMethod.BFS;
-                        } else {
-                            directionMethod = DirectionMethod.RANDOM;
-                        }
+                        directionMethod = DirectionMethod.string2Enum(method);
+                        layerAssignmentMethod = LayerAssignmentMethod.string2Enum(method);
                     }
 //                    System.out.println("da_precomp: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
-                    sugiy.assignDirections(directionMethod, 1);
+                    sugiy.assignDirections(directionMethod, NUMBER_OF_FORCE_DIRECTED_ITERATIONS);
+
+//                  System.out.println("da: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
+
+                    sugiy.assignLayers(layerAssignmentMethod, directionMethod);
+
+//                    System.out.println("al: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
 //                }
 
-//                System.out.println("da: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
-
                 if (method.equals("kieler")) {
-                    KielerLayouter kielerLayouter = new KielerLayouter(sugiy); //TODO: assign layers before to have
-                    // same situation for assigning the ports to sides -- currently NETWORK_SIMPLEX is chosen in
-                    // KielerLayouter as a default (hard coded; maybe change this, too)
+                    KielerLayouter kielerLayouter = new KielerLayouter(sugiy);
 
 //                    System.out.println("kieler_init: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
                     kielerLayouter.computeLayout();
@@ -272,10 +322,6 @@ public class AllTests {
 //                    System.out.println("kieler_draw: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
                 }
                 else {
-                    sugiy.assignLayers(LayerAssignmentMethod.NETWORK_SIMPLEX, directionMethod); //TODO: move as option to top of the
-                    // class
-
-//                    System.out.println("al: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
 
 //                    sugiy.createDummyNodes();
 
@@ -285,11 +331,13 @@ public class AllTests {
                     if (currentTest.equals(Test.CROSSING_MINIMIZATION_PHASE)) {
                         sugiy.createDummyNodesAndDoCrossingMinimization(CrossingMinimizationMethod.string2Enum(method),
                                 method.contains("-move"), method.contains("-placeTurnings"),
-                                NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
+                                HandlingDeadEnds.string2Enum(method), NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
                     }
                     else {
-                        sugiy.createDummyNodesAndDoCrossingMinimization(CrossingMinimizationMethod.PORTS,
-                                NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
+                        sugiy.createDummyNodesAndDoCrossingMinimization(DEFAULT_CROSSING_MINIMIZATION_METHOD,
+                                DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE,
+                                DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX,
+                                DEFAULT_HANDLING_DEAD_ENDS, NUMBER_OF_CROSSING_REDUCTION_ITERATIONS);
                     }
 
                     //save number of dummy nodes
@@ -297,7 +345,13 @@ public class AllTests {
 
 //                    System.out.println("cm: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
 
-                    sugiy.nodePositioning();
+                    if (currentTest.equals(Test.CROSSING_MINIMIZATION_PHASE)) {
+                        sugiy.nodePositioning(AlignmentParameters.Method.string2Enum(method),
+                                AlignmentParameters.Preference.string2Enum(method));
+                    }
+                    else {
+                        sugiy.nodePositioning(DEFAULT_ALIGNMENT_METHOD, DEFAULT_ALIGNMENT_PREFERENCE);
+                    }
 
 //                    System.out.println("np: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
 

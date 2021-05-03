@@ -19,6 +19,15 @@ public enum DirectionMethod {
         public String toString() {
             return "bfs";
         }
+    };
+
+    public static DirectionMethod string2Enum(String methodName) {
+        for (DirectionMethod method : DirectionMethod.values()) {
+            if (methodName.contains(method.toString())) {
+                return method;
+            }
+        }
+        return null;
     }
 
 }
