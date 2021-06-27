@@ -64,8 +64,8 @@ public class ConnectedComponentClusterer {
             Vertex node = vertices.iterator().next();
             Set<Vertex> connectedComponent = new LinkedHashSet<>();
             computeConnectedComponentRecursively(node, connectedComponent);
-            for (Vertex n : connectedComponent) {
-                vertices.remove(n);
+            for (Vertex v : connectedComponent) {
+                vertices.remove(v);
             }
             allConnectedComponents.add(connectedComponent);
         }
@@ -83,7 +83,10 @@ public class ConnectedComponentClusterer {
             VertexGroup currentVertexGroup = node.getVertexGroup();
             while (currentVertexGroup != null) {
                 for (Vertex nodeInTheSameGroup : currentVertexGroup.getContainedVertices()) {
-                    computeConnectedComponentRecursively(nodeInTheSameGroup, connectedComponent);
+                    //only if they are in a touching pair
+                    if (PortUtils.containsTouchingPair(currentVertexGroup, node, nodeInTheSameGroup)) {
+                        computeConnectedComponentRecursively(nodeInTheSameGroup, connectedComponent);
+                    }
                 }
 
                 currentVertexGroup = currentVertexGroup.getVertexGroup();

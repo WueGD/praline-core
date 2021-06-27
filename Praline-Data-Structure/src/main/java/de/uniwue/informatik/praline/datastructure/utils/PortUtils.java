@@ -461,4 +461,21 @@ public class PortUtils {
         return true;
     }
 
+    public static boolean containsTouchingPair(VertexGroup vg, Vertex v0, Vertex v1) {
+        //check list of touching pairs
+        for (TouchingPair touchingPair : vg.getTouchingPairs()) {
+            if (touchingPair.getVertex0().equals(v0) && touchingPair.getVertex1().equals(v1) ||
+                    touchingPair.getVertex0().equals(v1) && touchingPair.getVertex1().equals(v0)) {
+                return true;
+            }
+        }
+        //check recursively contained groups
+        for (VertexGroup containedVertexGroup : vg.getContainedVertexGroups()) {
+            if (containsTouchingPair(containedVertexGroup, v0, v1)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
