@@ -67,6 +67,7 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/example-very-small/praline-pseudo-plan-0e59d04df679e020.json";
 //            "Praline-Layouting/data/fabian-problemgraphen/send-johannes.json";
 //            "Praline-Layouting/data/fabian-problemgraphen/send-johannes2.json";
+//            "Praline-Layouting/data/fabian-04.05.2021/send-johannes2.json";
 
     private static final String TARGET_PATH =
             "Praline-Layouting/results/singleTest.svg";

@@ -113,7 +113,7 @@ public class NodePlacement {
         //set final x
         for (List<PortValues> portLayer : structure) {
             for (PortValues portValues : portLayer) {
-                //find 2 medians of the 4 entries and take their avarage
+                //find 2 medians of the 4 entries and take their average
                 List<Double> xValues = portValues.getXValues();
                 xValues.sort(Double::compareTo);
                 portValues.setX((xValues.get(1) + xValues.get(2)) / 2.0);
@@ -1183,8 +1183,12 @@ public class NodePlacement {
                             !nodeInTheGraph.equals(portVertex)) {
                         portIndexAtVertex = 0;
                         if (nodeInTheGraph != null) {
-                            if (!addDummyPortsForPaddingToOrders &&
-                                    (nodeInTheGraph.getShape() == null || isNanShape(nodeInTheGraph.getShape()))) {
+                            if (!addDummyPortsForPaddingToOrders
+                                    //TODO: now we foce overwriting by not checking this next condition any more
+                                    //that means pre-set width and height of vertices are ignored; bette make this an
+                                    // option later
+//                                    && (nodeInTheGraph.getShape() == null || isNanShape(nodeInTheGraph.getShape()))
+                            ) {
                                 // one node done - create Rectangle
                                 createNodeShape(layerIndex, nodeInTheGraph, xPos, yPos, portValues);
                             }
@@ -1217,8 +1221,12 @@ public class NodePlacement {
                     }
                 }
                 //for the last we may still need to create a node shape
-                if (nodeInTheGraph != null && !addDummyPortsForPaddingToOrders &&
-                            (nodeInTheGraph.getShape() == null || isNanShape(nodeInTheGraph.getShape()))) {
+                if (nodeInTheGraph != null && !addDummyPortsForPaddingToOrders
+                    //TODO: now we foce overwriting by not checking this next condition any more
+                    //that means pre-set width and height of vertices are ignored; bette make this an
+                    // option later
+//                        && (nodeInTheGraph.getShape() == null || isNanShape(nodeInTheGraph.getShape()))
+                ) {
                     createNodeShape(layerIndex, nodeInTheGraph, xPosOld, yPos, portValues);
                 }
             }
