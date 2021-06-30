@@ -44,7 +44,7 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
     private EdgeBundle edgeBundle;
     private final EdgeLabelManager labelManager;
     private String reference;
-    private final Map<String, String> properties = new HashMap<>();
+    private final Map<String, String> properties = new LinkedHashMap<>();
 
     /*==========
      * Constructors

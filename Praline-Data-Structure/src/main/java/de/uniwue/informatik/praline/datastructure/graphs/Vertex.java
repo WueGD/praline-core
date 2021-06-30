@@ -49,7 +49,7 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, Pro
     protected final LabelManager labelManager;
     protected Shape shape;
     protected String reference;
-    private final Map<String, String> properties = new HashMap<>();
+    private final Map<String, String> properties = new LinkedHashMap<>();
 
 
     /*==========

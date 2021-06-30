@@ -65,7 +65,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
     private final LabelManager labelManager;
     private Shape shape;
     private String reference;
-    private final Map<String, String> properties = new HashMap<>();
+    private final Map<String, String> properties = new LinkedHashMap<>();
 
 
     /*==========

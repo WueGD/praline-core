@@ -52,7 +52,7 @@ public class PortGroup implements PortComposition, ReferenceObject, PropertyObje
     private final List<PortComposition> portCompositions;
     private boolean ordered;
     private String reference;
-    private final Map<String, String> properties = new HashMap<>();
+    private final Map<String, String> properties = new LinkedHashMap<>();
 
 
     /*==========

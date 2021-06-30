@@ -59,7 +59,7 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
     private Shape shape;
     private boolean drawnFrame;
     private String reference;
-    private final Map<String, String> properties = new HashMap<>();
+    private final Map<String, String> properties = new LinkedHashMap<>();
 
 
     /*==========

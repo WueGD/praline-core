@@ -8,12 +8,12 @@ import de.uniwue.informatik.praline.io.output.jsforcegraph.model.JsForceGraph;
 import de.uniwue.informatik.praline.io.output.jsforcegraph.model.Link;
 import de.uniwue.informatik.praline.io.output.jsforcegraph.model.Node;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class JsForceGraphConverter
 {
-    private final Map<Vertex, Node> vertexMap = new HashMap<>();
+    private final Map<Vertex, Node> vertexMap = new LinkedHashMap<>();
     private int jsIdCounter = 1;
 
     public JsForceGraphConverter()
