@@ -1,6 +1,7 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
 import com.fasterxml.jackson.annotation.*;
+import de.uniwue.informatik.praline.datastructure.PropertyObject;
 import de.uniwue.informatik.praline.datastructure.ReferenceObject;
 import de.uniwue.informatik.praline.datastructure.labels.EdgeLabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
@@ -21,17 +22,17 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  * Their course is determined by the algorithm which sets the {@link Path}s of this edge.
  * Their course may be the unification of several {@link Path}s since we allow hyperedges,
  * but on a classical edge one should expect just one path.
- *
+ * <p>
  * The thickness may be set by the user and will then be taken as thickness for the {@link Path}s.
- *
+ * <p>
  * Several {@link Edge}s may be grouped together via {@link EdgeBundle}s.
- *
+ * <p>
  * You can add {@link Label}s to the interior of an {@link Edge}e or to the end of an {@link Edge} at any of its
  * ports. See {@link EdgeLabelManager}.
  */
-@JsonIgnoreProperties({ "edgeBundle", "thickness", "color" })
+@JsonIgnoreProperties({"edgeBundle", "thickness", "color"})
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
-public class Edge implements LabeledObject, ReferenceObject {
+public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
 
     /*==========
      * Instance variables
@@ -43,7 +44,7 @@ public class Edge implements LabeledObject, ReferenceObject {
     private EdgeBundle edgeBundle;
     private final EdgeLabelManager labelManager;
     private String reference;
-
+    private final Map<String, String> properties = new HashMap<>();
 
     /*==========
      * Constructors
@@ -135,17 +136,24 @@ public class Edge implements LabeledObject, ReferenceObject {
     }
 
     @Override
-    public String getReference()
-    {
+    public String getReference() {
         return this.reference;
     }
 
     @Override
-    public void setReference(String reference)
-    {
+    public void setReference(String reference) {
         this.reference = reference;
     }
 
+    @Override
+    public String getProperty(String key) {
+        return properties.get(key);
+    }
+
+    @Override
+    public void setProperty(String key, String value) {
+        properties.put(key, value);
+    }
 
     /*==========
      * Modifiers
@@ -179,9 +187,8 @@ public class Edge implements LabeledObject, ReferenceObject {
      * this {@link Edge} is also added to the list of {@link Edge}s of the passed {@link Port} p
      *
      * @param p
-     * @return
-     *      true if {@link Port} is added to the {@link Port}s of this {@link Edge} and false if the input parameter
-     *      is set to an {@link Port} that is already associated with this {@link Edge}.
+     * @return true if {@link Port} is added to the {@link Port}s of this {@link Edge} and false if the input parameter
+     * is set to an {@link Port} that is already associated with this {@link Edge}.
      */
     public boolean addPort(Port p) {
         if (addPortButNotEdge(p)) {

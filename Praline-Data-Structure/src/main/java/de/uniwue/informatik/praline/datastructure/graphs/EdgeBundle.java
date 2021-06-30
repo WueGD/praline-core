@@ -1,6 +1,7 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
 import com.fasterxml.jackson.annotation.*;
+import de.uniwue.informatik.praline.datastructure.PropertyObject;
 import de.uniwue.informatik.praline.datastructure.ReferenceObject;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
@@ -25,7 +26,7 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  */
 @JsonIgnoreProperties({ "allRecursivelyContainedEdges", "allRecursivelyContainedEdgeBundles", "edgeBundle" })
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
-public class EdgeBundle implements LabeledObject, ReferenceObject {
+public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObject {
 
     /*==========
      * Instance variables
@@ -36,6 +37,7 @@ public class EdgeBundle implements LabeledObject, ReferenceObject {
     private EdgeBundle edgeBundle;
     private final LabelManager labelManager;
     private String reference;
+    private final Map<String, String> properties = new HashMap<>();
 
 
     /*==========
@@ -164,6 +166,15 @@ public class EdgeBundle implements LabeledObject, ReferenceObject {
         this.reference = reference;
     }
 
+    @Override
+    public String getProperty(String key) {
+        return properties.get(key);
+    }
+
+    @Override
+    public void setProperty(String key, String value) {
+        properties.put(key, value);
+    }
 
     /*==========
      * Modifiers

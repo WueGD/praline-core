@@ -1,6 +1,7 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
 import com.fasterxml.jackson.annotation.*;
+import de.uniwue.informatik.praline.datastructure.PropertyObject;
 import de.uniwue.informatik.praline.datastructure.ReferenceObject;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
@@ -43,7 +44,7 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  */
 @JsonIgnoreProperties({ "vertex", "portGroup", "edges" })
 @JsonPropertyOrder({ "shape", "labelManager" })
-public class Port implements PortComposition, ShapedObject, LabeledObject, ReferenceObject {
+public class Port implements PortComposition, ShapedObject, LabeledObject, ReferenceObject, PropertyObject {
 
     /*==========
      * Default values
@@ -64,6 +65,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
     private final LabelManager labelManager;
     private Shape shape;
     private String reference;
+    private final Map<String, String> properties = new HashMap<>();
 
 
     /*==========
@@ -166,6 +168,16 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
     public void setReference(String reference)
     {
         this.reference = reference;
+    }
+
+    @Override
+    public String getProperty(String key) {
+        return properties.get(key);
+    }
+
+    @Override
+    public void setProperty(String key, String value) {
+        properties.put(key, value);
     }
 
     public Orientation getOrientationAtVertex() {

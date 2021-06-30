@@ -3,6 +3,7 @@ package de.uniwue.informatik.praline.datastructure.graphs;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import de.uniwue.informatik.praline.datastructure.PropertyObject;
 import de.uniwue.informatik.praline.datastructure.ReferenceObject;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
@@ -34,7 +35,7 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  * They are also not {@link de.uniwue.informatik.praline.datastructure.labels.LabeledObject}s.
  */
 @JsonPropertyOrder({ "ordered", "portCompositions" })
-public class PortGroup implements PortComposition, ReferenceObject {
+public class PortGroup implements PortComposition, ReferenceObject, PropertyObject {
 
     /*==========
      * Default values
@@ -51,6 +52,7 @@ public class PortGroup implements PortComposition, ReferenceObject {
     private final List<PortComposition> portCompositions;
     private boolean ordered;
     private String reference;
+    private final Map<String, String> properties = new HashMap<>();
 
 
     /*==========
@@ -113,6 +115,16 @@ public class PortGroup implements PortComposition, ReferenceObject {
     public void setReference(String reference)
     {
         this.reference = reference;
+    }
+
+    @Override
+    public String getProperty(String key) {
+        return properties.get(key);
+    }
+
+    @Override
+    public void setProperty(String key, String value) {
+        properties.put(key, value);
     }
 
     @Override
