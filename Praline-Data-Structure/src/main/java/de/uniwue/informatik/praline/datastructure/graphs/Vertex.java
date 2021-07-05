@@ -20,19 +20,20 @@ import java.util.*;
  * Such a port can be set to size zero, which gives the effect as if there were no {@link Port}s.
  * Via a {@link PortGroup} several {@link Port}s and {@link PortGroup}s can be grouped together.
  * Note that the {@link PortGroup}s should build a tree-structure (and not something more complicated).
- *
+ * <p>
  * A {@link Vertex} can be labeled.
  * In particular, if you want to assign a name or an ID to a {@link Vertex} you should use a
  * {@link de.uniwue.informatik.praline.datastructure.labels.TextLabel} attached to this {@link Vertex} and make it
  * the main label of this {@link Vertex}.
- *
+ * <p>
  * A {@link Vertex} should have a {@link Shape} in the end -- typically a
  * {@link de.uniwue.informatik.praline.datastructure.shapes.Rectangle}.
  * The idea is that a layouting algorithm will take a {@link Graph} and will set the coordinates and sizes of this
  * {@link Shape}, so there is no need to set this in the forehand.
  */
-@JsonIgnoreProperties({ "ports", "vertexGroup", "containedPortCompositionsAndAllPorts" })
-@JsonPropertyOrder({ "shape", "labelManager", "portCompositions" })
+@JsonIgnoreProperties({"ports", "vertexGroup", "containedPortCompositionsAndAllPorts"})
+@JsonPropertyOrder({"shape", "labelManager", "portCompositions", "properties"})
+//@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, PropertyObject {
 
@@ -49,7 +50,7 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, Pro
     protected final LabelManager labelManager;
     protected Shape shape;
     protected String reference;
-    private final Map<String, String> properties = new LinkedHashMap<>();
+    private final Map<String, String> properties;
 
 
     /*==========
@@ -57,11 +58,11 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, Pro
      *==========*/
 
     public Vertex() {
-        this(null, null, null, null);
+        this(null, null, null, null, null);
     }
 
     public Vertex(Collection<PortComposition> portCompositions) {
-        this(portCompositions, null, null, null);
+        this(portCompositions, null, null, null, null);
     }
 
     public Vertex(Collection<PortComposition> portCompositions, Shape shape) {
@@ -76,26 +77,34 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, Pro
         this(portCompositions, labels, null, shape);
     }
 
+    public Vertex(Collection<PortComposition> portCompositions, Collection<Label> labels, Label mainLabel,
+                  Shape shape) {
+        this(portCompositions, labels, mainLabel, shape, null);
+    }
+
+
     @JsonCreator
     private Vertex(
             @JsonProperty("portCompositions") final Collection<PortComposition> portCompositions,
             @JsonProperty("labelManager") final LabelManager labelManager,
-            @JsonProperty("shape") final Shape shape
+            @JsonProperty("shape") final Shape shape,
+            @JsonProperty("properties") final Map<String, String> properties
+
     ) {
-        this(portCompositions, labelManager.getLabels(), labelManager.getMainLabel(), shape);
+        this(portCompositions, labelManager.getLabels(), labelManager.getMainLabel(), shape, properties);
     }
 
     /**
      * leave value as null if it should be empty initially (e.g. no labels)
      *
-     * @param portCompositions
-     *      It suffices to only have the top-level {@link PortGroup}s and {@link Port}s in this {@link Collection}
+     * @param portCompositions It suffices to only have the top-level {@link PortGroup}s and {@link Port}s in this {@link Collection}
      * @param labels
      * @param mainLabel
      * @param shape
+     * @param properties
      */
     public Vertex(Collection<PortComposition> portCompositions, Collection<Label> labels, Label mainLabel,
-                  Shape shape) {
+                  Shape shape, Map<String, String> properties) {
         this.ports = new LinkedHashSet<>();
         this.portCompositions = new ArrayList<>();
         if (portCompositions != null) {
@@ -116,7 +125,12 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, Pro
         }
         this.labelManager = new LabelManager(this, labels, mainLabel);
         this.shape = shape;
+        this.properties = new LinkedHashMap<>();
+        if (properties != null) {
+            this.properties.putAll(properties);
+        }
     }
+
 
 
     /*==========
@@ -155,14 +169,12 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, Pro
     }
 
     @Override
-    public String getReference()
-    {
+    public String getReference() {
         return this.reference;
     }
 
     @Override
-    public void setReference(String reference)
-    {
+    public void setReference(String reference) {
         this.reference = reference;
     }
 
@@ -176,6 +188,10 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, Pro
         properties.put(key, value);
     }
 
+    @Override
+    public Map<String, String> getProperties() {
+        return Collections.unmodifiableMap(properties);
+    }
 
     /*==========
      * Modifiers
@@ -205,8 +221,7 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, Pro
         //but first remove it as direct child of a port group of a vertex if it was there before
         if (pc.getPortGroup() != null) {
             pc.getPortGroup().removePortComposition(pc);
-        }
-        else if (pc.getVertex() != null) {
+        } else if (pc.getVertex() != null) {
             pc.getVertex().removePortComposition(pc);
         }
 
@@ -220,13 +235,10 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, Pro
     }
 
     /**
-     *
-     * @param pc
-     *      the passed {@link PortComposition} does not need to be on the top level -- it can also be contained
-     *      somewhere in the hierarchy tree of {@link PortGroup}s of this {@link Vertex}.
-     * @return
-     *      if false is returned there is no such {@link PortComposition} or something else went wrong (e. g. failed
-     *      by removing {@link Port}s contained in the passed {@link PortComposition})
+     * @param pc the passed {@link PortComposition} does not need to be on the top level -- it can also be contained
+     *           somewhere in the hierarchy tree of {@link PortGroup}s of this {@link Vertex}.
+     * @return if false is returned there is no such {@link PortComposition} or something else went wrong (e. g. failed
+     * by removing {@link Port}s contained in the passed {@link PortComposition})
      */
     public boolean removePortComposition(PortComposition pc) {
         boolean success = false;
@@ -256,7 +268,7 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, Pro
             }
         }
 
-        return  success;
+        return success;
     }
 
 
@@ -328,7 +340,7 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, Pro
     }
 
     private static void assignPortCompositionRecursivelyToVertex(PortComposition topLevelPortComposition,
-                                                                    Vertex vertex) {
+                                                                 Vertex vertex) {
         topLevelPortComposition.setVertex(vertex);
         if (topLevelPortComposition instanceof PortGroup) {
             for (PortComposition childPortComposition : ((PortGroup) topLevelPortComposition).getPortCompositions()) {

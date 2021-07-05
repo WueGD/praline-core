@@ -16,15 +16,15 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  * Via an {@link EdgeBundle} you may group {@link Edge}s and further {@link EdgeBundle}s together.
  * {@link EdgeBundle}s should build a tree-structure (and not something more complicated).
  * In typical applications they may represent bundles of wires or cables.
- *
+ * <p>
  * {@link EdgeBundle}s do not have an own course via {@link de.uniwue.informatik.praline.datastructure.paths.Path}s,
  * but a layouting algorithm should place the {@link de.uniwue.informatik.praline.datastructure.paths.Path}s of all
  * {@link Edge}s of an {@link EdgeBundle} close together to obtain the effect of a bundled set of edges.
- *
+ * <p>
  * An {@link EdgeBundle} may have labels, but just for the whole thing -- for placing {@link Label}s close to
  * {@link Port}s use the labeling of its contained {@link Edge}s.
  */
-@JsonIgnoreProperties({ "allRecursivelyContainedEdges", "allRecursivelyContainedEdgeBundles", "edgeBundle" })
+@JsonIgnoreProperties({"allRecursivelyContainedEdges", "allRecursivelyContainedEdgeBundles", "edgeBundle"})
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObject {
 
@@ -37,7 +37,7 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
     private EdgeBundle edgeBundle;
     private final LabelManager labelManager;
     private String reference;
-    private final Map<String, String> properties = new LinkedHashMap<>();
+    private final Map<String, String> properties;
 
 
     /*==========
@@ -45,15 +45,15 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
      *==========*/
 
     public EdgeBundle() {
-        this(null, null, null, null);
+        this(null, null, null, null, null);
     }
 
     public EdgeBundle(Collection<Edge> containedEdges) {
-        this(containedEdges, null, null, null);
+        this(containedEdges, null, null, null, null);
     }
 
     public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles) {
-        this(containedEdges, containedEdgeBundles, null, null);
+        this(containedEdges, containedEdgeBundles, null, null, null);
     }
 
     public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles,
@@ -61,17 +61,23 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
         this(containedEdges, containedEdgeBundles, labels, null);
     }
 
+    public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles,
+                      Collection<Label> labels, Label mainlabel) {
+        this(containedEdges, containedEdgeBundles, labels, mainlabel, null);
+    }
+
     @JsonCreator
     private EdgeBundle(
             @JsonProperty("containedEdges") final Collection<Edge> containedEdges,
             @JsonProperty("containedEdgeBundles") final Collection<EdgeBundle> containedEdgeBundles,
-            @JsonProperty("labelManager") final LabelManager labelManager
+            @JsonProperty("labelManager") final LabelManager labelManager,
+            @JsonProperty("properties") final Map<String, String> properties
     ) {
-        this(containedEdges, containedEdgeBundles, labelManager.getLabels(), labelManager.getMainLabel());
+        this(containedEdges, containedEdgeBundles, labelManager.getLabels(), labelManager.getMainLabel(), properties);
     }
 
     public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles,
-                      Collection<Label> labels, Label mainlabel) {
+                      Collection<Label> labels, Label mainlabel, Map<String, String> properties) {
         this.containedEdges = newArrayListNullSafe(containedEdges);
         for (Edge e : this.containedEdges) {
             e.setEdgeBundle(this);
@@ -81,6 +87,10 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
             eb.setEdgeBundle(this);
         }
         this.labelManager = new LabelManager(this, labels, mainlabel);
+        this.properties = new LinkedHashMap<>();
+        if (properties != null) {
+            this.properties.putAll(properties);
+        }
     }
 
 
@@ -91,9 +101,8 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
     /**
      * Differs from {@link EdgeBundle#getAllRecursivelyContainedEdges()}
      *
-     * @return
-     *      {@link Edge}es contained directly in this {@link EdgeBundle}. Note that {@link Edge}s contained in an
-     *      {@link EdgeBundle} of this {@link EdgeBundle} are not returned
+     * @return {@link Edge}es contained directly in this {@link EdgeBundle}. Note that {@link Edge}s contained in an
+     * {@link EdgeBundle} of this {@link EdgeBundle} are not returned
      */
     public List<Edge> getContainedEdges() {
         return Collections.unmodifiableList(containedEdges);
@@ -102,9 +111,8 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
     /**
      * Differs from {@link EdgeBundle#getContainedEdges()}
      *
-     * @return
-     *      {@link Edge}es contained directly in this {@link EdgeBundle} and contained in any {@link EdgeBundle}
-     *      contained in this {@link EdgeBundle} or even deeper (with arbitrary depth)
+     * @return {@link Edge}es contained directly in this {@link EdgeBundle} and contained in any {@link EdgeBundle}
+     * contained in this {@link EdgeBundle} or even deeper (with arbitrary depth)
      */
     public List<Edge> getAllRecursivelyContainedEdges() {
         List<Edge> allEdges = new ArrayList<>(containedEdges);
@@ -117,9 +125,8 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
     /**
      * Differs from {@link EdgeBundle#getAllRecursivelyContainedEdgeBundles()}
      *
-     * @return
-     *      {@link EdgeBundle}es contained directly in this {@link EdgeBundle}. Note that {@link EdgeBundle}s
-     *      contained in an {@link EdgeBundle} of this {@link EdgeBundle} are not returned
+     * @return {@link EdgeBundle}es contained directly in this {@link EdgeBundle}. Note that {@link EdgeBundle}s
+     * contained in an {@link EdgeBundle} of this {@link EdgeBundle} are not returned
      */
     public List<EdgeBundle> getContainedEdgeBundles() {
         return Collections.unmodifiableList(containedEdgeBundles);
@@ -128,9 +135,8 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
     /**
      * Differs from {@link EdgeBundle#getContainedEdgeBundles()}
      *
-     * @return
-     *      {@link EdgeBundle}es contained directly in this {@link EdgeBundle} and contained in any {@link EdgeBundle}
-     *      contained in this {@link EdgeBundle} or even deeper (with arbitrary depth)
+     * @return {@link EdgeBundle}es contained directly in this {@link EdgeBundle} and contained in any {@link EdgeBundle}
+     * contained in this {@link EdgeBundle} or even deeper (with arbitrary depth)
      */
     public List<EdgeBundle> getAllRecursivelyContainedEdgeBundles() {
         List<EdgeBundle> allEdgeBundles = new ArrayList<>();
@@ -155,14 +161,12 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
     }
 
     @Override
-    public String getReference()
-    {
+    public String getReference() {
         return this.reference;
     }
 
     @Override
-    public void setReference(String reference)
-    {
+    public void setReference(String reference) {
         this.reference = reference;
     }
 
@@ -176,6 +180,10 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
         properties.put(key, value);
     }
 
+    @Override
+    public Map<String, String> getProperties() {
+        return Collections.unmodifiableMap(properties);
+    }
     /*==========
      * Modifiers
      *==========*/
@@ -201,10 +209,8 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
      * Removes an {@link Edge} from this {@link EdgeBundle} or from some recursively contained
      * {@link EdgeBundle}
      *
-     * @param e
-     *      to be removed from this {@link EdgeBundle}
-     * @return
-     *      success
+     * @param e to be removed from this {@link EdgeBundle}
+     * @return success
      */
     public boolean removeEdge(Edge e) {
         boolean success = containedEdges.remove(e);
@@ -233,10 +239,8 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
      * Removes an {@link EdgeBundle} from this {@link EdgeBundle} or from some recursively contained
      * {@link EdgeBundle}
      *
-     * @param eb
-     *      to be removed from this {@link EdgeBundle}
-     * @return
-     *      success
+     * @param eb to be removed from this {@link EdgeBundle}
+     * @return success
      */
     public boolean removeEdgeBundle(EdgeBundle eb) {
         boolean success = containedEdgeBundles.remove(eb);
@@ -273,7 +277,7 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
         EdgeBundle that = (EdgeBundle) o;
         return EqualLabeling.equalLabelingLists(new ArrayList<>(containedEdges),
                 new ArrayList<>(that.containedEdges)) && EqualLabeling.equalLabelingLists(
-                        new ArrayList<>(containedEdgeBundles), new ArrayList<>(that.containedEdgeBundles)) &&
+                new ArrayList<>(containedEdgeBundles), new ArrayList<>(that.containedEdgeBundles)) &&
                 labelManager.equalLabeling(that.labelManager) && Objects.equals(reference, that.reference);
     }
 }

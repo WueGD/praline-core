@@ -1,6 +1,9 @@
 package de.uniwue.informatik.praline.datastructure.graphs;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.uniwue.informatik.praline.datastructure.PropertyObject;
 import de.uniwue.informatik.praline.datastructure.ReferenceObject;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
@@ -22,19 +25,19 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  * A {@link Vertex} is never directly connected to an {@link Edge} but only via {@link Port}s.
  * Typically there is one {@link Edge} per {@link Port}, but you may have arbitrarily many {@link Edge}s per
  * {@link Port} and you can also have {@link Port}s without {@link Edge}s.
- *
+ * <p>
  * You may wish to have a set of {@link Port}s of a {@link Vertex} next to each other.
  * You can do this by using a {@link PortGroup} containing these {@link Port}s; see there for more.
- *
+ * <p>
  * You may wish to have a coupling between two {@link Port}s of the same {@link Vertex} or of different vertices in the
  * way that they appear on the same vertical or horizontal line.
  * This can be done by using {@link PortPairing}s, which are stored in {@link VertexGroup}s.
- *
+ * <p>
  * A {@link Port} can be labeled.
  * In particular, if you want to assign a name or an ID to a {@link Port} you should use a
  * {@link de.uniwue.informatik.praline.datastructure.labels.TextLabel} attached to this {@link Port} and make it
  * the main label of this {@link Port}.
- *
+ * <p>
  * A {@link Port} should have a {@link Shape} in the end -- typically a
  * {@link de.uniwue.informatik.praline.datastructure.shapes.Rectangle}.
  * The idea is that a layouting algorithm will take a {@link Graph} and will set the coordinates and sizes of this
@@ -42,8 +45,8 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  * If this {@link Port} should not be visible (later a viewer should get the impression that an {@link Edge} / the
  * {@link Edge}s are directly accessing the {@link Vertex}), then use a {@link Shape} of size 0 for this port.
  */
-@JsonIgnoreProperties({ "vertex", "portGroup", "edges" })
-@JsonPropertyOrder({ "shape", "labelManager" })
+@JsonIgnoreProperties({"vertex", "portGroup", "edges"})
+@JsonPropertyOrder({"shape", "labelManager", "properties"})
 public class Port implements PortComposition, ShapedObject, LabeledObject, ReferenceObject, PropertyObject {
 
     /*==========
@@ -65,7 +68,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
     private final LabelManager labelManager;
     private Shape shape;
     private String reference;
-    private final Map<String, String> properties = new LinkedHashMap<>();
+    private final Map<String, String> properties;
 
 
     /*==========
@@ -92,15 +95,20 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
         this(edges, labels, null, shape);
     }
 
+    public Port(Collection<Edge> edges, Collection<Label> labels, Label mainLabel, Shape shape) {
+        this(edges, labels, mainLabel, shape, null);
+    }
+
     @JsonCreator
     private Port(
             @JsonProperty("labelManager") final LabelManager labelManager,
-            @JsonProperty("shape") final Shape shape
+            @JsonProperty("shape") final Shape shape,
+            @JsonProperty("properties") final Map<String, String> properties
     ) {
-        this(null, labelManager.getLabels(), labelManager.getMainLabel(), shape);
+        this(null, labelManager.getLabels(), labelManager.getMainLabel(), shape, properties);
     }
 
-    public Port(Collection<Edge> edges, Collection<Label> labels, Label mainLabel, Shape shape) {
+    public Port(Collection<Edge> edges, Collection<Label> labels, Label mainLabel, Shape shape, Map<String, String> properties) {
         this.edges = newArrayListNullSafe(edges);
         for (Edge edge : this.edges) {
             edge.addPortButNotEdge(this);
@@ -108,9 +116,12 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
         this.labelManager = new LabelManager(this, labels, mainLabel);
         if (shape == null) {
             this.shape = DEFAULT_SHAPE_TO_BE_CLONED.clone();
-        }
-        else {
+        } else {
             this.shape = shape;
+        }
+        this.properties = new LinkedHashMap<>();
+        if (properties != null) {
+            this.properties.putAll(properties);
         }
     }
 
@@ -159,20 +170,23 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
     }
 
     @Override
-    public String getReference()
-    {
+    public String getReference() {
         return this.reference;
     }
 
     @Override
-    public void setReference(String reference)
-    {
+    public void setReference(String reference) {
         this.reference = reference;
     }
 
     @Override
     public String getProperty(String key) {
         return properties.get(key);
+    }
+
+    @Override
+    public Map<String, String> getProperties() {
+        return Collections.unmodifiableMap(properties);
     }
 
     @Override
@@ -196,9 +210,8 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
      * this {@link Port} is also added to the list of {@link Port}s of the passed {@link Edge} e
      *
      * @param e
-     * @return
-     *      true if {@link Edge} is added to the {@link Edge}s of this {@link Port} and false if the input parameter
-     *      is set to an {@link Edge} that is already associated with this {@link Port}.
+     * @return true if {@link Edge} is added to the {@link Edge}s of this {@link Port} and false if the input parameter
+     * is set to an {@link Edge} that is already associated with this {@link Port}.
      */
     public boolean addEdge(Edge e) {
         if (addEdgeButNotPort(e)) {
@@ -234,6 +247,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
         }
         return false;
     }
+
     protected boolean removeEdgeButNotPort(Edge e) {
         return edges.remove(e);
     }
