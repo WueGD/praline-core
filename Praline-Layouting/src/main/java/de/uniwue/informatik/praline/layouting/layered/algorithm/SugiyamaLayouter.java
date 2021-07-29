@@ -1,6 +1,7 @@
 package de.uniwue.informatik.praline.layouting.layered.algorithm;
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
+import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.io.output.svg.SVGDrawer;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
@@ -76,6 +77,8 @@ public class SugiyamaLayouter implements PralineLayouter {
     private List<PortGroup> dummyPortGroupsForEdgeBundles;
     private Map<EdgeBundle, Collection<Edge>> originalEdgeBundles;
     private Map<PortPairing, PortPairing> replacedPortPairings;
+    private Map<Vertex, Double> preSetWidth;
+    private Map<Vertex, Double> preSetHeight;
 
     //additional structures
 
@@ -176,6 +179,23 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public void construct() {
         if (isSingleComponent) {
+            //register pre-set node sizes
+            for (Vertex vertex : graph.getVertices()) {
+                Shape shape = vertex.getShape();
+                if (shape != null) {
+                    if (shape instanceof Rectangle2D) {
+                        double width = ((Rectangle2D) shape).getWidth();
+                        if (Double.isFinite(width)) {
+                            preSetWidth.put(vertex, width);
+                        }
+                        double height = ((Rectangle2D) shape).getHeight();
+                        if (Double.isFinite(height)) {
+                            preSetHeight.put(vertex, height);
+                        }
+                    }
+                }
+            }
+            //do preprocessing
             GraphPreprocessor graphPreprocessor = new GraphPreprocessor(this);
             graphPreprocessor.construct();
         }
@@ -466,6 +486,8 @@ public class SugiyamaLayouter implements PralineLayouter {
         edgeToEnd = new LinkedHashMap<>();
         nodeToOutgoingEdges = new LinkedHashMap<>();
         nodeToIncomingEdges = new LinkedHashMap<>();
+        preSetWidth = new LinkedHashMap<>();
+        preSetHeight = new LinkedHashMap<>();
     }
 
     // other steps //
@@ -886,14 +908,16 @@ public class SugiyamaLayouter implements PralineLayouter {
                 return 0;
             }
             if (isPlug(node) || vertexGroups.containsKey(node)) {
-                double minWidth = Double.POSITIVE_INFINITY;
+                double maxWidth = 0;
                 VertexGroup vertexGroup = isPlug(node) ? plugs.get(node) : vertexGroups.get(node);
                 for (Vertex originalVertex : vertexGroup.getAllRecursivelyContainedVertices()) {
-                    minWidth = Math.min(minWidth, drawInfo.computeMinVertexWidth(originalVertex));
+                    maxWidth = Math.max(maxWidth,
+                            Math.max(preSetWidth.getOrDefault(originalVertex, 0d),
+                                    drawInfo.computeMinVertexWidth(originalVertex)));
                 }
-                return minWidth;
+                return maxWidth;
             }
-            return drawInfo.computeMinVertexWidth(node);
+            return Math.max(preSetWidth.getOrDefault(node, 0d), drawInfo.computeMinVertexWidth(node));
         }
         else {
             for (SugiyamaLayouter componentLayouter : componentLayouters) {
@@ -905,7 +929,35 @@ public class SugiyamaLayouter implements PralineLayouter {
         }
     }
 
-    public double getWidthForPort(Port port) {
+    public double getMinHeightForNode(Vertex node) {
+        if (isSingleComponent) {
+            if (isDummy(node)) {
+                return 0;
+            }
+            if (isPlug(node) || vertexGroups.containsKey(node)) {
+                double maxHeight = 0;
+                VertexGroup vertexGroup = isPlug(node) ? plugs.get(node) : vertexGroups.get(node);
+                for (Vertex originalVertex : vertexGroup.getAllRecursivelyContainedVertices()) {
+                    maxHeight = Math.max(maxHeight,
+                            Math.max(preSetHeight.getOrDefault(originalVertex, 0d),
+                                    drawInfo.computeMinVertexHeight(originalVertex)));
+                }
+                return maxHeight;
+            }
+            return Math.max(preSetHeight.getOrDefault(node, 0d), drawInfo.computeMinVertexHeight(node));
+        }
+        else {
+            for (SugiyamaLayouter componentLayouter : componentLayouters) {
+                if (componentLayouter.getGraph().getVertices().contains(node)) {
+                    return componentLayouter.getMinWidthForNode(node);
+                }
+            }
+            return -1;
+        }
+    }
+
+
+        public double getWidthForPort(Port port) {
         if (isSingleComponent) {
             //first find original port
             Port originalPort = port;

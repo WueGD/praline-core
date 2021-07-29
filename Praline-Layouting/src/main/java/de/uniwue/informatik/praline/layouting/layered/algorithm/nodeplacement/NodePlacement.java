@@ -24,7 +24,6 @@ public class NodePlacement {
     private SortingOrder sortingOrder;
     private List<Double> heightOfLayers;
     private Vertex dummyVertex;
-    private double layerHeight;
     private Map<Vertex, Set<Port>> dummyPorts;
     private Map<Port, Vertex> dummyPort2unionNode;
     private List<Edge> dummyEdges;
@@ -148,14 +147,14 @@ public class NodePlacement {
     }
 
     public void initializeStructure() {
-        layerHeight = drawInfo.getVertexHeight();
         int layer = -1;
         for (List<Vertex> rankNodes : sortingOrder.getNodeOrder()) {
             ++layer;
 
             heightOfLayers.add(0.0);
             for (Vertex node : rankNodes) {
-                heightOfLayers.set(layer, Math.max(heightOfLayers.get(layer), sugy.isDummy(node) ? 0.0 : 1.0));
+                heightOfLayers.set(layer, Math.max(heightOfLayers.get(layer), sugy.isDummy(node) ? 0.0 :
+                        sugy.getMinHeightForNode(node)));
             }
             List<PortValues> rankBottomPorts = new ArrayList<>();
             List<PortValues> rankTopPorts = new ArrayList<>();
@@ -1184,9 +1183,10 @@ public class NodePlacement {
                         portIndexAtVertex = 0;
                         if (nodeInTheGraph != null) {
                             if (!addDummyPortsForPaddingToOrders
-                                    //TODO: now we foce overwriting by not checking this next condition any more
-                                    //that means pre-set width and height of vertices are ignored; bette make this an
-                                    // option later
+                                    // now we foce overwriting by not checking this next condition any more
+                                    // but this should be ok because we have previously in dummyPortsForWidth()
+                                    // used the pre-set width as a minimum width (which was maybe achieved by
+                                    // inserting dummy ports
 //                                    && (nodeInTheGraph.getShape() == null || isNanShape(nodeInTheGraph.getShape()))
                             ) {
                                 // one node done - create Rectangle
@@ -1215,6 +1215,9 @@ public class NodePlacement {
                         }
                     }
                     if (!portVertex.equals(dummyVertex)) {
+
+                        //TODO: port placement s.t. the port starts immediately at the node
+
                         createPortShape(currentY, portValues, layerIndex % 2 == 0, nodeInTheGraph, portIndexAtVertex,
                                 addDummyPortsForPaddingToOrders);
                         ++portIndexAtVertex;
@@ -1222,9 +1225,10 @@ public class NodePlacement {
                 }
                 //for the last we may still need to create a node shape
                 if (nodeInTheGraph != null && !addDummyPortsForPaddingToOrders
-                    //TODO: now we foce overwriting by not checking this next condition any more
-                    //that means pre-set width and height of vertices are ignored; bette make this an
-                    // option later
+                    // now we foce overwriting by not checking this next condition any more
+                    // but this should be ok because we have previously in dummyPortsForWidth()
+                    // used the pre-set width as a minimum width (which was maybe achieved by
+                    // inserting dummy ports
 //                        && (nodeInTheGraph.getShape() == null || isNanShape(nodeInTheGraph.getShape()))
                 ) {
                     createNodeShape(layerIndex, nodeInTheGraph, xPosOld, yPos, portValues);
@@ -1232,7 +1236,7 @@ public class NodePlacement {
             }
 
             if (layerIndex % 2 == 0) {
-                currentY += heightOfLayers.get(layerIndex / 2) * layerHeight +
+                currentY += heightOfLayers.get(layerIndex / 2) +
                         Math.min(1.0, heightOfLayers.get(layerIndex / 2)) * 2.0 * drawInfo.getBorderWidth();
             } else {
                 currentY += ((2 * drawInfo.getPortHeight()) + drawInfo.getDistanceBetweenLayers());
@@ -1253,15 +1257,18 @@ public class NodePlacement {
     private void createNodeShape(int layerIndex, Vertex nodeInTheGraph, double xPos, double yPos,
                                  PortValues portValues) {
         double width = portValues.getX() - (portValues.getWidth() + delta) / 2.0 - xPos;
-        double height = heightOfLayers.get(layerIndex / 2) * layerHeight +
+        double maxHeightOnLayer = heightOfLayers.get(layerIndex / 2) +
                 Math.min(1.0, heightOfLayers.get(layerIndex / 2)) * 2.0 * drawInfo.getBorderWidth();
+        double height = sugy.getMinHeightForNode(nodeInTheGraph) +
+                Math.min(1.0, heightOfLayers.get(layerIndex / 2)) * 2.0 * drawInfo.getBorderWidth();
+        double diffToMaxHeight = maxHeightOnLayer - height;
         Rectangle nodeShape = (Rectangle) nodeInTheGraph.getShape();
         if (nodeShape == null) {
             nodeShape = new Rectangle();
             nodeInTheGraph.setShape(nodeShape);
         }
         nodeShape.x = xPos;
-        nodeShape.y = yPos;
+        nodeShape.y = yPos + diffToMaxHeight * 0.5; //height offset if we are not as high as the maximum
         nodeShape.width = width;
         nodeShape.height = height;
     }

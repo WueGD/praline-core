@@ -362,9 +362,11 @@ public class DrawingPreparation {
     public void restoreOriginalElements(boolean disableShifting) {
         this.diableShifting = disableShifting;
 
+
+
         //<shifting involved>
 
-        // The first two blocks involve shifting. For them we need a clear structure with edges going only between
+        // The first blocks involve shifting. For them we need a clear structure with edges going only between
         // neighboring layers. Hence they have to occur first before we replace dummy edges, unify their paths and
         // remove several types of dummy vertices contained in edges
 
@@ -384,12 +386,18 @@ public class DrawingPreparation {
         }
 
 
+        //move ports towards vertices
+        //so far for vertices having a smaller height than the maximum vertex height on their layer, we draw them
+        // with a gap (i.e. their ports assume their vertices have the maximum height on the layer)
+        // now we move the ports inwards to close that gap
+        movePortsTowardsTheirVertices();
+
+
         //do extra shifts at nodes with ports with multiple edges, to redraw them -> they should go as skewed edges
         // to that port
         makeSpaceForSkewEdgesAtPortsWithMultipleEdges();
 
         //</shifting involved>
-
 
         //replace dummy edges
         boolean hasChanged = true;
@@ -462,6 +470,30 @@ public class DrawingPreparation {
         //restore ports of devices that have nothing but a port pairing to a port of another vertex
         for (VertexGroup vertexGroup : sugy.getGraph().getVertexGroups()) {
             restorePortPairingsOfDeviceVertices(vertexGroup);
+        }
+    }
+
+    private void movePortsTowardsTheirVertices() {
+        //if there is a gap between vertex and port, we move the port and its incident edge
+        for (Vertex node : sugy.getGraph().getVertices()) {
+            double yPosBottom = node.getShape().getYPosition();
+            double yPosTop = yPosBottom + node.getShape().getBoundingBox().getHeight();
+            for (Port port : sortingOrder.getBottomPortOrder().get(node)) {
+                Rectangle portShape = (Rectangle) port.getShape();
+                double targetYPos = yPosBottom - portShape.getHeight();
+                if (portShape.getYPosition() != targetYPos) {
+                    double shiftValue = (yPosBottom - portShape.getHeight()) - portShape.getYPosition();
+                    shiftPort(port, shiftValue);
+                }
+            }
+            for (Port port : sortingOrder.getTopPortOrder().get(node)) {
+                Rectangle portShape = (Rectangle) port.getShape();
+                double targetYPos = yPosTop;
+                if (portShape.getYPosition() != targetYPos) {
+                    double shiftValue = yPosTop - portShape.getYPosition();
+                    shiftPort(port, shiftValue);
+                }
+            }
         }
     }
 
@@ -637,6 +669,10 @@ public class DrawingPreparation {
         //find for each original vertex to which side of the unification vertex it has ports to the outside
         //-1: bottom side, 0: device vertex (whole length + can be both or in the middle) or undefined, 1: top side
         Map<Integer, List<Vertex>> vertexSide2origVertex = new LinkedHashMap<>();
+        Map<Integer, Double> vertexSide2maxHeight = new LinkedHashMap<>();
+        vertexSide2maxHeight.put(-1, 0.0);
+        vertexSide2maxHeight.put(0, 0.0);
+        vertexSide2maxHeight.put(1, 0.0);
         Map<Vertex, Double> minX = new LinkedHashMap<>();
         Map<Vertex, Double> maxX = new LinkedHashMap<>();
         Vertex dummyDeviceRepresenter = new Vertex();
@@ -649,6 +685,8 @@ public class DrawingPreparation {
                 deviceVertex = originalVertex;
                 vertexSide2origVertex.putIfAbsent(0, new ArrayList<>());
                 vertexSide2origVertex.get(0).add(deviceVertex);
+                vertexSide2maxHeight.replace(0, Math.max(vertexSide2maxHeight.get(0),
+                        sugy.getMinHeightForNode(originalVertex)));
                 minX.put(deviceVertex, unionVertexShape.getXPosition());
                 maxX.put(deviceVertex, unionVertexShape.getXPosition() + unionVertexShape.width);
             }
@@ -666,15 +704,18 @@ public class DrawingPreparation {
             if (minX.containsKey(consideredVertex)) {
                 vertexSide2origVertex.putIfAbsent(vertexSide, new ArrayList<>());
                 vertexSide2origVertex.get(vertexSide).add(consideredVertex);
+                vertexSide2maxHeight.replace(vertexSide, Math.max(vertexSide2maxHeight.get(vertexSide),
+                        sugy.getMinHeightForNode(originalVertex)));
             }
         }
 
         //draw for each side of the unification vertex its contained original vertices next to each other in the order
         // found just in the step before
-        int numberOfDifferentSides = vertexSide2origVertex.keySet().size();
-        //adjust height of vertex by the number of sides it uses
+        //adjust height of union vertex by the height of its up to three rows of sub-vertices
         //for this also shift the drawing to get extra space
-        double shiftNodeBy = diableShifting ? 0.0 : (double) (numberOfDifferentSides - 1) * drawInfo.getVertexHeight();
+        double shiftNodeBy = diableShifting ? 0.0 :
+                vertexSide2maxHeight.get(-1) + vertexSide2maxHeight.get(0) + vertexSide2maxHeight.get(1)
+                - unionVertexShape.getHeight();
         double shiftLayerBy = 0;
         int layer = sugy.getRank(dummyUnificationVertex);
         if (layer2shiftForUnionNodes.containsKey(layer)) {
@@ -703,7 +744,7 @@ public class DrawingPreparation {
         }
 
         //draw each original vertex
-        int yShiftMultiplier = 0;
+        double yOffset = 0;
         for (int vertexSide = -1; vertexSide <= 1; vertexSide++) {
             List<Vertex> originalVertices = vertexSide2origVertex.get(vertexSide);
             if (originalVertices != null) {
@@ -715,9 +756,11 @@ public class DrawingPreparation {
                     //determine shape for original vertex
                     originalVertex.setShape(unionVertexShape.clone());
                     Rectangle originalVertexShape = (Rectangle) originalVertex.getShape();
-                    originalVertexShape.height = originalVertexShape.height / (double) numberOfDifferentSides;
-                    originalVertexShape.y = originalVertexShape.y +
-                            (double) yShiftMultiplier * originalVertexShape.getHeight();
+                    originalVertexShape.height = vertexSide == 0 ? vertexSide2maxHeight.get(0) :
+                            sugy.getMinHeightForNode(originalVertex);
+                    originalVertexShape.y = originalVertexShape.y + yOffset +
+                            //additionally add an individual offset if this node is not as high as its neighbors
+                            (vertexSide == -1 ? (vertexSide2maxHeight.get(-1) - originalVertexShape.height) * 0.5 : 0);
                     originalVertexShape.x = xPos;
                     double endXPos = j + 1 == originalVertices.size() ?
                             unionVertexShape.getXPosition() + unionVertexShape.width :
@@ -733,7 +776,7 @@ public class DrawingPreparation {
                         sortingOrder.getTopPortOrder().put(originalVertex, new ArrayList<>());
                     }
                 }
-                ++yShiftMultiplier;
+                yOffset += vertexSide2maxHeight.get(vertexSide);
             }
         }
         //transfer shape of the replace ports to the original ports
@@ -754,7 +797,7 @@ public class DrawingPreparation {
 
     private void transferPortProperties(Vertex deviceVertex, Map<Vertex, List<Port>> portOrder, Port replacePort) {
         Port origPort = sugy.getReplacedPorts().get(replacePort);
-        if (origPort != null ) { //may be null because it is a dummy port for label padding
+        if (origPort != null) { //may be null because it is a dummy port for label padding
             Vertex originalVertex = origPort.getVertex();
             portOrder.get(originalVertex).add(origPort);
             origPort.setShape(replacePort.getShape().clone());
@@ -989,7 +1032,17 @@ public class DrawingPreparation {
         return null;
     }
 
-    private Point2D.Double findSegmentPointAt(Rectangle portRectangle, Set<Line2D.Double> allSegments) {
+    private Point2D.Double findSegmentPointAt(Rectangle portRectangle, Edge edge) {
+        Set<Line2D.Double> allSegments = new LinkedHashSet<>();
+        for (Path path : edge.getPaths()) {
+            allSegments.addAll(((PolygonalPath) path).getSegments());
+        }
+
+        return findSegmentPointAt(portRectangle, allSegments);
+    }
+
+
+        private Point2D.Double findSegmentPointAt(Rectangle portRectangle, Set<Line2D.Double> allSegments) {
         for (Line2D.Double segment : allSegments) {
             if (portRectangle.containsInsideOrOnBoundary((Point2D.Double) segment.getP1())) {
                 return (Point2D.Double) segment.getP1();
