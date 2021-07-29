@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.uniwue.informatik.praline.datastructure.PropertyObject;
 import de.uniwue.informatik.praline.datastructure.ReferenceObject;
-import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 
 import java.util.*;
@@ -21,20 +20,20 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  * Inside a {@link PortGroup} its elements may be arranged freely (if {@link PortGroup#isOrdered()} == false) or
  * arranged as prescribed by the list {@link PortGroup#getPortCompositions()} (if {@link PortGroup#isOrdered()} ==
  * true).
- *
+ * <p>
  * A {@link PortGroup} provides the possibility to have {@link PortGroup}s inside {@link PortGroup}s inside
  * {@link PortGroup}s and so on.
  * To keep this manageable, it is assumed that {@link PortGroup}s build trees (and not more complicated graphs) with
  * each element of a tree appearing only once in such a tree.
  * The user giving the input has to take care for this.
  * In such a tree, the {@link PortGroup}s are the inner nodes and the {@link Port}s are the leaves.
- *
+ * <p>
  * Different from {@link Port}s, {@link PortGroup}s are *not*
  * {@link de.uniwue.informatik.praline.datastructure.shapes.ShapedObject}s because they represent only the possible
  * logical/combinatorial arrangements of {@link Port}s and not their concrete outline in a drawing.
  * They are also not {@link de.uniwue.informatik.praline.datastructure.labels.LabeledObject}s.
  */
-@JsonPropertyOrder({ "ordered", "portCompositions" })
+@JsonPropertyOrder({"ordered", "portCompositions", "properties"})
 public class PortGroup implements PortComposition, ReferenceObject, PropertyObject {
 
     /*==========
@@ -52,7 +51,7 @@ public class PortGroup implements PortComposition, ReferenceObject, PropertyObje
     private final List<PortComposition> portCompositions;
     private boolean ordered;
     private String reference;
-    private final Map<String, String> properties = new LinkedHashMap<>();
+    private final Map<String, String> properties;
 
 
     /*==========
@@ -60,31 +59,39 @@ public class PortGroup implements PortComposition, ReferenceObject, PropertyObje
      *==========*/
 
     public PortGroup() {
-        this(null, DEFAULT_IS_ORDERED);
+        this(null, DEFAULT_IS_ORDERED, null);
     }
 
     public PortGroup(boolean isOrdered) {
-        this(null, isOrdered);
+        this(null, isOrdered, null);
     }
 
     public PortGroup(int numberOfPortsPlannedToAdd) {
-        portCompositions = new ArrayList<>(numberOfPortsPlannedToAdd);
-        ordered = DEFAULT_IS_ORDERED;
+        this(new ArrayList<>(numberOfPortsPlannedToAdd), DEFAULT_IS_ORDERED, null);
     }
 
     public PortGroup(Collection<PortComposition> portCompositions) {
-        this(portCompositions, DEFAULT_IS_ORDERED);
+        this(portCompositions, DEFAULT_IS_ORDERED, null);
+    }
+
+    public PortGroup(Collection<PortComposition> portCompositions, boolean ordered) {
+        this(portCompositions, ordered, null);
     }
 
     @JsonCreator
     public PortGroup(
             @JsonProperty("portCompositions") final Collection<PortComposition> portCompositions,
-            @JsonProperty("ordered") final boolean ordered
+            @JsonProperty("ordered") final boolean ordered,
+            @JsonProperty("properties") final Map<String, String> properties
     ) {
         this.ordered = ordered;
         this.portCompositions = new ArrayList<>();
         for (PortComposition portComposition : newArrayListNullSafe(portCompositions)) {
             addPortComposition(portComposition);
+        }
+        this.properties = new LinkedHashMap<>();
+        if (properties != null) {
+            this.properties.putAll(properties);
         }
     }
 
@@ -106,14 +113,12 @@ public class PortGroup implements PortComposition, ReferenceObject, PropertyObje
     }
 
     @Override
-    public String getReference()
-    {
+    public String getReference() {
         return this.reference;
     }
 
     @Override
-    public void setReference(String reference)
-    {
+    public void setReference(String reference) {
         this.reference = reference;
     }
 
@@ -125,6 +130,11 @@ public class PortGroup implements PortComposition, ReferenceObject, PropertyObje
     @Override
     public void setProperty(String key, String value) {
         properties.put(key, value);
+    }
+
+    @Override
+    public Map<String, String> getProperties() {
+        return Collections.unmodifiableMap(properties);
     }
 
     @Override
@@ -147,7 +157,6 @@ public class PortGroup implements PortComposition, ReferenceObject, PropertyObje
         this.portGroup = portGroup;
     }
 
-
     /*==========
      * Modifiers
      *==========*/
@@ -160,8 +169,7 @@ public class PortGroup implements PortComposition, ReferenceObject, PropertyObje
         //remove it as direct child of a port group of a vertex if it was there before
         if (pc.getPortGroup() != null) {
             pc.getPortGroup().removePortComposition(pc);
-        }
-        else if (pc.getVertex() != null) {
+        } else if (pc.getVertex() != null) {
             pc.getVertex().removePortComposition(pc);
         }
         portCompositions.add(position, pc);
@@ -194,7 +202,7 @@ public class PortGroup implements PortComposition, ReferenceObject, PropertyObje
         }
 
         if (pc instanceof PortGroup) {
-            for (PortComposition groupMember : ((PortGroup)pc).getPortCompositions()) {
+            for (PortComposition groupMember : ((PortGroup) pc).getPortCompositions()) {
                 setVertexRecursivelyToAllPortCompositions(groupMember, vertex);
             }
         }
@@ -227,7 +235,7 @@ public class PortGroup implements PortComposition, ReferenceObject, PropertyObje
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PortGroup portGroup = (PortGroup) o;
-        return  ordered == portGroup.ordered && EqualLabeling.equalLabelingLists(new ArrayList<>(portCompositions),
+        return ordered == portGroup.ordered && EqualLabeling.equalLabelingLists(new ArrayList<>(portCompositions),
                 new ArrayList<>(portGroup.portCompositions)) && Objects.equals(reference, portGroup.reference);
     }
 }

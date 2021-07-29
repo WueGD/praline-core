@@ -44,14 +44,14 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
     private EdgeBundle edgeBundle;
     private final EdgeLabelManager labelManager;
     private String reference;
-    private final Map<String, String> properties = new LinkedHashMap<>();
+    private final Map<String, String> properties;
 
     /*==========
      * Constructors
      *==========*/
 
     public Edge(Collection<Port> ports) {
-        this(ports, null, null, null, null);
+        this(ports, null, null, null, null, null);
     }
 
     public Edge(Collection<Port> ports, Collection<Label> innerLabels) {
@@ -62,16 +62,22 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
         this(ports, innerLabels, portLabels, null, null);
     }
 
+    public Edge(Collection<Port> ports, Collection<Label> innerLabels, Map<Port, List<Label>> portLabels, Label mainLabel,
+                PathStyle pathStyle){
+        this(ports, innerLabels, portLabels, mainLabel,pathStyle, null);
+    }
+
 
     @JsonCreator
     protected Edge(
             @JsonProperty("ports") final Collection<Port> ports,
             @JsonProperty("labelManager") final EdgeLabelManager labelManager,
             @JsonProperty("pathStyle") final PathStyle pathStyle,
-            @JsonProperty("paths") final Collection<Path> paths
+            @JsonProperty("paths") final Collection<Path> paths,
+            @JsonProperty("properties") final Map<String, String> properties
     ) {
         //do not add port labels first because they are in the wrong format
-        this(ports, labelManager.getInnerLabels(), null, labelManager.getMainLabel(), pathStyle);
+        this(ports, labelManager.getInnerLabels(), null, labelManager.getMainLabel(), pathStyle, properties);
         //but do it more manually here
         for (EdgeLabelManager.PairPort2Labels pair : labelManager.getAllPortLabels()) {
             labelManager.addPortLabels(pair.port, pair.labels);
@@ -87,10 +93,11 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
      * @param portLabels
      * @param mainLabel
      * @param pathStyle
+     * @param properties
      */
     public Edge(
             Collection<Port> ports, Collection<Label> innerLabels, Map<Port, List<Label>> portLabels, Label mainLabel,
-            PathStyle pathStyle
+            PathStyle pathStyle, Map<String, String> properties
     ) {
         this.ports = newArrayListNullSafe(ports);
         for (Port port : this.ports) {
@@ -99,6 +106,10 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
         this.labelManager = new EdgeLabelManager(this, innerLabels, portLabels, mainLabel);
         this.pathStyle = pathStyle == null ? PathStyle.DEFAULT_PATH_STYLE : pathStyle;
         this.paths = new LinkedList<>();
+        this.properties = new LinkedHashMap<>();
+        if(properties != null){
+            this.properties.putAll(properties);
+        }
     }
 
 
@@ -153,6 +164,11 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
     @Override
     public void setProperty(String key, String value) {
         properties.put(key, value);
+    }
+
+    @Override
+    public Map<String, String> getProperties() {
+        return Collections.unmodifiableMap(properties);
     }
 
     /*==========

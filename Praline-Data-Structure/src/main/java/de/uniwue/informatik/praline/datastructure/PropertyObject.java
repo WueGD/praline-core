@@ -1,5 +1,7 @@
 package de.uniwue.informatik.praline.datastructure;
 
+import java.util.Map;
+
 /**
  * Allows user-specified properties to be added to a graph element.
  */
@@ -19,4 +21,11 @@ public interface PropertyObject {
      * @param value Property value
      */
     void setProperty(String key, String value);
+
+    /**
+     * Gets a map of all properties set in the graph element.
+     *
+     * @return Map containing all properties
+     */
+    Map<String, String> getProperties();
 }

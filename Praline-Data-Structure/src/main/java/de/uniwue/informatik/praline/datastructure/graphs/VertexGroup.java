@@ -21,18 +21,18 @@ import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArr
  * them and
  * a layouting algorithm should take care to place them close to each other.
  * You can have frame around these {@link Vertex}es, which is handled with a {@link Shape}.
- *
+ * <p>
  * If you add {@link TouchingPair}s, it pairs two {@link Vertex}es together, i.e., within this group, the algorithm
  * should draw them such that they touch (see there for more).
- *
+ * <p>
  * Moreover, you can define a connection between two {@link Port}s (of possibly different {@link Vertex}es) within this
  * {@link VertexGroup}. They should be drawn on the same horizontal or vertical line.
- *
+ * <p>
  * A {@link VertexGroup} may have {@link Label}s.
  */
-@JsonIgnoreProperties({ "allRecursivelyContainedVertices", "allRecursivelyContainedVertexGroups", "vertexGroup" })
-@JsonPropertyOrder({ "drawnFrame", "labelManager", "shape", "containedVertices", "containedVertexGroups",
-        "touchingPairs", "portPairings" })
+@JsonIgnoreProperties({"allRecursivelyContainedVertices", "allRecursivelyContainedVertexGroups", "vertexGroup"})
+@JsonPropertyOrder({"drawnFrame", "labelManager", "shape", "containedVertices", "containedVertexGroups",
+        "touchingPairs", "portPairings", "properties"})
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject, PropertyObject {
 
@@ -59,7 +59,7 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
     private Shape shape;
     private boolean drawnFrame;
     private String reference;
-    private final Map<String, String> properties = new LinkedHashMap<>();
+    private final Map<String, String> properties;
 
 
     /*==========
@@ -67,11 +67,17 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
      *==========*/
 
     public VertexGroup() {
-        this(null, null, null, null, null, null, null, DEFAULT_DRAW_FRAME);
+        this(null, null, null, null, null, null, null, DEFAULT_DRAW_FRAME, null);
     }
 
     public VertexGroup(Collection<Vertex> containedVertices) {
-        this(containedVertices, null, null, null, null, null, null, DEFAULT_DRAW_FRAME);
+        this(containedVertices, null, null, null, null, null, null, DEFAULT_DRAW_FRAME, null);
+    }
+
+    public VertexGroup(Collection<Vertex> containedVertices, Collection<VertexGroup> containedVertexGroups,
+                       Collection<TouchingPair> touchingPairs, Collection<PortPairing> portPairings,
+                       Collection<Label> labels, Label mainLabel, Shape shape, boolean drawnFrame) {
+        this(containedVertices, containedVertexGroups, touchingPairs, portPairings, labels, mainLabel, shape, drawnFrame, null);
     }
 
     @JsonCreator
@@ -82,10 +88,11 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
             @JsonProperty("containedVertices") final Collection<Vertex> containedVertices,
             @JsonProperty("containedVertexGroups") final Collection<VertexGroup> containedVertexGroups,
             @JsonProperty("touchingPairs") final Collection<TouchingPair> touchingPairs,
-            @JsonProperty("portPairings") final Collection<PortPairing> portPairings
+            @JsonProperty("portPairings") final Collection<PortPairing> portPairings,
+            @JsonProperty("properties") final Map<String, String> properties
     ) {
         this(containedVertices, containedVertexGroups, touchingPairs, portPairings, labelManager.getLabels(),
-                labelManager.getMainLabel(), shape, drawnFrame);
+                labelManager.getMainLabel(), shape, drawnFrame, properties);
     }
 
     /**
@@ -94,7 +101,7 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
      */
     public VertexGroup(Collection<Vertex> containedVertices, Collection<VertexGroup> containedVertexGroups,
                        Collection<TouchingPair> touchingPairs, Collection<PortPairing> portPairings,
-                       Collection<Label> labels, Label mainLabel, Shape shape, boolean drawnFrame) {
+                       Collection<Label> labels, Label mainLabel, Shape shape, boolean drawnFrame, Map<String, String> properties) {
         this.containedVertices = newArrayListNullSafe(containedVertices);
         for (Vertex v : this.containedVertices) {
             v.setVertexGroup(this);
@@ -108,6 +115,10 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
         this.labelManager = new LabelManager(this, labels, mainLabel);
         this.shape = shape;
         this.drawnFrame = drawnFrame;
+        this.properties = new LinkedHashMap<>();
+        if (properties != null) {
+            this.properties.putAll(properties);
+        }
     }
 
 
@@ -120,9 +131,8 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
     /**
      * Differs from {@link VertexGroup#getAllRecursivelyContainedVertices()}
      *
-     * @return
-     *      {@link Vertex}es contained directly in this {@link VertexGroup}. Note that vertices contained in a
-     *      {@link VertexGroup} of this {@link VertexGroup} are not returned
+     * @return {@link Vertex}es contained directly in this {@link VertexGroup}. Note that vertices contained in a
+     * {@link VertexGroup} of this {@link VertexGroup} are not returned
      */
     public List<Vertex> getContainedVertices() {
         return Collections.unmodifiableList(containedVertices);
@@ -131,9 +141,8 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
     /**
      * Differs from {@link VertexGroup#getContainedVertices()}
      *
-     * @return
-     *      {@link Vertex}es contained directly in this {@link VertexGroup} and contained in any {@link VertexGroup}
-     *      contained in this {@link VertexGroup} or even deeper (with arbitrary depth)
+     * @return {@link Vertex}es contained directly in this {@link VertexGroup} and contained in any {@link VertexGroup}
+     * contained in this {@link VertexGroup} or even deeper (with arbitrary depth)
      */
     public List<Vertex> getAllRecursivelyContainedVertices() {
         List<Vertex> allVertices = new ArrayList<>(containedVertices);
@@ -146,9 +155,8 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
     /**
      * Differs from {@link VertexGroup#getAllRecursivelyContainedVertexGroups()}
      *
-     * @return
-     *      {@link VertexGroup}s contained directly in this {@link VertexGroup}. Note that {@link VertexGroup}s
-     *      contained in a {@link VertexGroup} of this {@link VertexGroup} are not returned
+     * @return {@link VertexGroup}s contained directly in this {@link VertexGroup}. Note that {@link VertexGroup}s
+     * contained in a {@link VertexGroup} of this {@link VertexGroup} are not returned
      */
     public List<VertexGroup> getContainedVertexGroups() {
         return Collections.unmodifiableList(containedVertexGroups);
@@ -157,9 +165,8 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
     /**
      * Differs from {@link VertexGroup#getContainedVertexGroups()}
      *
-     * @return
-     *      {@link VertexGroup}s contained directly in this {@link VertexGroup} and contained in any {@link VertexGroup}
-     *      contained in this {@link VertexGroup} or even deeper (with arbitrary depth)
+     * @return {@link VertexGroup}s contained directly in this {@link VertexGroup} and contained in any {@link VertexGroup}
+     * contained in this {@link VertexGroup} or even deeper (with arbitrary depth)
      */
     public List<VertexGroup> getAllRecursivelyContainedVertexGroups() {
         List<VertexGroup> allVertexGroups = new ArrayList<>();
@@ -210,14 +217,12 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
     }
 
     @Override
-    public String getReference()
-    {
+    public String getReference() {
         return this.reference;
     }
 
     @Override
-    public void setReference(String reference)
-    {
+    public void setReference(String reference) {
         this.reference = reference;
     }
 
@@ -231,6 +236,10 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
         properties.put(key, value);
     }
 
+    @Override
+    public Map<String, String> getProperties() {
+        return Collections.unmodifiableMap(properties);
+    }
 
     /*==========
      * Modifiers
@@ -240,14 +249,13 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
         containedVertices.add(v);
         v.setVertexGroup(this);
     }
+
     /**
      * Removes a {@link Vertex} from this {@link VertexGroup} or from some recursively contained {@link VertexGroup}.
      * It also removes all {@link TouchingPair}s and {@link PortPairing}s where this {@link Vertex} is involved.
      *
-     * @param v
-     *      to be removed from this {@link VertexGroup}
-     * @return
-     *      success
+     * @param v to be removed from this {@link VertexGroup}
+     * @return success
      */
     public boolean removeVertex(Vertex v) {
         boolean success = containedVertices.remove(v);
@@ -283,10 +291,8 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
      * Removes a {@link VertexGroup} from this {@link VertexGroup} or from some recursively contained
      * {@link VertexGroup}
      *
-     * @param vg
-     *      to be removed from this {@link VertexGroup}
-     * @return
-     *      success
+     * @param vg to be removed from this {@link VertexGroup}
+     * @return success
      */
     public boolean removeVertexGroup(VertexGroup vg) {
         boolean success = containedVertexGroups.remove(vg);
@@ -315,12 +321,9 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
     }
 
     /**
-     *
-     * @param pp
-     *      Each of both ports of this {@link PortPairing} must be contained in a {@link Vertex} of
-     *      this {@link VertexGroup}
-     * @return
-     *      success
+     * @param pp Each of both ports of this {@link PortPairing} must be contained in a {@link Vertex} of
+     *           this {@link VertexGroup}
+     * @return success
      */
     public boolean addPortPairing(PortPairing pp) {
         List<Port> allPortsOfTopLevelVertices = new ArrayList<>();
