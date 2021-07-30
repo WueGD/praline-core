@@ -33,9 +33,22 @@ public class ConnectedComponentClusterer {
             componentGraphs.add(getComponentGraph(componentVertexSet));
         }
 
+        //special case: so far we have only found graphs by vertices;
+        //in a degenerate case, there are isolated edges -> make an own component
+        findIsolatedEdges(componentGraphs);
+
         componentGraphs.sort(Comparator.comparingInt(g -> g.getVertices().size()));
 
         return componentGraphs;
+    }
+
+    private void findIsolatedEdges(List<Graph> componentGraphs) {
+        for (Edge edge : graph.getEdges()) {
+            if (edge.getPorts().isEmpty()) {
+                //make a new graph for each isolated edge
+                componentGraphs.add(new Graph(null, null, Collections.singleton(edge), null));
+            }
+        }
     }
 
     private Graph getComponentGraph(Set<Vertex> componentVertexSet) {

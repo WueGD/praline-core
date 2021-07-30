@@ -68,7 +68,7 @@ public class LayerAssignmentNetworkSimplex implements LayerAssignment {
 
         normalize();
         computeInitialOrder();
-//        balance(); TODO: commented out because it did not bring improvements :( maybe revisist later
+//        balance(); TODO: commented out because it did not bring improvements :( maybe revisit later
         sortLayers();
     }
 
@@ -194,9 +194,6 @@ public class LayerAssignmentNetworkSimplex implements LayerAssignment {
 
         while (tightTree(treeVertices, startVertex) < n) {
             Edge e = findNonTreeEdgeWithMinimalSlack(treeVertices);
-            if (e == null) {
-                System.out.println("CHECK: NO EDGE FOUND"); //TODO: seems to happen in a few cases --> debug and fix it!
-            }
             int delta = getSlack(e) * (treeVertices.contains(sugy.getStartNode(e)) ? 1 : -1);
             for (Vertex treeVertex : treeVertices) {
                 ranks.replace(treeVertex, ranks.get(treeVertex) + delta);
