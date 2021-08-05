@@ -28,7 +28,8 @@ public class MainDrawPackage {
 //            "Praline-Layouting/data/generated_2021-03-15_17-32-05";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18";
 //            "Praline-Layouting/data/praline-package-2020-05-18";
-            "Praline-Layouting/data/praline-readable-2020-09-04";
+//            "Praline-Layouting/data/praline-readable-2020-09-04";
+            "Praline-Layouting/data/denkbares_08_06_2021/praline";
 //            "Praline-Layouting/data/5plansOriginalPseudo";
 
 
@@ -65,7 +66,7 @@ public class MainDrawPackage {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        List<File> files = new LinkedList<>();
+        List<File> files = new ArrayList<>();
 
         File dir = new File(PATH_DATA_SET);
         File[] directoryListing = dir.listFiles();
