@@ -48,7 +48,7 @@ public class DrawingInformation {
     private double borderWidth;
     private double vertexHeight; //TODO: as minimum height/flexible for diff. heights (multiple labels above each other)
     private double vertexMinimumWidth;
-    private double vertexWidthMaxStretchFactor; //for vertical stretch; 1 means (almost) no stretch, positive infinity
+    private double vertexWidthMaxStretchFactor; //for horizontal stretch; 1 means (almost) no stretch, positive infinity
     // means arbitrary stretch
     private Color vertexColor; //null for transparent
     private double portWidth;
