@@ -126,7 +126,7 @@ public class NodePlacement {
             initializePortValueParams();
         }
 
-        reTransformStructure(false);
+        reTransformStructure(true);
 
         return dummyPorts;
     }
@@ -212,9 +212,9 @@ public class NodePlacement {
         }
     }
 
-    public void reTransformStructure(boolean addDummyPortsForPaddingToOrders) {
+    public void reTransformStructure(boolean drawShapes) {
         // creates shapes for all nodes
-        draw(addDummyPortsForPaddingToOrders);
+        drawAndSetOrder(drawShapes);
         // remove the dummy edges of port pairings und dummy vertices of multiple-layers-spanning edges
         for (Edge dummy : dummyEdges) {
             for (Port port : new LinkedList<>(dummy.getPorts())) {
@@ -281,9 +281,9 @@ public class NodePlacement {
                 } else if (portVertex.equals(currentUnionNode)) {
                     //still the same union node but different sub-node
                     currentWidth += delta / 2.0;
-                    List<PortValues> nodeOrder = addDummyPortsAndGetNewOrder(order, currentWidth, minWidth,
+                    double addWidth = addDummyPortsAndGetNewOrder(order, newOrder, currentWidth, minWidth,
                             currentUnionNode, currentNode, nodePosition, position, useMultipleRegularSizeDummyPorts);
-                    newOrder.addAll(nodeOrder);
+                    currentWidthUnionNode += addWidth;
 
                     currentNode = sugy.getReplacedPorts().get(port).getVertex();
                     nodePosition = position;
@@ -293,39 +293,14 @@ public class NodePlacement {
                 } else {
                     currentWidth += delta;
                     currentWidthUnionNode += delta;
-                    List<PortValues> nodeOrder = addDummyPortsAndGetNewOrder(order, currentWidth, minWidth,
+                    double addWidth = addDummyPortsAndGetNewOrder(order, newOrder, currentWidth, minWidth,
                             currentUnionNode, currentNode, nodePosition, position, useMultipleRegularSizeDummyPorts);
-                    newOrder.addAll(nodeOrder);
+                    currentWidth += addWidth;
+                    currentWidthUnionNode += addWidth;
                     //special case: if we have passed over a union node check if we need additional width
                     if (currentUnionNode != null) {
-                        Vertex deviceVertex = null;
-                        VertexGroup vertexGroup = sugy.getVertexGroups().get(currentUnionNode);
-                        if (vertexGroup != null) {
-                            for (Vertex containedVertex : vertexGroup.getContainedVertices()) {
-                                if (sugy.getDeviceVertices().contains(containedVertex)) {
-                                    deviceVertex = containedVertex;
-                                }
-                            }
-                        }
-                        if (deviceVertex != null) {
-                            //TODO: currently we just padd to the right. Maybe make it symmetric later? (low priority)
-                            double minWidthUnionNode = sugy.getMinWidthForNode(deviceVertex);
-
-                            while (currentWidthUnionNode < minWidthUnionNode) {
-                                Port p = new Port();
-                                createMainLabel(p);
-                                addToCorrectPortGroupOrNode(p, currentUnionNode, deviceVertex);
-                                dummyPorts.putIfAbsent(deviceVertex, new LinkedHashSet<>());
-                                dummyPorts.get(deviceVertex).add(p);
-                                dummyPort2unionNode.put(p, currentUnionNode);
-                                PortValues dummyPortValues = createNewPortValues(p,
-                                        useMultipleRegularSizeDummyPorts ?
-                                                drawInfo.getPortWidth():
-                                                Math.max(0,minWidthUnionNode - currentWidthUnionNode - delta));
-                                newOrder.add(dummyPortValues);
-                                currentWidthUnionNode += delta + dummyPortValues.getWidth();
-                            }
-                        }
+                        paddDeviceVertex(useMultipleRegularSizeDummyPorts, newOrder, currentWidthUnionNode,
+                                currentUnionNode, currentNode);
                         currentUnionNode = null;
                     }
                     currentNode = portVertex;
@@ -339,9 +314,14 @@ public class NodePlacement {
             }
             //maybe the last vertex is still open
             if (currentNode != null && !currentNode.equals(dummyVertex)) {
-                List<PortValues> nodeOrder = addDummyPortsAndGetNewOrder(order, currentWidth, minWidth,
-                        currentUnionNode, currentNode, nodePosition, order.size(), useMultipleRegularSizeDummyPorts);
-                newOrder.addAll(nodeOrder);
+                double addWidth = addDummyPortsAndGetNewOrder(order, newOrder, currentWidth, minWidth, currentUnionNode,
+                        currentNode, nodePosition, order.size(), useMultipleRegularSizeDummyPorts);
+                currentWidth += addWidth;
+                currentWidthUnionNode += addWidth;
+                if (currentUnionNode != null) {
+                    paddDeviceVertex(useMultipleRegularSizeDummyPorts, newOrder, currentWidthUnionNode,
+                            currentUnionNode, currentNode);
+                }
             }
 
             structure.set(layer, newOrder);
@@ -350,21 +330,58 @@ public class NodePlacement {
         return dummyPorts;
     }
 
+    private void paddDeviceVertex(boolean useMultipleRegularSizeDummyPorts, List<PortValues> newOrder,
+                                  double currentWidthUnionNode, Vertex currentUnionNode, Vertex currentNode) {
+        Vertex deviceVertex = null;
+        VertexGroup vertexGroup = sugy.getVertexGroups().get(currentUnionNode);
+        if (vertexGroup != null) {
+            for (Vertex containedVertex : vertexGroup.getContainedVertices()) {
+                if (sugy.getDeviceVertices().contains(containedVertex)) {
+                    deviceVertex = containedVertex;
+                }
+            }
+        }
+        if (deviceVertex != null) {
+            //TODO: currently we just padd to the right. Maybe make it symmetric later? (low priority)
+            double minWidthUnionNode = sugy.getMinWidthForNode(deviceVertex);
+
+            while (currentWidthUnionNode < minWidthUnionNode) {
+                //note that we add the new port to the current node and not to the device node.
+                // this is because the device nodes will be covered by nodes appended to it and if we increase the
+                // width of the current node, the width of the device node will automatically be increased. Assigning
+                // these ports directly to the device vertex would cause ugly gaps in the compound drawing at the end
+                Port p = new Port();
+                createMainLabel(p);
+                addToCorrectPortGroupOrNode(p, currentUnionNode, currentNode);
+                dummyPorts.putIfAbsent(currentNode, new LinkedHashSet<>());
+                dummyPorts.get(currentNode).add(p);
+                dummyPort2unionNode.put(p, currentUnionNode);
+                PortValues dummyPortValues = createNewPortValues(p,
+                        useMultipleRegularSizeDummyPorts ?
+                                drawInfo.getPortWidth():
+                                Math.max(0,minWidthUnionNode - currentWidthUnionNode - delta));
+                newOrder.add(dummyPortValues);
+                currentWidthUnionNode += delta + dummyPortValues.getWidth();
+            }
+        }
+    }
+
     /**
      *
      * @param order
+     * @param newOrderToAppend
      * @param currentWidth
      * @param minWidth
      * @param currentUnionNode
-     *      may be null
      * @param currentNode
-     *      may be not null
      * @param nodePosition
      * @param position
      * @param useMultipleRegularSizeDummyPorts
      * @return
+     *      new currentWidth
      */
-    private List<PortValues> addDummyPortsAndGetNewOrder(List<PortValues> order, double currentWidth, double minWidth,
+    private double addDummyPortsAndGetNewOrder(List<PortValues> order, List<PortValues> newOrderToAppend,
+                                                         double currentWidth, double minWidth,
                                                          Vertex currentUnionNode, Vertex currentNode, int nodePosition,
                                                          int position, boolean useMultipleRegularSizeDummyPorts) {
         if (currentUnionNode == null) {
@@ -396,8 +413,9 @@ public class NodePlacement {
             currentWidth += dummyPortValues.getWidth() + delta;
         }
 
+        newOrderToAppend.addAll(nodeOrder);
 
-        return nodeOrder;
+        return currentWidth;
     }
 
     private void addToCorrectPortGroupOrNode(Port p, Vertex unionNode, Vertex node) {
@@ -1161,7 +1179,7 @@ public class NodePlacement {
         }
     }
 
-    private void draw(boolean addDummyPortsForPaddingToOrders) {
+    private void drawAndSetOrder(boolean drawShapes) {
         double currentY = drawInfo.getPortHeight();
         double yPos = currentY;
         for (int layerIndex = 0; layerIndex < structure.size(); layerIndex++) {
@@ -1171,7 +1189,7 @@ public class NodePlacement {
                 int portIndexAtVertex = 0;
                 // x1, y1, x2, y2
                 // initialize shape of first node
-                double xPos = addDummyPortsForPaddingToOrders ? 0.0 : layer.get(0).getX();
+                double xPos = drawShapes ? layer.get(0).getX() : 0.0;
                 double xPosOld = Double.NaN;
                 PortValues portValues = null;
                 for (int pos = 0; pos < layer.size(); pos++) {
@@ -1182,7 +1200,7 @@ public class NodePlacement {
                             !nodeInTheGraph.equals(portVertex)) {
                         portIndexAtVertex = 0;
                         if (nodeInTheGraph != null) {
-                            if (!addDummyPortsForPaddingToOrders
+                            if (drawShapes
                                     // now we foce overwriting by not checking this next condition any more
                                     // but this should be ok because we have previously in dummyPortsForWidth()
                                     // used the pre-set width as a minimum width (which was maybe achieved by
@@ -1218,13 +1236,13 @@ public class NodePlacement {
 
                         //TODO: port placement s.t. the port starts immediately at the node
 
-                        createPortShape(currentY, portValues, layerIndex % 2 == 0, nodeInTheGraph, portIndexAtVertex,
-                                addDummyPortsForPaddingToOrders);
+                        createPortShapeAndIntegratePortOrder(currentY, portValues, layerIndex % 2 == 0,
+                                nodeInTheGraph, portIndexAtVertex, drawShapes);
                         ++portIndexAtVertex;
                     }
                 }
                 //for the last we may still need to create a node shape
-                if (nodeInTheGraph != null && !addDummyPortsForPaddingToOrders
+                if (nodeInTheGraph != null && drawShapes
                     // now we foce overwriting by not checking this next condition any more
                     // but this should be ok because we have previously in dummyPortsForWidth()
                     // used the pre-set width as a minimum width (which was maybe achieved by
@@ -1273,15 +1291,15 @@ public class NodePlacement {
         nodeShape.height = height;
     }
 
-    private Vertex createPortShape(double currentY, PortValues portValues, boolean isBottomSide, Vertex nodeInTheGraph,
-                                   int portIndexAtNode, boolean addDummyPortsForPaddingToOrders) {
+    private Vertex createPortShapeAndIntegratePortOrder(double currentY, PortValues portValues, boolean isBottomSide, Vertex nodeInTheGraph,
+                                                        int portIndexAtNode, boolean drawShape) {
         Port port = portValues.getPort();
         if (!port.getVertex().equals(nodeInTheGraph)) {
             nodeInTheGraph = port.getVertex();
             portIndexAtNode = 0;
         }
 
-        if (!addDummyPortsForPaddingToOrders) {
+        if (drawShape) {
             //if not width is set, use the default width
             double drawnWidth =
                     port.getShape() instanceof Rectangle && !Double.isNaN(((Rectangle) port.getShape()).getWidth()) ?
@@ -1299,7 +1317,7 @@ public class NodePlacement {
         //todo: currently we check the complete list via contains. if necessary speed up by checking at the correct
         // place within the list .get(index).equals(port)
         // I would have expected this index to be portIndexAtNode, but somehow that does not see to work
-        if (addDummyPortsForPaddingToOrders && !relevantPortOrdering.contains(port)) {
+        if (!relevantPortOrdering.contains(port)) {
             relevantPortOrdering.add(portIndexAtNode, port);
             port.setOrientationAtVertex(isBottomSide ? Orientation.SOUTH : Orientation.NORTH);
         }
