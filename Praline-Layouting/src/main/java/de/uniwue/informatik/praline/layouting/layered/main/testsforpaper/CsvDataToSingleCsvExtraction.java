@@ -18,23 +18,26 @@ public class CsvDataToSingleCsvExtraction {
 //                    "paper-all-tests-2020-06-10_06-18-04";
 //                    "paper-all-tests-2020-08-20_16-01-53";
 //                    "2020-11-26_04-07-39";
-                    "2021-08-05_19-03-14"; //first test run for journal paper, 1 execution per graph
+//                    "2021-08-05_19-03-14"; //first test run for journal paper, 1 execution per graph
+                    "2021-08-07_10-47-21"; //test run for journal, 10 execution per graph, praline-package-2020-05-18+
+//                    "2021-08-07_15-44-10"; //test run for journal, 10 execution per graph, denkbares_08_06_2021+
 
 
     private static final String[] DATA_DIRS =
             {
-//                    "DA_lc-praline-package-2020-05-18",
+////                    "DA_lc-praline-package-2020-05-18",
+////                    "DA_generated_2020-08-20_04-42-39",
 //                    "DA_praline-package-2020-05-18",
-//                    "DA_generated_2020-08-20_04-42-39",
+//                    "DA_generated_2021-08-06_17-27-03",
 //                    "CM_lc-praline-package-2020-05-18",
+//                    "CM_generated_2020-08-20_04-42-39"
                     "CM_praline-package-2020-05-18",
-                    "CM_generated_2020-08-20_04-42-39"
+                    "CM_generated_2021-08-06_17-27-03"
 //                    "CM_denkbares_08_06_2021/praline"
             };
 
     private static final String TARGET_PATH =
             DATA_PATH + "/csv-summary";
-//            "Praline-Layouting/results/2020-07-09_18-07-13/csv-summary";
 
     private static final String[] TARGET_FILE_PREFIX =
             {
@@ -47,12 +50,14 @@ public class CsvDataToSingleCsvExtraction {
 
     private static final String[] TARGET_FILES =
             {
-//                    "DA_lc-praline-package-2020-05-18",
+////                    "DA_lc-praline-package-2020-05-18",
+////                    "DA_generated_2020-08-20_04-42-39",
 //                    "DA_praline-package-2020-05-18",
-//                    "DA_generated_2020-08-20_04-42-39",
+//                    "DA_generated_2021-08-06_17-27-03",
 //                    "CM_lc-praline-package-2020-05-18",
+//                    "CM_generated_2020-08-20_04-42-39"
                     "CM_praline-package-2020-05-18",
-                    "CM_generated_2020-08-20_04-42-39"
+                    "CM_generated_2021-08-06_17-27-03"
 //                    "CM_denkbares_08_06_2021/praline"
             };
 
@@ -84,14 +89,17 @@ public class CsvDataToSingleCsvExtraction {
             put("fd-ns", "fd");
             put("bfs-ns", "bfs");
             put("ran-ns", "rand");
-            put("ports-noMove-noPlaceTurnings-relPos-firstComes-noPref", "ports");
-            put("mixed-noMove-noPlaceTurnings-relPos-firstComes-noPref", "mixed");
-            put("nodes-noMove-noPlaceTurnings-relPos-firstComes-noPref", "nodes");
+            put("ports-noMove-placeTurnings-relPos-firstComes-prefLongE", "ports");
+            put("mixed-noMove-placeTurnings-relPos-firstComes-prefLongE", "mixed");
+            put("nodes-noMove-placeTurnings-relPos-firstComes-prefLongE", "nodes");
+            put("ports--noMove--placeTurnings-relPos-firstComes-prefLongE", "ports");
+            put("mixed--noMove--placeTurnings-relPos-firstComes-prefLongE", "mixed");
+            put("nodes--noMove--placeTurnings-relPos-firstComes-prefLongE", "nodes");
         }
     };
 
     private static final List<String> IGNORE_FIELDS_CONTAINING_STRING =
-            Arrays.asList("-ons", "-fdp", "-move", "-placeTurnings", "-mis", "-prefLongE", "-area", "-ratio"
+            Arrays.asList("-ons", "-fdp", "-move", "-noPlaceTurnings", "-mis", "-noPref", "-area", "-ratio"
                     , "-pseudoBCs", "-otherSide");
 
     public static void main(String[] args) {
