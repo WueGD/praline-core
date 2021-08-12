@@ -33,9 +33,7 @@ public class AllTests {
     public static final String[] DATA_SETS =
             {
 //                    "generated_2020-06-04_18-39-49",
-//                    "generated_2020-08-20_04-42-39",
-                    "generated_2021-08-06_17-27-03", //based on "praline-package-2020-05-18"
-//                    "generated_2021-08-07_15-24-08", //based on "denkbares_08_06_2021/praline"
+                    "generated_2020-08-20_04-42-39",
 //                    "lc-praline-package-2020-05-18"
                     "praline-package-2020-05-18"
 //                    "praline-readable-2020-09-04"
@@ -54,7 +52,7 @@ public class AllTests {
                     Test.CROSSING_MINIMIZATION_PHASE
             };
 
-    private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 10; //1; //10; //50 //200
+    private static final int NUMBER_OF_REPETITIONS_PER_GRAPH = 1; //5; //10; //50 //200
 
     private static final int NUMBER_OF_FORCE_DIRECTED_ITERATIONS = 1; //10;
 
@@ -74,7 +72,7 @@ public class AllTests {
     private static final CrossingMinimizationMethod DEFAULT_CROSSING_MINIMIZATION_METHOD =
             CrossingMinimizationMethod.PORTS;
 
-    private static final boolean DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE = false;
+    private static final boolean DEFAULT_MOVE_PORTS_ADJ_TO_TURNING_DUMMIES_TO_THE_OUTSIDE = true;
 
     private static final boolean DEFAULT_PLACE_TURNING_DUMMIES_NEXT_TO_THEIR_VERTEX = true;
 
@@ -111,31 +109,29 @@ public class AllTests {
                 case DIRECTION_ASSIGNMENT_PHASE:
                     ArrayList<String> daMethods = new ArrayList<>();
                     for (DirectionMethod dm : DirectionMethod.values()) {
-                        daMethods.add(dm.toString());
-//                        for (LayerAssignmentMethod lam : LayerAssignmentMethod.values()) {
-//                            //we can use LayerAssignmentMethod.FD_POSITION only if DirectionMethod.FORCE is used
-//                            if (!lam.equals(LayerAssignmentMethod.FD_POSITION) || dm.equals(DirectionMethod.FORCE)) {
-//                                daMethods.add(dm + "-" + lam);
-//                            }
-//                        }
+                        for (LayerAssignmentMethod lam : LayerAssignmentMethod.values()) {
+                            //we can use LayerAssignmentMethod.FD_POSITION only if DirectionMethod.FORCE is used
+                            if (!lam.equals(LayerAssignmentMethod.FD_POSITION) || dm.equals(DirectionMethod.FORCE)) {
+                                daMethods.add(dm + "-" + lam);
+                            }
+                        }
                     }
                     return daMethods;
                 case CROSSING_MINIMIZATION_PHASE:
                     ArrayList<String> methods = new ArrayList<>();
-                    String[] movePortsToTurningDummies = {"noMove"}; //{"noMove", "move"};
-                    String[] placeTurningDummiesCloseToVertex = {"placeTurnings"}; //{"noPlaceTurnings", "placeTurnings"};
+                    String[] movePortsToTurningDummies = {"noMove", "move"}; //{"-noMove"};
+                    String[] placeTurningDummiesCloseToVertex = {"noPlaceTurnings", "placeTurnings"}; //{"-noPlaceTurnings"};
                     for (CrossingMinimizationMethod cmm : CrossingMinimizationMethod.values()) {
                         for (String m : movePortsToTurningDummies) {
                             for (String ptd : placeTurningDummiesCloseToVertex) {
                                 for (HandlingDeadEnds hde : HandlingDeadEnds.values()) {
-//                                    for (AlignmentParameters.Method alignMethod : AlignmentParameters.Method.values()) {
-//                                        for (AlignmentParameters.Preference alignPref : AlignmentParameters.Preference
-//                                                .values()) {
-                                            methods.add(cmm + "-" + m + "-" + ptd + "-" + hde
-//                                                    + "-" + alignMethod + "-" + alignPref);
-                                                    + "-" + DEFAULT_ALIGNMENT_METHOD + "-" + DEFAULT_ALIGNMENT_PREFERENCE);
-//                                        }
-//                                    }
+                                    for (AlignmentParameters.Method alignMethod : AlignmentParameters.Method.values()) {
+                                        for (AlignmentParameters.Preference alignPref : AlignmentParameters.Preference
+                                                .values()) {
+                                            methods.add(cmm + "-" + m + "-" + ptd + "-" + hde + "-" + alignMethod +
+                                                            "-" + alignPref);
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -309,9 +305,6 @@ public class AllTests {
                     if (currentTest.equals(Test.DIRECTION_ASSIGNMENT_PHASE)) {
                         directionMethod = DirectionMethod.string2Enum(method);
                         layerAssignmentMethod = LayerAssignmentMethod.string2Enum(method);
-                        if (layerAssignmentMethod == null) {
-                            layerAssignmentMethod = DEFAULT_LAYER_ASSIGNMENT_METHOD;
-                        }
                     }
 //                    System.out.println("da_precomp: " + ((double) (mxBean.getThreadCpuTime(Thread.currentThread().getId()) - startTime) / 1000000000.0));
                     sugiy.assignDirections(directionMethod, NUMBER_OF_FORCE_DIRECTED_ITERATIONS);

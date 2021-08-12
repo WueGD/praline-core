@@ -17,7 +17,7 @@ public class DrawingInformation {
     public final static double DEFAULT_BORDER_WIDTH = 2;
     public final static double DEFAULT_VERTEX_HEIGHT = 30; //24 //48;
     public final static double DEFAULT_VERTEX_MINIMUM_WIDTH = 12; //20;
-    public final static double DEFAULT_VERTEX_WIDTH_MAX_STRETCH_FACTOR = 16.0; //1.0; //Double.POSITIVE_INFINITY;
+    public final static double DEFAULT_VERTEX_WIDTH_MAX_STRETCH_FACTOR = 12.0; //1.0; //Double.POSITIVE_INFINITY;
     private static final Color DEFAULT_VERTEX_COLOR = Color.lightGray; //null for transparent;
     public final static double DEFAULT_PORT_WIDTH = 8;
     public final static double DEFAULT_PORT_HEIGHT = 4;
@@ -38,7 +38,7 @@ public class DrawingInformation {
     public static final boolean DEFAULT_SHOW_PORT_LABEL_FRAMES = false;
     public final static Color DEFAULT_PORT_GROUP_COLOR = Color.LIGHT_GRAY;
     public final static double DEFAULT_PORT_GROUP_BORDER = 2;
-    public final static boolean DEFAULT_SHOW_PORT_GROUPS = true;
+    public final static boolean DEFAULT_SHOW_PORT_GROUPS = false;
 
 
     //TODO: JZ: I think this should not be static, but instance-wide, moreover set font in constructor
