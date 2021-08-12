@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CsvDataExtraction {
@@ -71,23 +70,20 @@ public class CsvDataExtraction {
 //                    "2021-03-19_17-05-45"; //rr same as 3 before, but as weighted is with edge weights by edge length
 //                    "2021-08-02_11-01-23"; //rr + removing the current values map from crossing reduction
 //                    "2021-08-04_23-06-45"; //trying to avoid more maps in crossing reduction
-//                    "2021-08-05_14-52-31"; //rr + trying to avoid more maps in crossing reduction
-                    "2021-08-05_19-03-14"; //first test run for journal paper, 1 execution per graph
-
+                    "2021-08-05_14-52-31"; //rr + trying to avoid more maps in crossing reduction
 
     private static final String[] DATA_DIRS =
             {
 //                    "DA_lc-praline-package-2020-05-18",
-                    "DA_praline-package-2020-05-18",
-                    "DA_generated_2020-08-20_04-42-39",
+//                    "DA_generated_2020-08-20_04-42-39",
 //                    "CM_lc-praline-package-2020-05-18",
-                    "CM_praline-package-2020-05-18",
-                    "CM_generated_2020-08-20_04-42-39"
-//                    "CM_denkbares_08_06_2021/praline"
+//                    "CM_generated_2020-08-20_04-42-39"
+//                    "CM_praline-package-2020-05-18"
+                    "CM_denkbares_08_06_2021/praline"
             };
 
 
-    private static final boolean TABLE_CONTENT_OUTPUT = true; //otherwise better readable for humans
+    private static final boolean TABLE_CONTENT_OUTPUT = false; //otherwise better readable for humans
 
     private static final DecimalFormat OUTPUT_FORMAT_MEAN =
             new DecimalFormat("#.00", DecimalFormatSymbols.getInstance(Locale.US));
@@ -97,21 +93,19 @@ public class CsvDataExtraction {
             new DecimalFormat("#.0", DecimalFormatSymbols.getInstance(Locale.US));
     private static final DecimalFormat OUTPUT_PERCENT_FORMAT =
             new DecimalFormat("#", DecimalFormatSymbols.getInstance(Locale.US));
-    private static final String PERCENT_SYMBOL = ""; //" \\%";
+    private static final String PERCENT_SYMBOL = " \\%"; //"";
     private static final String INSTEAD_OF_LEADING_ZERO = "~";
     private static final boolean IGNORE_SD = true;
 
     private static final String[] CONSIDER_FILES = {"noc", "nob", "nodn", "space", "time"};
 
-    private static final String[] SORT_ENTRIES_ORDER = {"fd", "bfs", "ran",
-            "ports", "mixed", "nodes", "pseudoBCs", "otherSide", "relPos", "kieler"};
+    private static final String[] SORT_ENTRIES_ORDER = {"fd", "bfs", "ran"};
 
     //set to an unkonwn value or null to have relative to the best
-    private static final List<String> ENTRIES_RELATIVE_TO = Arrays.asList(
-            "ran",
-            "ran-ns",
-            "kieler"
-    );
+    private static final String ENTRIES_RELATIVE_TO =
+//            "ran";
+            "kieler";
+//            null;
 
     private static final Map<String, String> KNOWN_NAMES = new LinkedHashMap<>() {
         {
@@ -120,35 +114,15 @@ public class CsvDataExtraction {
             put("nodn", "\\ndv");
             put("ratio", "w:h");
             put("#vtcs", "vtcs");
-            put("ran", "\\rand");
-            put("fd-ns", "\\fd");
-            put("bfs-ns", "\\bfs");
-            put("ran-ns", "\\rand");
-            put("kieler", "\\kieler");
-//            put("ports-noMove-placeTurnings-pseudoBCs-firstComes-noPref", "\\ports + \\pseudobc");
-//            put("mixed-noMove-placeTurnings-pseudoBCs-firstComes-noPref", "\\mixed + \\pseudobc");
-//            put("nodes-noMove-placeTurnings-pseudoBCs-firstComes-noPref", "\\vertices + \\pseudobc");
-//            put("ports-noMove-placeTurnings-otherSide-firstComes-noPref", "\\ports + \\oppositebc");
-//            put("mixed-noMove-placeTurnings-otherSide-firstComes-noPref", "\\mixed + \\oppositebc");
-//            put("nodes-noMove-placeTurnings-otherSide-firstComes-noPref", "\\vertices + \\oppositebc");
-//            put("ports-noMove-placeTurnings-relPos-firstComes-noPref", "\\ports + \\relpos");
-//            put("mixed-noMove-placeTurnings-relPos-firstComes-noPref", "\\mixed + \\relpos");
-//            put("nodes-noMove-placeTurnings-relPos-firstComes-noPref", "\\vertices + \\relpos");
-            put("ports-noMove-placeTurnings-pseudoBCs-firstComes-noPref", "p + p");
-            put("mixed-noMove-placeTurnings-pseudoBCs-firstComes-noPref", "m + p");
-            put("nodes-noMove-placeTurnings-pseudoBCs-firstComes-noPref", "v + p");
-            put("ports-noMove-placeTurnings-otherSide-firstComes-noPref", "p + o");
-            put("mixed-noMove-placeTurnings-otherSide-firstComes-noPref", "m + o");
-            put("nodes-noMove-placeTurnings-otherSide-firstComes-noPref", "v + o");
-            put("ports-noMove-placeTurnings-relPos-firstComes-noPref", "p + r");
-            put("mixed-noMove-placeTurnings-relPos-firstComes-noPref", "m + r");
-            put("nodes-noMove-placeTurnings-relPos-firstComes-noPref", "v + r");
+//            put("ports-noMove-noPlaceTurnings", "ports");
+//            put("mixed-noMove-noPlaceTurnings", "mixed");
+//            put("nodes-noMove-noPlaceTurnings", "nodes");
+            put("ran", "rand");
         }
     };
 
     private static final List<String> IGNORE_FIELDS_CONTAINING_STRING =
-            Arrays.asList("#vtcs", "-ons", "-fdp", "-move", "-noPlaceTurnings", "-mis", "-prefLongE", "-area",
-                    "-ratio");
+            Arrays.asList("#vtcs"); //, "-move", "-placeTurnings", "-area", "-ratio");
 
     public static void main(String[] args) {
         for (String dataDir : DATA_DIRS) {
@@ -190,7 +164,6 @@ public class CsvDataExtraction {
 
 
             List<String> methods = new ArrayList<>(results.get(0).keySet());
-            sortMethods(methods);
 
             //special handling: space
             if (testCase.equals("space")) {
@@ -336,7 +309,7 @@ public class CsvDataExtraction {
             boolean hasReferenceRatio = false;
             for (String method : newMethods) {
                 Double entry = candidatesRatio.get(method);
-                if (ENTRIES_RELATIVE_TO.contains(method)) {
+                if (method.equals(ENTRIES_RELATIVE_TO)) {
                     referenceRatio = entry;
                     hasReferenceRatio = true;
                 }
@@ -384,7 +357,7 @@ public class CsvDataExtraction {
         boolean hasReferenceValue = false;
         for (String method : methods) {
             Integer entry = candidates.get(method);
-            if (ENTRIES_RELATIVE_TO.contains(method)) {
+            if (method.equals(ENTRIES_RELATIVE_TO)) {
                 referenceValue = entry;
                 hasReferenceValue = true;
             }
@@ -409,38 +382,30 @@ public class CsvDataExtraction {
     private static void sortMethods(List<String> methods) {
         for (int i = SORT_ENTRIES_ORDER.length - 1; i >= 0; i--) {
             //remove and append first
-            List<String> methodsReversed = new ArrayList<>(methods); //methods.stream().sorted(Comparator
-            // .reverseOrder())
-            // .collect
-            // (Collectors.toList());
-            Collections.reverse(methodsReversed);
-            for (String method : methodsReversed) {
-                if (method.contains(SORT_ENTRIES_ORDER[i])) {
-                    methods.remove(method);
-                    methods.add(0, method);
-                }
+            if (methods.contains(SORT_ENTRIES_ORDER[i])) {
+                methods.remove(SORT_ENTRIES_ORDER[i]);
+                methods.add(0, SORT_ENTRIES_ORDER[i]);
             }
         }
     }
 
     private static void tableHeadLineOutput(List<String> methods) {
-        System.out.print("\\multicolumn{1}{c}{}");
+        System.out.print("\\multicolumn{1}{c|}{}");
         String numberColumns = "" + (IGNORE_SD ? 2 : 3);
         String headLineSD = IGNORE_SD ? "" : " & sd";
         for (String method : methods) {
             System.out.print(" & \\multicolumn{" + numberColumns + "}{c}{" + string(method) + "}");
         }
         System.out.println(" \\\\");
-        for (String method : methods) {
-            System.out.print(" & $\\mu$" + headLineSD + " & $\\beta$");
-        }
-        System.out.println(" \\\\");
+        System.out.println(" & mean" + headLineSD + " & best & mean" + headLineSD
+                + " & best & mean" + headLineSD + " & best \\\\");
         System.out.println("\\hline");
     }
 
     private static void tableTextOutput(String testCase, List<String> methods,
                                         Map<String, NumberDistribution<Double>> method2relativeQuality,
                                         Map<String, NumberDistribution<Integer>> method2best) {
+        sortMethods(methods);
         System.out.print(string(testCase));
         //find best method to make it bold face
         int bestMethodIndex = -1;
@@ -476,6 +441,7 @@ public class CsvDataExtraction {
     private static void regularTextOutput(String testCase, int numberOfEvaluatedFiles, List<String> methods,
                                           Map<String, NumberDistribution<Double>> method2relativeQuality,
                                           Map<String, NumberDistribution<Integer>> method2best) {
+        sortMethods(methods);
         System.out.println();
         System.out.println("---" + testCase + "---");
         System.out.println("evaluated " + numberOfEvaluatedFiles + " files");
@@ -496,6 +462,7 @@ public class CsvDataExtraction {
 
     private static void regularTextOutputTime(List<String> methods,
                                               Map<String, NumberDistribution<Integer>> method2absoluteTime) {
+        sortMethods(methods);
         System.out.println();
         System.out.println("---analyzing absolute time---");
         System.out.println();
@@ -514,7 +481,7 @@ public class CsvDataExtraction {
     }
 
     private static String formatMean(double number, String method) {
-        String meanAsText = ENTRIES_RELATIVE_TO.contains(method) ?
+        String meanAsText = method.equals(ENTRIES_RELATIVE_TO) ?
                 OUTPUT_FORMAT_MEAN_RELATIVE_TO.format(number) : OUTPUT_FORMAT_MEAN.format(number);
         if (meanAsText.startsWith(".")) {
             meanAsText = INSTEAD_OF_LEADING_ZERO + meanAsText;

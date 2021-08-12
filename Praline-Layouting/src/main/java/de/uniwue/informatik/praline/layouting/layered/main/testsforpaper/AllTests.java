@@ -33,11 +33,11 @@ public class AllTests {
     public static final String[] DATA_SETS =
             {
 //                    "generated_2020-06-04_18-39-49",
-                    "generated_2020-08-20_04-42-39",
+//                    "generated_2020-08-20_04-42-39",
 //                    "lc-praline-package-2020-05-18"
-                    "praline-package-2020-05-18"
+//                    "praline-package-2020-05-18"
 //                    "praline-readable-2020-09-04"
-//                    "denkbares_08_06_2021/praline"
+                    "denkbares_08_06_2021/praline"
             };
     private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
     private static final String PATH_RESULTS =
@@ -48,7 +48,7 @@ public class AllTests {
 
     private static final Test[] CURRENT_TESTS =
             {
-                    Test.DIRECTION_ASSIGNMENT_PHASE,
+//                    Test.DIRECTION_ASSIGNMENT_PHASE,
                     Test.CROSSING_MINIMIZATION_PHASE
             };
 

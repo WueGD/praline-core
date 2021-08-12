@@ -17,19 +17,15 @@ public class CsvDataToSingleCsvExtraction {
             "Praline-Layouting/results/" +
 //                    "paper-all-tests-2020-06-10_06-18-04";
 //                    "paper-all-tests-2020-08-20_16-01-53";
-//                    "2020-11-26_04-07-39";
-                    "2021-08-05_19-03-14"; //first test run for journal paper, 1 execution per graph
-
+                    "2020-11-26_04-07-39";
 
     private static final String[] DATA_DIRS =
             {
 //                    "DA_lc-praline-package-2020-05-18",
-//                    "DA_praline-package-2020-05-18",
 //                    "DA_generated_2020-08-20_04-42-39",
 //                    "CM_lc-praline-package-2020-05-18",
-                    "CM_praline-package-2020-05-18",
-                    "CM_generated_2020-08-20_04-42-39"
-//                    "CM_denkbares_08_06_2021/praline"
+//                    "CM_generated_2020-08-20_04-42-39"
+                    "CM_praline-package-2020-05-18"
             };
 
     private static final String TARGET_PATH =
@@ -38,24 +34,20 @@ public class CsvDataToSingleCsvExtraction {
 
     private static final String[] TARGET_FILE_PREFIX =
             {
-                    "ncr",
-                    "nbp",
+                    "noc",
+                    "nob",
 //                    "nodn",
                     "time",
-                    "area"
+                    "space"
             };
-
     private static final String[] TARGET_FILES =
             {
 //                    "DA_lc-praline-package-2020-05-18",
-//                    "DA_praline-package-2020-05-18",
 //                    "DA_generated_2020-08-20_04-42-39",
 //                    "CM_lc-praline-package-2020-05-18",
-                    "CM_praline-package-2020-05-18",
-                    "CM_generated_2020-08-20_04-42-39"
-//                    "CM_denkbares_08_06_2021/praline"
+//                    "CM_generated_2020-08-20_04-42-39"
+                    "CM_praline-package-2020-05-18"
             };
-
     private static final String TARGET_FILE_SUFFIX = ".csv";
 
     private static final String[] CONSIDER_FILES =
@@ -80,19 +72,15 @@ public class CsvDataToSingleCsvExtraction {
     private static final Map<String, String> KNOWN_NAMES = new LinkedHashMap<>() {
         {
             put("#vtcs", "vtcs");
+//            put("ports-noMove-noPlaceTurnings", "ports");
+//            put("mixed-noMove-noPlaceTurnings", "mixed");
+//            put("nodes-noMove-noPlaceTurnings", "nodes");
             put("ran", "rand");
-            put("fd-ns", "fd");
-            put("bfs-ns", "bfs");
-            put("ran-ns", "rand");
-            put("ports-noMove-noPlaceTurnings-relPos-firstComes-noPref", "ports");
-            put("mixed-noMove-noPlaceTurnings-relPos-firstComes-noPref", "mixed");
-            put("nodes-noMove-noPlaceTurnings-relPos-firstComes-noPref", "nodes");
         }
     };
 
     private static final List<String> IGNORE_FIELDS_CONTAINING_STRING =
-            Arrays.asList("-ons", "-fdp", "-move", "-placeTurnings", "-mis", "-prefLongE", "-area", "-ratio"
-                    , "-pseudoBCs", "-otherSide");
+            Arrays.asList(); //"-move", "-placeTurnings", "-area", "-ratio");
 
     public static void main(String[] args) {
         File targetDir = new File(TARGET_PATH);
