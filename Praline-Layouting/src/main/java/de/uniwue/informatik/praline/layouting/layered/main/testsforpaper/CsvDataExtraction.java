@@ -73,23 +73,16 @@ public class CsvDataExtraction {
 //                    "2021-08-04_23-06-45"; //trying to avoid more maps in crossing reduction
 //                    "2021-08-05_14-52-31"; //rr + trying to avoid more maps in crossing reduction
 //                    "2021-08-05_19-03-14"; //first test run for journal paper, 1 execution per graph
-//                    "2021-08-07_10-47-21"; //old test run for journal, 10 execution per graph, praline-package-2020-05-18+
-//                    "2021-08-07_15-44-10"; //old test run for journal, 10 execution per graph, denkbares_08_06_2021+
-//                    "2021-08-11_15-19-06"; //test run 5 iterations repairPortPairings, praline-package-2020-05-18
-//                    "2021-08-11_15-44-04"; //test run 4 iterations repairPortPairings, praline-package-2020-05-18; incomplete
-//                    "2021-08-11_20-27-45"; //test run improved repairPortPairings, praline-package-2020-05-18; incomplete
-//                    "2021-08-12_02-30-58"; //test run for journal, 10 execution per graph, praline-package-2020-05-18+
-//                    "2021-08-12_11-13-10"; //cm run for journal, 10 execution per graph, praline-package-2020-05-18+
-//                    "2021-08-12_13-26-16"; //cm run for journal, 10 execution per graph, praline-package-2020-05-18+
-                    "ctga-all-tests2021-08-12"; //test run for cgta, 10 execution per graph, praline-package-2020-05-18+
+                    "2021-08-07_10-47-21"; //test run for journal, 10 execution per graph, praline-package-2020-05-18+
+//                    "2021-08-07_15-44-10"; //test run for journal, 10 execution per graph, denkbares_08_06_2021+
 
 
     private static final String[] DATA_DIRS =
             {
 //                    "DA_lc-praline-package-2020-05-18",
 //                    "DA_generated_2020-08-20_04-42-39",
-//                    "DA_praline-package-2020-05-18",
-//                    "DA_generated_2021-08-06_17-27-03",
+                    "DA_praline-package-2020-05-18",
+                    "DA_generated_2021-08-06_17-27-03",
 //                    "DA_denkbares_08_06_2021/praline",
 //                    "DA_generated_2021-08-07_15-24-08",
 //                    "CM_lc-praline-package-2020-05-18",
@@ -101,7 +94,7 @@ public class CsvDataExtraction {
             };
 
 
-    private static final boolean TABLE_CONTENT_OUTPUT = true; //otherwise better readable for humans
+    private static final boolean TABLE_CONTENT_OUTPUT = false; //otherwise better readable for humans
 
     private static final DecimalFormat OUTPUT_FORMAT_MEAN =
             new DecimalFormat("#.00", DecimalFormatSymbols.getInstance(Locale.US));
@@ -113,14 +106,14 @@ public class CsvDataExtraction {
             new DecimalFormat("#", DecimalFormatSymbols.getInstance(Locale.US));
     private static final String PERCENT_SYMBOL = ""; //" \\%";
     private static final String INSTEAD_OF_LEADING_ZERO = "~";
-    private static final boolean IGNORE_SD = true;
+    private static final boolean IGNORE_SD = false;
 
     private static final String[] CONSIDER_FILES = {"noc", "nob", "nodn", "space", "time"};
 
     private static final String[] SORT_ENTRIES_ORDER = {"fd", "bfs", "ran",
             "nodes", "mixed", "ports", "pseudoBCs", "otherSide", "relPos", "kieler"};
 
-    //set to an unknown value or null to have relative to the best
+    //set to an unkonwn value or null to have relative to the best
     private static final List<String> ENTRIES_RELATIVE_TO = Arrays.asList(
             "ran",
             "ran-ns",

@@ -19,15 +19,14 @@ public class CsvDataToSingleCsvExtraction {
 //                    "paper-all-tests-2020-08-20_16-01-53";
 //                    "2020-11-26_04-07-39";
 //                    "2021-08-05_19-03-14"; //first test run for journal paper, 1 execution per graph
-//                    "2021-08-07_10-47-21"; //test run for journal, 10 execution per graph, praline-package-2020-05-18+
+                    "2021-08-07_10-47-21"; //test run for journal, 10 execution per graph, praline-package-2020-05-18+
 //                    "2021-08-07_15-44-10"; //test run for journal, 10 execution per graph, denkbares_08_06_2021+
-                    "ctga-all-tests2021-08-12"; //test run for cgta, 10 execution per graph, praline-package-2020-05-18+
 
 
     private static final String[] DATA_DIRS =
             {
-//                    "DA_lc-praline-package-2020-05-18",
-//                    "DA_generated_2020-08-20_04-42-39",
+////                    "DA_lc-praline-package-2020-05-18",
+////                    "DA_generated_2020-08-20_04-42-39",
 //                    "DA_praline-package-2020-05-18",
 //                    "DA_generated_2021-08-06_17-27-03",
 //                    "CM_lc-praline-package-2020-05-18",
@@ -51,8 +50,8 @@ public class CsvDataToSingleCsvExtraction {
 
     private static final String[] TARGET_FILES =
             {
-//                    "DA_lc-praline-package-2020-05-18",
-//                    "DA_generated_2020-08-20_04-42-39",
+////                    "DA_lc-praline-package-2020-05-18",
+////                    "DA_generated_2020-08-20_04-42-39",
 //                    "DA_praline-package-2020-05-18",
 //                    "DA_generated_2021-08-06_17-27-03",
 //                    "CM_lc-praline-package-2020-05-18",
