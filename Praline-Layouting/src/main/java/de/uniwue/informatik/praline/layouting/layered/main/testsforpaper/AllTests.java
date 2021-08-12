@@ -50,7 +50,7 @@ public class AllTests {
 
     private static final Test[] CURRENT_TESTS =
             {
-                    Test.DIRECTION_ASSIGNMENT_PHASE,
+//                    Test.DIRECTION_ASSIGNMENT_PHASE,
                     Test.CROSSING_MINIMIZATION_PHASE
             };
 
