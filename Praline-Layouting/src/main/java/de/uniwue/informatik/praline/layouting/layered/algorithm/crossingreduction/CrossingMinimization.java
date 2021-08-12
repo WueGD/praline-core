@@ -31,6 +31,7 @@ public class CrossingMinimization {
     private Set<Vertex> adjacentToDummyTurningPoints;
     private Map<Vertex, SortingNode> vertex2sortingNode;
     private Map<Port, SortingNode> port2SortingNode;
+    private Map<SortingNode, Double> currentValues;
     private int maxRank;
     private int numberOfCrossings;
     private CrossingMinimizationMethod method;
@@ -98,6 +99,7 @@ public class CrossingMinimization {
         this.movePortsAdjToTurningDummiesToTheOutside = movePortsAdjToTurningDummiesToTheOutside;
         this.placeTurningDummiesNextToTheirVertex = placeTurningDummiesNextToTheirVertex;
 
+        this.currentValues = new LinkedHashMap<>();
         this.vertex2sortingNode = new LinkedHashMap<>();
         this.port2SortingNode = new LinkedHashMap<>();
         this.adjacentToDummyTurningPoints = new LinkedHashSet<>();
@@ -130,7 +132,7 @@ public class CrossingMinimization {
                     }
                 }
 
-                // initialize SortingNodes and currentPositions
+                // initialize SortingNodes and currentValues
                 if (considerPortsOfNode(node)) {
                     for (Port port : node.getPorts()) {
                         SortingNode sortingNode = new SortingNode(port);
@@ -150,7 +152,7 @@ public class CrossingMinimization {
         }
 
         //update current values acc to type
-        updateCurrentPositions();
+        updateCurrentValues();
     }
 
     private void doSweeping(boolean handlePortPairings, boolean allowPortPermuting, HandlingDeadEnds handlingDeadEnds) {
@@ -260,7 +262,7 @@ public class CrossingMinimization {
                 if (handlePortPairings && allowPortPermuting) {
                     reorderPortParingsAndTurningDummies(rank, upwards);
                 }
-                updateCurrentPositions();
+                updateCurrentValues();
             }
 
             hasChanged = checkIfHasChanged(lastStepNodeOrder, lastStepTopPortOrder, lastStepBottomPortOrder,
@@ -515,12 +517,12 @@ public class CrossingMinimization {
         }
     }
 
-    private void updateCurrentPositions() {
+    private void updateCurrentValues() {
         if (method.equals(CrossingMinimizationMethod.VERTICES)) {
             for (List<Vertex> layer : this.orders.getNodeOrder()) {
                 for (int i = 0; i < layer.size(); i++) {
                     Vertex vertex = layer.get(i);
-                    vertex2sortingNode.get(vertex).setCurrentPosition((double) i);
+                    currentValues.put(vertex2sortingNode.get(vertex), (double) i);
                 }
             }
         }
@@ -541,10 +543,10 @@ public class CrossingMinimization {
         double valueTop = 0.0;
         for (Vertex node : layer) {
             for (Port port : orders.getTopPortOrder().get(node)) {
-                port2SortingNode.get(port).setCurrentPosition(valueTop++);
+                currentValues.put(port2SortingNode.get(port), valueTop++);
             }
             for (Port port : orders.getBottomPortOrder().get(node)) {
-                port2SortingNode.get(port).setCurrentPosition(valueBottom++);
+                currentValues.put(port2SortingNode.get(port), valueBottom++);
             }
         }
     }
@@ -556,7 +558,7 @@ public class CrossingMinimization {
                 updateFractionalPortOrderPositions(nodePosition, node);
             }
             if (vertex2sortingNode.containsKey(node)) {
-                vertex2sortingNode.get(node).setCurrentPosition((double) nodePosition);
+                currentValues.put(vertex2sortingNode.get(node), (double) nodePosition);
             }
         }
     }
@@ -565,11 +567,11 @@ public class CrossingMinimization {
         double dividerTop = (double) orders.getTopPortOrder().get(node).size() + 1.0;
         double dividerBottom = (double) orders.getBottomPortOrder().get(node).size() + 1.0;
         for (int portPosition = 0; portPosition < orders.getTopPortOrder().get(node).size(); portPosition++) {
-            port2SortingNode.get(orders.getTopPortOrder().get(node).get(portPosition)).setCurrentPosition(
+            currentValues.put(port2SortingNode.get(orders.getTopPortOrder().get(node).get(portPosition)),
                     (-0.5 + (double) nodePosition + (((double) portPosition + 1.0) / dividerTop)));
         }
         for (int portPosition = 0; portPosition < orders.getBottomPortOrder().get(node).size(); portPosition++) {
-            port2SortingNode.get(orders.getBottomPortOrder().get(node).get(portPosition)).setCurrentPosition(
+            currentValues.put(port2SortingNode.get(orders.getBottomPortOrder().get(node).get(portPosition)),
                     (-0.5 + (double) nodePosition + (((double) portPosition + 1.0) / dividerBottom)));
         }
     }
@@ -713,8 +715,8 @@ public class CrossingMinimization {
         for (Port port : ports) {
             Port otherPort = PortUtils.getAdjacentPort(port);
             double adjacentObjectPosition = port2SortingNode.get(otherPort) != null ?
-                    port2SortingNode.get(otherPort).getCurrentPosition():
-                    vertex2sortingNode.get(otherPort.getVertex()).getCurrentPosition();
+                    currentValues.get(port2SortingNode.get(otherPort)) :
+                    currentValues.get(vertex2sortingNode.get(otherPort.getVertex()));
             port2adjacentNodePosition.put(port, adjacentObjectPosition);
         }
 
@@ -877,7 +879,7 @@ public class CrossingMinimization {
     }
 
     private void orderPortsFinally(Map<Vertex, List<Port>> currentTPortOrder, Map<Vertex, List<Port>> currentBPortOrder,
-                                   boolean updateCurrentPositions, boolean upwards, boolean isFinalSorting,
+                                   boolean updateCurrentValues, boolean upwards, boolean isFinalSorting,
                                    boolean handlePortPairings, boolean ignoreNodesWithPairings) {
         List<Map<Vertex, List<Port>>> portOrdersToBeSorted = Arrays.asList(currentBPortOrder, currentTPortOrder);
 
@@ -910,7 +912,7 @@ public class CrossingMinimization {
                     }
                 }
             }
-            if (updateCurrentPositions) {
+            if (updateCurrentValues) {
                 if (method.equals(CrossingMinimizationMethod.PORTS)) {
                     updatePortOrderPositions(layer);
                 } else {
@@ -1504,8 +1506,10 @@ public class CrossingMinimization {
         double sumBarycenter = 0;
         int countRelevantAdjacencies = 0;
         for (SortingNode adjacentNode : adjacentNodesOnAdjacentLayer) {
-            sumBarycenter += adjacentNode.getCurrentPosition();
-            ++countRelevantAdjacencies;
+            if (currentValues.containsKey(adjacentNode)) {
+                sumBarycenter += currentValues.get(adjacentNode);
+                ++countRelevantAdjacencies;
+            }
         }
         return sumBarycenter / (double) countRelevantAdjacencies;
     }
@@ -1570,7 +1574,6 @@ public class CrossingMinimization {
         private Port port;
         private Vertex vertex;
         private boolean representsPort;
-        private double currentPosition;
 
         SortingNode(Port port) {
             this.port =port;
@@ -1601,14 +1604,6 @@ public class CrossingMinimization {
          */
         public Object getStoredObject() {
             return port != null ? port : vertex;
-        }
-
-        public double getCurrentPosition() {
-            return currentPosition;
-        }
-
-        public void setCurrentPosition(double currentPosition) {
-            this.currentPosition = currentPosition;
         }
     }
 }
