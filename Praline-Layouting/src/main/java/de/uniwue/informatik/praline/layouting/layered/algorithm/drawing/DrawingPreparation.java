@@ -332,11 +332,7 @@ public class DrawingPreparation {
     }
 
     private void shiftPort(PortComposition portComposition, double shiftValue) {
-        shiftPort(portComposition, shiftValue, false);
-    }
-
-    private void shiftPort(PortComposition portComposition, double shiftValue, boolean forceShifting) {
-        if (diableShifting && !forceShifting) {
+        if (diableShifting) {
             return;
         }
         if (portComposition instanceof Port) {
@@ -487,7 +483,7 @@ public class DrawingPreparation {
                 double targetYPos = yPosBottom - portShape.getHeight();
                 if (portShape.getYPosition() != targetYPos) {
                     double shiftValue = (yPosBottom - portShape.getHeight()) - portShape.getYPosition();
-                    shiftPort(port, shiftValue, true); //here we force shifting bc we also need it in kieler layouter
+                    shiftPort(port, shiftValue);
                 }
             }
             for (Port port : sortingOrder.getTopPortOrder().get(node)) {
@@ -495,7 +491,7 @@ public class DrawingPreparation {
                 double targetYPos = yPosTop;
                 if (portShape.getYPosition() != targetYPos) {
                     double shiftValue = yPosTop - portShape.getYPosition();
-                    shiftPort(port, shiftValue, true); //here we force shifting bc we also need it in kieler layouter
+                    shiftPort(port, shiftValue);
                 }
             }
         }

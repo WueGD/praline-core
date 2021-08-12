@@ -38,7 +38,7 @@ public class DrawingInformation {
     public static final boolean DEFAULT_SHOW_PORT_LABEL_FRAMES = false;
     public final static Color DEFAULT_PORT_GROUP_COLOR = Color.LIGHT_GRAY;
     public final static double DEFAULT_PORT_GROUP_BORDER = 2;
-    public final static boolean DEFAULT_SHOW_PORT_GROUPS = false;
+    public final static boolean DEFAULT_SHOW_PORT_GROUPS = true;
 
 
     //TODO: JZ: I think this should not be static, but instance-wide, moreover set font in constructor
