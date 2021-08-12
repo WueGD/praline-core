@@ -8,7 +8,6 @@ import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.io.output.util.DrawingUtils;
 import de.uniwue.informatik.praline.layouting.PralineLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimization;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimization2;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.HandlingDeadEnds;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.drawing.DrawingPreparation;
@@ -328,7 +327,7 @@ public class SugiyamaLayouter implements PralineLayouter {
             DummyNodeCreation dnc = new DummyNodeCreation(this);
             dnc.assignWrongSidePortsTemporaryToOtherSide();
             dnc.createDummyNodesForEdges();
-            CrossingMinimization2 cm1 = new CrossingMinimization2(this);
+            CrossingMinimization cm1 = new CrossingMinimization(this);
             SortingOrder result = cm1.layerSweepWithBarycenterHeuristic(cmMethod, orders,
                     !useFDLayoutForInitialNodeOrder, movePortsAdjToTurningDummiesToTheOutside,
                     placeTurningDummiesNextToTheirVertex, false, handlingDeadEnds);
@@ -356,7 +355,7 @@ public class SugiyamaLayouter implements PralineLayouter {
             for (Edge edge : dummyNodeData.getDummyEdge2RealEdge().keySet()) {
                 this.dummyEdge2RealEdge.put(edge, dummyNodeData.getDummyEdge2RealEdge().get(edge));
             }
-            CrossingMinimization2 cm2 = new CrossingMinimization2(this);
+            CrossingMinimization cm2 = new CrossingMinimization(this);
             orders = cm2.layerSweepWithBarycenterHeuristic(cmMethod, orders, false,
                     movePortsAdjToTurningDummiesToTheOutside, placeTurningDummiesNextToTheirVertex, true,
                     handlingDeadEnds);

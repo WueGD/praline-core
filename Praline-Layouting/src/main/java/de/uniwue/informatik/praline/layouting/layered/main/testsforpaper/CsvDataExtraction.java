@@ -67,10 +67,7 @@ public class CsvDataExtraction {
 //                    "2021-03-19_02-20-08"; //rr maximum independent set for determining alignments in node placement
 //                    "2021-03-19_02-47-52"; //rr same as before + arbitrary node width
 //                    "2021-03-19_03-04-21"; //rr with arbitrary node width
-//                    "2021-03-19_17-05-45"; //rr same as 3 before, but as weighted is with edge weights by edge length
-//                    "2021-08-02_11-01-23"; //rr + removing the current values map from crossing reduction
-//                    "2021-08-04_23-06-45"; //trying to avoid more maps in crossing reduction
-                    "2021-08-05_14-52-31"; //rr + trying to avoid more maps in crossing reduction
+                    "2021-03-19_17-05-45"; //rr same as 3 before, but as weighted is with edge weights by edge length
 
     private static final String[] DATA_DIRS =
             {
@@ -78,8 +75,7 @@ public class CsvDataExtraction {
 //                    "DA_generated_2020-08-20_04-42-39",
 //                    "CM_lc-praline-package-2020-05-18",
 //                    "CM_generated_2020-08-20_04-42-39"
-//                    "CM_praline-package-2020-05-18"
-                    "CM_denkbares_08_06_2021/praline"
+                    "CM_praline-package-2020-05-18"
             };
 
 
