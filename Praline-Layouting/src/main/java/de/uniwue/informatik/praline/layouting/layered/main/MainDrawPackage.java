@@ -27,13 +27,13 @@ public class MainDrawPackage {
 //            "Praline-Layouting/data/generated_2020-08-20_04-42-39";
 //            "Praline-Layouting/data/generated_2021-03-15_17-32-05";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18";
-            "Praline-Layouting/data/praline-package-2020-05-18";
+//            "Praline-Layouting/data/praline-package-2020-05-18";
 //            "Praline-Layouting/data/generated_2021-08-06_17-27-03"; //based on "praline-package-2020-05-18"
 //            "Praline-Layouting/data/praline-readable-2020-09-04";
 //            "Praline-Layouting/data/denkbares_08_06_2021/praline";
 //            "Praline-Layouting/data/generated_2021-08-07_15-24-08"; //based on "denkbares_08_06_2021/praline"
 //            "Praline-Layouting/data/5plansOriginalPseudo";
-//            "Praline-Layouting/data/example-cgta";
+            "Praline-Layouting/data/example-cgta";
 
 
     private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");

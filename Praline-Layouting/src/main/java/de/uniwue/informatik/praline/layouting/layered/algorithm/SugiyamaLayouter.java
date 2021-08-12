@@ -394,7 +394,7 @@ public class SugiyamaLayouter implements PralineLayouter {
             np.initialize();
             np.initializeStructure();
             dummyPortsForLabelPadding = np.dummyPortsForWidth(true);
-            np.reTransformStructure(false);
+            np.reTransformStructure(true);
         }
         else {
             for (SugiyamaLayouter componentLayouter : componentLayouters) {
