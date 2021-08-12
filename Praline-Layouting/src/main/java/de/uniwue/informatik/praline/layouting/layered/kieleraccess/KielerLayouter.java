@@ -9,7 +9,7 @@ import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.layouting.PralineLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
-import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimization2;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignmentMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
@@ -287,7 +287,7 @@ public class KielerLayouter implements PralineLayouter {
                     sugiyForInternalUse.getDummyPortsForLabelPadding().putIfAbsent(pralinePlug, new LinkedHashSet<>());
                     Set<Port> dummyPorts = sugiyForInternalUse.getDummyPortsForLabelPadding().get(pralinePlug);
                     boolean isFinalSorting = i >= iterationsOfPortPairRepairing - 1;
-                        allPortPairingsSeparated = CrossingMinimization2.repairPortPairings(sugiyForInternalUse,
+                        allPortPairingsSeparated = CrossingMinimization.repairPortPairings(sugiyForInternalUse,
                                 pralinePlug, bottomPortOrder, topPortOrder, false, isFinalSorting,
                                 isFinalSorting, isFinalSorting, isFinalSorting ? dummyPorts : null);
                 }
