@@ -23,6 +23,9 @@ public class Node {
     @SerializedName("state")
     @Expose
     private Map<String, String> state;
+    @SerializedName("metrics")
+    @Expose
+    private Map<String, Double> metrics;
 
     public String getId() {
         return this.id;
@@ -66,5 +69,15 @@ public class Node {
     public void setState(Map<String, String> state)
     {
         this.state = state;
+    }
+
+    public Map<String, Double> getMetrics()
+    {
+        return metrics;
+    }
+
+    public void setMetrics(Map<String, Double> metrics)
+    {
+        this.metrics = metrics;
     }
 }

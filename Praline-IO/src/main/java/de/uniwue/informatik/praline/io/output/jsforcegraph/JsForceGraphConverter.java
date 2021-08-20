@@ -66,7 +66,7 @@ public class JsForceGraphConverter
 
     // Possibility to extend exported data using inheritance
     @SuppressWarnings("unused")
-    protected void addVertexAttributes( Vertex vertex, Node node)
+    protected void addVertexAttributes(Vertex vertex, Node node)
     { }
 
     // Possibility to extend exported data using inheritance
