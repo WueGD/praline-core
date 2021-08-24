@@ -27,19 +27,20 @@ public class JsForceGraphExporter
         {
             Node node = new Node();
 
-            // We first try to use the reference as ID, otherwise we construct an unique ID using the counter
-            // Different prefixes ensure that these two variants don't conflict.
-            if (vertex.getReference() != null && !vertex.getReference().isBlank())
+            // We first try to use the reference as ID, otherwise we construct a unique ID using the counter.
+            // We also ensure that we do not accidentally construct one of the already used references using the counter.
+            String reference = vertex.getReference();
+            if (reference != null && !reference.isBlank() && !usedIds.contains(reference))
             {
-                String newId = "r" + vertex.getReference();
+                node.setId(reference);
+            }
+            while (node.getId() == null)
+            {
+                String newId = "c" + jsIdCounter++;
                 if (!usedIds.contains(newId))
                 {
                     node.setId(newId);
                 }
-            }
-            if (node.getId() == null)
-            {
-                node.setId("c" + jsIdCounter++);
             }
             usedIds.add(node.getId());
 
