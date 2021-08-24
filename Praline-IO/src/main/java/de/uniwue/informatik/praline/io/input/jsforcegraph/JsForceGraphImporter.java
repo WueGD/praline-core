@@ -15,10 +15,6 @@ import java.util.Map;
 
 public class JsForceGraphImporter
 {
-    public JsForceGraphImporter()
-    {
-    }
-
     public Graph convertGraph(JsForceGraph jsForceGraph)
     {
         Graph graph = new Graph();

@@ -2,7 +2,6 @@ package de.uniwue.informatik.praline.io.output.jsforcegraph;
 
 import de.uniwue.informatik.praline.datastructure.graphs.Edge;
 import de.uniwue.informatik.praline.datastructure.graphs.Graph;
-import de.uniwue.informatik.praline.datastructure.graphs.Port;
 import de.uniwue.informatik.praline.datastructure.graphs.Vertex;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
@@ -10,34 +9,40 @@ import de.uniwue.informatik.praline.io.model.jsforcegraph.JsForceGraph;
 import de.uniwue.informatik.praline.io.model.jsforcegraph.Link;
 import de.uniwue.informatik.praline.io.model.jsforcegraph.Node;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class JsForceGraphExporter
 {
-    private final Map<Vertex, Node> vertexMap = new LinkedHashMap<>();
-
-    public JsForceGraphExporter()
-    {
-    }
-
     public JsForceGraph convertGraph(Graph graph)
     {
         JsForceGraph jsForceGraph = new JsForceGraph();
         int jsIdCounter = 1;
+        final Set<String> usedIds = new HashSet<>();
+        final Map<Vertex, Node> vertexMap = new LinkedHashMap<>();
 
         for (Vertex vertex : graph.getVertices())
         {
             Node node = new Node();
+
+            // We first try to use the reference as ID, otherwise we construct an unique ID using the counter
+            // Different prefixes ensure that these two variants don't conflict.
             if (vertex.getReference() != null && !vertex.getReference().isBlank())
             {
-                node.setId(vertex.getReference());
+                String newId = "r" + vertex.getReference();
+                if (!usedIds.contains(newId))
+                {
+                    node.setId(newId);
+                }
             }
-            else
+            if (node.getId() == null)
             {
-                node.setId(Integer.toString(jsIdCounter));
-                jsIdCounter++;
+                node.setId("c" + jsIdCounter++);
             }
+            usedIds.add(node.getId());
+
             Label<?> mainLabel = vertex.getLabelManager().getMainLabel();
             if (mainLabel instanceof TextLabel)
             {
@@ -45,7 +50,7 @@ public class JsForceGraphExporter
             }
             this.addVertexAttributes(vertex, node);
             jsForceGraph.getNodes().add(node);
-            this.vertexMap.put(vertex, node);
+            vertexMap.put(vertex, node);
         }
 
         for (Edge edge : graph.getEdges())
@@ -53,8 +58,8 @@ public class JsForceGraphExporter
             Link link = new Link();
             if (edge.getPorts().size() > 1)
             {
-                link.setSource(this.getVertexNodeId(edge.getPorts().get(0)));
-                link.setTarget(this.getVertexNodeId(edge.getPorts().get(1)));
+                link.setSource(vertexMap.get(edge.getPorts().get(0).getVertex()).getId());
+                link.setTarget(vertexMap.get(edge.getPorts().get(1).getVertex()).getId());
             }
             Label<?> mainLabel = edge.getLabelManager().getMainLabel();
             if (mainLabel instanceof TextLabel)
@@ -66,12 +71,6 @@ public class JsForceGraphExporter
         }
 
         return jsForceGraph;
-    }
-
-    private String getVertexNodeId(Port port)
-    {
-        Vertex vertex = port.getVertex();
-        return this.vertexMap.get(vertex).getId();
     }
 
     // Possibility to extend exported data using inheritance
