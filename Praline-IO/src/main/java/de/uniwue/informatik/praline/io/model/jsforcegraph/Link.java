@@ -1,22 +1,22 @@
 
-package de.uniwue.informatik.praline.io.output.jsforcegraph.model;
+package de.uniwue.informatik.praline.io.model.jsforcegraph;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Map;
 
-public class Node {
+public class Link {
 
-    @SerializedName("id")
+    @SerializedName("source")
     @Expose
-    private String id;
+    private String source;
+    @SerializedName("target")
+    @Expose
+    private String target;
     @SerializedName("name")
     @Expose
     private String name;
-    @SerializedName("val")
-    @Expose
-    private Integer val;
     @SerializedName("tags")
     @Expose
     private Map<String, String> tags;
@@ -27,12 +27,20 @@ public class Node {
     @Expose
     private Map<String, Double> metrics;
 
-    public String getId() {
-        return this.id;
+    public String getSource() {
+        return this.source;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public String getTarget() {
+        return this.target;
+    }
+
+    public void setTarget(String target) {
+        this.target = target;
     }
 
     public String getName() {
@@ -41,14 +49,6 @@ public class Node {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Integer getVal() {
-        return this.val;
-    }
-
-    public void setVal(Integer val) {
-        this.val = val;
     }
 
     public Map<String, String> getTags()

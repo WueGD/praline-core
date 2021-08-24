@@ -1,5 +1,5 @@
 
-package de.uniwue.informatik.praline.io.output.jsforcegraph.model;
+package de.uniwue.informatik.praline.io.model.jsforcegraph;
 
 import java.util.LinkedList;
 import java.util.List;
