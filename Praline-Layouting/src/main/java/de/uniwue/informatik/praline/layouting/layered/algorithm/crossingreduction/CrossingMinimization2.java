@@ -1056,11 +1056,34 @@ public class CrossingMinimization2 {
                     currentPortOrderMap.replace(node, portsOfThisNodeSide);
                 }
                 if (handlePortPairings) {
-                    int iterations = 4;
-                    for (int i = 0; i < iterations; i++) {
-                        repairPortPairings(sugy, node, currentBPortOrder, currentTPortOrder,
-                                ((upwards ? 0 : 1) + i) % 2 == 0, isFinalSorting && i == iterations - 1, true, false,
-                                null);
+                    boolean allPortPairingsSeparated = false;
+                    int maxTries = 20;
+                    int tries = 0;
+                    do {
+                        int iterations = 4;
+                        for (int i = 0; i < iterations; i++) {
+                            allPortPairingsSeparated =
+                                    repairPortPairings(sugy, node, currentBPortOrder, currentTPortOrder,
+                                            ((upwards ? 0 : 1) + i) % 2 == 0, isFinalSorting && i == iterations - 1,
+                                            true, false, null);
+                        }
+                    }
+                    while (isFinalSorting && !allPortPairingsSeparated && tries++ < maxTries);
+
+                    if (isFinalSorting) {
+                        //check port pairings
+                        if (!allPortPairingsSeparated) {
+                            System.out.println("Warning! No valid arrangement of port pairings found for plug "
+                                    + sugy.getPlugs().get(node).getContainedVertices() + ".");
+                        }
+                        //check port groups
+                        List<Port> allPortsCombined = new ArrayList<>(currentBPortOrder.get(node));
+                        allPortsCombined.addAll(currentTPortOrder.get(node));
+                        if (!PortUtils.arrangmentOfPortsIsValidAccordingToPortGroups(allPortsCombined, node.getPortCompositions())) {
+                            System.out.println("Warning! Constraints due to port groups " +
+                                    "not completely fulfilled (possibly because of conflicts with port pairings) at plug "
+                                    + sugy.getPlugs().get(node).getContainedVertices() + ".");
+                        }
                     }
                 }
             }
@@ -1189,12 +1212,14 @@ public class CrossingMinimization2 {
      * @param dummyPortsForAbsoluteIndex
      *          if portsNeedAbsoluteSameIndex, it will try to reach the same index by inserting dummy ports.
      *          This can be set to null (and that's the default).
+     * @return
+     *          confirmed success (it was checked that all port pairings are separated)
      */
-    public static void repairPortPairings(SugiyamaLayouter sugy, Vertex node, Map<Vertex, List<Port>> currentBPortOrder,
-                                          Map<Vertex, List<Port>> currentTPortOrder, boolean preferredSwapSideTop,
-                                          boolean isFinalSorting, boolean allowForceSwapping,
-                                          boolean portsNeedAbsoluteSameIndex,
-                                          Collection<Port> dummyPortsForAbsoluteIndex) {
+    public static boolean repairPortPairings(SugiyamaLayouter sugy, Vertex node, Map<Vertex, List<Port>> currentBPortOrder,
+                                             Map<Vertex, List<Port>> currentTPortOrder, boolean preferredSwapSideTop,
+                                             boolean isFinalSorting, boolean allowForceSwapping,
+                                             boolean portsNeedAbsoluteSameIndex,
+                                             Collection<Port> dummyPortsForAbsoluteIndex) {
         List<Port> bottomOrder = currentBPortOrder.get(node);
         List<Port> topOrder = currentTPortOrder.get(node);
 
@@ -1347,7 +1372,7 @@ public class CrossingMinimization2 {
         }
 
         //check success
-        if (isFinalSorting && !portsNeedAbsoluteSameIndex) {
+        if (isFinalSorting) {
             //check port pairings
             boolean portParingsValid = true;
             for (Pair<Port, Port> portPairing : allPortPairings) {
@@ -1359,19 +1384,9 @@ public class CrossingMinimization2 {
                     portParingsValid = false;
                 }
             }
-            if (!portParingsValid) {
-                System.out.println("Warning! No valid arrangement of port pairings found for plug "
-                        + sugy.getPlugs().get(node).getContainedVertices() + ".");
-            }
-            //check port groups
-            List<Port> allPortsCombined = new ArrayList<>(bottomOrder);
-            allPortsCombined.addAll(topOrder);
-            if (!PortUtils.arrangmentOfPortsIsValidAccordingToPortGroups(allPortsCombined, node.getPortCompositions())) {
-                System.out.println("Warning! Constraints due to port groups " +
-                        "not completely fulfilled (possibly because of conflicts with port pairings) at plug "
-                        + sugy.getPlugs().get(node).getContainedVertices() + ".");
-            }
+            return portParingsValid;
         }
+        return false;
     }
 
     private static int addDummyPort(Port pairedPort, int indexPairedPort, boolean addAfter, List<Port> portOrdering,

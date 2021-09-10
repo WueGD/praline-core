@@ -46,7 +46,7 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0019-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0024-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0282-praline.json";
-            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0414-praline.json";
+//            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0414-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0434-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0462-praline.json"; //1 component
 //            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0001-praline.json";
@@ -54,6 +54,7 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0011-praline.json";
 //            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0140-praline.json";
 //            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0107-praline.json";
+            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0109-praline.json";
 //            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0104-praline.json";
 //            "Praline-Layouting/data/node-size-test.json";
 //            //small, but many vertex groups
