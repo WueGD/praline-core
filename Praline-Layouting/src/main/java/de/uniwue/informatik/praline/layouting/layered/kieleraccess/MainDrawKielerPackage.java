@@ -47,7 +47,7 @@ public class MainDrawKielerPackage {
 
     private static final int NUMBER_OF_FORCE_DIRECTED_ITERATIONS = 1; //10;
 
-    private static final int NUMBER_OF_PARALLEL_THREADS = 1; //8;
+    private static final int NUMBER_OF_PARALLEL_THREADS = 8;
 
 
     private static int progressCounter = 0;
