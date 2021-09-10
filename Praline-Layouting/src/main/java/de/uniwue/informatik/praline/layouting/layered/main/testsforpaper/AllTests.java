@@ -35,8 +35,9 @@ public class AllTests {
 //                    "generated_2020-06-04_18-39-49",
 //                    "generated_2020-08-20_04-42-39",
 //                    "lc-praline-package-2020-05-18"
-                    "praline-package-2020-05-18"
+//                    "praline-package-2020-05-18"
 //                    "praline-readable-2020-09-04"
+                    "denkbares_08_06_2021/praline"
             };
     private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
     private static final String PATH_RESULTS =
@@ -196,19 +197,24 @@ public class AllTests {
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUMBER_OF_PARALLEL_THREADS);
         progressCounter = 0;
         totalSteps = 0;
-        for (String pathsDataSet : DATA_SETS) {
+        for (String pathDataSet : DATA_SETS) {
             for (Test currentTest : CURRENT_TESTS) {
 
-                String targetPath = PATH_RESULTS + File.separator + currentTest + "_" + pathsDataSet;
+                String targetPath = PATH_RESULTS + File.separator + currentTest + "_" + pathDataSet;
 
                 new File(targetPath).mkdirs();
 
-                List<File> files = new LinkedList<>();
+                List<File> files = new ArrayList<>();
 
-                File dir = new File(PATH_DATA_SET + File.separator + pathsDataSet);
+                File dir = new File(PATH_DATA_SET + File.separator + pathDataSet);
                 File[] directoryListing = dir.listFiles();
                 if (directoryListing != null) {
-                    files.addAll(Arrays.asList(directoryListing));
+                    for (File child : directoryListing) {
+                        if (child.getName().endsWith(".json") &&
+                                (!PATH_DATA_SET.endsWith("readable-2020-09-04") || child.getName().endsWith("-praline.json"))) {
+                            files.add(child);
+                        }
+                    }
                 }
 
                 totalSteps += files.size() * noi * Test.getMethods(currentTest).size();
