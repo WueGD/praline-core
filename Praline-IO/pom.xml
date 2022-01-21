@@ -5,7 +5,7 @@
     <parent>
         <artifactId>Praline-Core</artifactId>
         <groupId>praline</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -19,8 +19,7 @@
         <dependency>
             <groupId>praline</groupId>
             <artifactId>Praline-Data-Structure</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
+            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

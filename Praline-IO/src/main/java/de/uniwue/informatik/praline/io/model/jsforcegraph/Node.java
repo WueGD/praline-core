@@ -26,6 +26,15 @@ public class Node {
     @SerializedName("metrics")
     @Expose
     private Map<String, Double> metrics;
+    @SerializedName("fx")
+    @Expose
+    private Double fx;
+    @SerializedName("fy")
+    @Expose
+    private Double fy;
+    @SerializedName("fz")
+    @Expose
+    private Double fz;
 
     public String getId() {
         return this.id;
@@ -79,5 +88,35 @@ public class Node {
     public void setMetrics(Map<String, Double> metrics)
     {
         this.metrics = metrics;
+    }
+
+    public Double getFx()
+    {
+        return fx;
+    }
+
+    public void setFx(Double fx)
+    {
+        this.fx = fx;
+    }
+
+    public Double getFy()
+    {
+        return fy;
+    }
+
+    public void setFy(Double fy)
+    {
+        this.fy = fy;
+    }
+
+    public Double getFz()
+    {
+        return fz;
+    }
+
+    public void setFz(Double fz)
+    {
+        this.fz = fz;
     }
 }

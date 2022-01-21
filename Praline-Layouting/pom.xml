@@ -5,7 +5,7 @@
     <parent>
         <artifactId>Praline-Core</artifactId>
         <groupId>praline</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -14,13 +14,13 @@
         <dependency>
             <groupId>praline</groupId>
             <artifactId>Praline-Data-Structure</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${revision}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>praline</groupId>
             <artifactId>Praline-IO</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${revision}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -41,7 +41,7 @@
         <dependency>
             <groupId>praline</groupId>
             <artifactId>Jung-Layouting</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${revision}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

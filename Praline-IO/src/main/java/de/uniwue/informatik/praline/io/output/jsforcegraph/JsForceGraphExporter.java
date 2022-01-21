@@ -16,7 +16,7 @@ import java.util.Set;
 
 public class JsForceGraphExporter
 {
-    public JsForceGraph convertGraph(Graph graph)
+    public JsForceGraph convertGraph(Graph graph, boolean exportCoordinates)
     {
         JsForceGraph jsForceGraph = new JsForceGraph();
         int jsIdCounter = 1;
@@ -49,6 +49,14 @@ public class JsForceGraphExporter
             {
                 node.setName(mainLabel.toString());
             }
+
+            if (exportCoordinates)
+            {
+                node.setFx(vertex.getShape().getXPosition());
+                node.setFy(0.0);
+                node.setFz(vertex.getShape().getYPosition());
+            }
+
             this.addVertexAttributes(vertex, node);
             jsForceGraph.getNodes().add(node);
             vertexMap.put(vertex, node);
