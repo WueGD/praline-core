@@ -4,6 +4,7 @@ import de.uniwue.informatik.praline.datastructure.graphs.Edge;
 import de.uniwue.informatik.praline.datastructure.graphs.Graph;
 import de.uniwue.informatik.praline.datastructure.graphs.Port;
 import de.uniwue.informatik.praline.datastructure.graphs.Vertex;
+import de.uniwue.informatik.praline.datastructure.labels.ReferenceIconLabel;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.io.model.jsforcegraph.JsForceGraph;
 import de.uniwue.informatik.praline.io.model.jsforcegraph.Link;
@@ -23,9 +24,11 @@ public class JsForceGraphImporter
         for (Node node : jsForceGraph.getNodes())
         {
             Vertex vertex = new Vertex();
-            String name = node.getName();
-            if (name != null) {
+            if (node.getName() != null) {
                 vertex.getLabelManager().setMainLabel(new TextLabel(node.getName()));
+            }
+            if (node.getIcon() != null) {
+                vertex.getLabelManager().addLabel(new ReferenceIconLabel(node.getIcon()));
             }
             vertex.setReference(node.getId());
             idVertexMap.put(node.getId(), vertex);

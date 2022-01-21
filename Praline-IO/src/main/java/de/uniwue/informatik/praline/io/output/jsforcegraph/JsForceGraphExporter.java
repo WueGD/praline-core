@@ -4,6 +4,7 @@ import de.uniwue.informatik.praline.datastructure.graphs.Edge;
 import de.uniwue.informatik.praline.datastructure.graphs.Graph;
 import de.uniwue.informatik.praline.datastructure.graphs.Vertex;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
+import de.uniwue.informatik.praline.datastructure.labels.ReferenceIconLabel;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.io.model.jsforcegraph.JsForceGraph;
 import de.uniwue.informatik.praline.io.model.jsforcegraph.Link;
@@ -44,12 +45,21 @@ public class JsForceGraphExporter
             }
             usedIds.add(node.getId());
 
+            // Handle main label (usually this is a TextLabel)
             Label<?> mainLabel = vertex.getLabelManager().getMainLabel();
             if (mainLabel instanceof TextLabel)
             {
                 node.setName(mainLabel.toString());
             }
 
+            // Handle ReferenceIconLabel if existing
+            vertex.getLabelManager().getLabels().stream()
+                    .filter(ReferenceIconLabel.class::isInstance)
+                    .map(ReferenceIconLabel.class::cast)
+                    .findFirst()
+                    .ifPresent(l -> node.setIcon(l.getReference()));
+
+            // Store coordinates if requested
             if (exportCoordinates)
             {
                 node.setFx(vertex.getShape().getXPosition());
@@ -57,7 +67,9 @@ public class JsForceGraphExporter
                 node.setFz(vertex.getShape().getYPosition());
             }
 
+            // Add possible extended attributes (if this class is derived from)
             this.addVertexAttributes(vertex, node);
+
             jsForceGraph.getNodes().add(node);
             vertexMap.put(vertex, node);
         }

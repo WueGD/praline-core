@@ -35,6 +35,9 @@ public class Node {
     @SerializedName("fz")
     @Expose
     private Double fz;
+    @SerializedName("icon")
+    @Expose
+    private String icon;
 
     public String getId() {
         return this.id;
@@ -118,5 +121,15 @@ public class Node {
     public void setFz(Double fz)
     {
         this.fz = fz;
+    }
+
+    public String getIcon()
+    {
+        return icon;
+    }
+
+    public void setIcon(String icon)
+    {
+        this.icon = icon;
     }
 }
