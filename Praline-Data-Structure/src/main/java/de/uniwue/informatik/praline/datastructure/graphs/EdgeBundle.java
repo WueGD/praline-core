@@ -52,6 +52,10 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
         this(containedEdges, null, null, null, null);
     }
 
+    public EdgeBundle(Collection<Edge> containedEdges, Label mainLabel) {
+        this(containedEdges, null, Collections.singleton(mainLabel), mainLabel);
+    }
+
     public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles) {
         this(containedEdges, containedEdgeBundles, null, null, null);
     }
@@ -59,6 +63,10 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
     public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles,
                       Collection<Label> labels) {
         this(containedEdges, containedEdgeBundles, labels, null);
+    }
+
+    public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles, Label mainLabel) {
+        this(containedEdges, containedEdgeBundles, Collections.singleton(mainLabel), mainLabel);
     }
 
     public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles,

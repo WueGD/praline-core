@@ -9,6 +9,7 @@ import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.styles.PathStyle;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Rather special version of {@link Label} (see there for more).
@@ -48,6 +49,11 @@ public class LeaderedLabel extends Label<LabelStyle> implements LabeledObject {
             null);
     }
 
+    public LeaderedLabel(Label mainLabel) {
+        this(LeaderedLabel.DEFAULT_SHAPE_TO_BE_CLONED.clone(), null, null, null, Collections.singleton(mainLabel),
+                mainLabel);
+    }
+
     public LeaderedLabel(Shape arrowHead) {
         this(arrowHead, null, null, null, null, null);
     }
@@ -58,6 +64,10 @@ public class LeaderedLabel extends Label<LabelStyle> implements LabeledObject {
 
     public LeaderedLabel(Shape arrowHead, PathStyle pathStyle) {
         this(arrowHead, pathStyle, null, null, null, null);
+    }
+
+    public LeaderedLabel(Shape arrowHead, PathStyle pathStyle, Label mainLabel) {
+        this(arrowHead, pathStyle, null, null, Collections.singleton(mainLabel), mainLabel);
     }
 
     @JsonCreator

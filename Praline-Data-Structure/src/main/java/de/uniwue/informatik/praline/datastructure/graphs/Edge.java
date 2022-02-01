@@ -58,6 +58,10 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
         this(ports, innerLabels, null, null, null);
     }
 
+    public Edge(Collection<Port> ports, Label mainLabel) {
+        this(ports, Collections.singleton(mainLabel), null, mainLabel, null);
+    }
+
     public Edge(Collection<Port> ports, Collection<Label> innerLabels, Map<Port, List<Label>> portLabels) {
         this(ports, innerLabels, portLabels, null, null);
     }

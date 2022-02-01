@@ -74,6 +74,10 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
         this(containedVertices, null, null, null, null, null, null, DEFAULT_DRAW_FRAME, null);
     }
 
+    public VertexGroup(Collection<Vertex> containedVertices, Label mainLabel) {
+        this(containedVertices, null, null, null, Collections.singleton(mainLabel), mainLabel, null, DEFAULT_DRAW_FRAME, null);
+    }
+
     public VertexGroup(Collection<Vertex> containedVertices, Collection<VertexGroup> containedVertexGroups,
                        Collection<TouchingPair> touchingPairs, Collection<PortPairing> portPairings,
                        Collection<Label> labels, Label mainLabel, Shape shape, boolean drawnFrame) {

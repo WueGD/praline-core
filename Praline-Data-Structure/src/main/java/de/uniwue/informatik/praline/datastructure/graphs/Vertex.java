@@ -73,6 +73,10 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, Pro
         this(portCompositions, labels, null, null);
     }
 
+    public Vertex(Collection<PortComposition> portCompositions, Label mainLabel) {
+        this(portCompositions, Collections.singleton(mainLabel), mainLabel, null);
+    }
+
     public Vertex(Collection<PortComposition> portCompositions, Collection<Label> labels, Shape shape) {
         this(portCompositions, labels, null, shape);
     }

@@ -87,6 +87,10 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
         this(edges, labels, null, null);
     }
 
+    public Port(Collection<Edge> edges, Label mainLabel) {
+        this(edges, Collections.singleton(mainLabel), mainLabel, null);
+    }
+
     public Port(Collection<Edge> edges, Shape shape) {
         this(edges, null, null, shape);
     }
