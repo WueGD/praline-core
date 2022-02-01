@@ -1,6 +1,7 @@
 package de.uniwue.informatik.praline.layouting.layered.main;
 
-import de.uniwue.informatik.praline.datastructure.graphs.Graph;
+import de.uniwue.informatik.praline.datastructure.graphs.*;
+import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.utils.Serialization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
@@ -12,6 +13,10 @@ import de.uniwue.informatik.praline.layouting.layered.main.util.CrossingsCountin
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class MainDrawSinglePlan {
 
@@ -54,7 +59,7 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0011-praline.json";
 //            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0140-praline.json";
 //            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0107-praline.json";
-            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0109-praline.json";
+//            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0109-praline.json";
 //            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0104-praline.json";
 //            "Praline-Layouting/data/node-size-test.json";
 //            //small, but many vertex groups
@@ -76,6 +81,7 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/fabian-problemgraphen/send-johannes.json";
 //            "Praline-Layouting/data/fabian-problemgraphen/send-johannes2.json";
 //            "Praline-Layouting/data/fabian-04.05.2021/send-johannes2.json";
+            "MINIMAL_RUNNING_EXAMPLE";
 
     private static final String TARGET_PATH =
             "Praline-Layouting/results/singleTest.svg";
@@ -98,21 +104,33 @@ public class MainDrawSinglePlan {
 
     private static final int NUMBER_OF_CROSSING_REDUCTION_ITERATIONS = 1; //3;
 
+    /**
+     *
+     * @param args
+     *      optional: you may add a path to a praline json file as first parameter. This graph will be drawn.
+     */
     public static void main(String[] args) {
         SugiyamaLayouter bestRun = null;
         int fewestCrossings = Integer.MAX_VALUE;
+        String pathToGraph = args.length > 0 && args[0].length() > 0 ? args[0] : SOURCE_PATH;
 
         for (int i = 0; i < NUMBER_OF_REPETITIONS_PER_GRAPH; i++) {
-            File file = new File(SOURCE_PATH);
             Graph graph = null;
+
+
+            File file = new File(pathToGraph);
             try {
                 graph = Serialization.read(file, Graph.class);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
 
-            System.out.println("Read graph " + SOURCE_PATH);
-            System.out.println();
+                System.out.println("Read graph " + pathToGraph);
+                System.out.println();
+
+            } catch (IOException e) {
+                graph = createMinimalRunningExampleForJournalArticle();
+
+                System.out.println("Failed to read graph at " + pathToGraph + ". Path correct? Correct json format?");
+                System.out.println("Used minimal running example for journal article instead.");
+            }
 
             SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
 
@@ -145,7 +163,7 @@ public class MainDrawSinglePlan {
                 try {
                     sameGraphReloaded = Serialization.read(file, Graph.class);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    sameGraphReloaded = createMinimalRunningExampleForJournalArticle();
                 }
                 if (!graph.equalLabeling(sameGraphReloaded)) {
                     System.out.println("Warning! Drawn graph and input graph differ.");
@@ -157,5 +175,99 @@ public class MainDrawSinglePlan {
             System.out.println();
             System.out.println();
         }
+    }
+
+    private static Graph createMinimalRunningExampleForJournalArticle() {
+        /*
+        create vertices, ports, and port groups
+         */
+        List<Vertex> vertices = new ArrayList<>(5);
+        List<List<Port>> ports = new ArrayList<>(5);
+        List<List<PortComposition>> vertexPortCompositions = new ArrayList<>(5);
+        List<String> vertexNames = Arrays.asList("Alexander", "Joachim", "Johannes", "Julian", "Walter");
+        List<Integer> numberOfPorts = Arrays.asList(4, 4, 2, 1, 8);
+
+        //create for each vertex its ports
+        for (int i = 0; i < vertexNames.size(); i++) {
+            ArrayList<Port> portList = new ArrayList<>(numberOfPorts.get(i));
+            for (int j = 0; j < numberOfPorts.get(i); j++) {
+                portList.add(new Port(null, new TextLabel((j+1) + "")));
+            }
+            ports.add(portList);
+        }
+
+        //create/save for each vertex its port compositions, i.e. port groups + ports
+        for (int i = 0; i < ports.size(); i++) {
+            List<Port> portList = ports.get(i);
+            List<PortComposition> pcList = new ArrayList<>();
+            // add port groups (and ports)
+            //Alexander
+            if (i == 0) {
+                pcList.add(portList.get(0));
+                pcList.add(new PortGroup(Arrays.asList(portList.get(1), portList.get(2), portList.get(3))));
+            }
+            //Joachim
+            else if (i == 1) {
+                pcList.add(new PortGroup(Arrays.asList(portList.get(0), portList.get(1)), false));
+                pcList.add(new PortGroup(Arrays.asList(portList.get(2), portList.get(3)), false));
+            }
+            //Johannes
+            else if (i == 2) {
+                pcList.addAll(portList);
+            }
+            //Julian
+            else if (i == 3) {
+                pcList.addAll(portList);
+            }
+            //Walter
+            else if (i == 4) {
+                PortGroup portGroup12 = new PortGroup(Arrays.asList(portList.get(0), portList.get(1)), false);
+                PortGroup portGroup56 = new PortGroup(Arrays.asList(portList.get(4), portList.get(5)), false);
+                PortGroup portGroup78 = new PortGroup(Arrays.asList(portList.get(6), portList.get(7)), false);
+                pcList.add(new PortGroup(Arrays.asList(portGroup12, portList.get(2), portList.get(3)), false));
+                pcList.add(new PortGroup(Arrays.asList(portGroup56, portGroup78), false));
+            }
+            vertexPortCompositions.add(pcList);
+        }
+
+        //create each vertex
+        for (int i = 0; i < vertexNames.size(); i++) {
+            vertices.add(new Vertex(vertexPortCompositions.get(i), new TextLabel(vertexNames.get(i))));
+        }
+
+        /*
+        create port pairings via dummy vertex groups
+         */
+        List<VertexGroup> dummyVertexGroups = new ArrayList<>(2);
+        // 1 port pairing of Johannes
+        dummyVertexGroups.add(new VertexGroup(Collections.singleton(vertices.get(2)), null, null,
+                Collections.singleton(new PortPairing(ports.get(2).get(0), ports.get(2).get(1))), null, null, null,
+                false, null));
+        // 2 port pairings of Walter
+        dummyVertexGroups.add(new VertexGroup(Collections.singleton(vertices.get(4)), null, null,
+                Arrays.asList(new PortPairing(ports.get(4).get(1), ports.get(4).get(5)),
+                        new PortPairing(ports.get(4).get(2), ports.get(4).get(6))), null, null, null, false, null));
+
+        /*
+        create edges
+         */
+        List<Edge> edges = Arrays.asList(
+                //edges adjacent to Joachim (vertex index 1)
+                new Edge(Arrays.asList(ports.get(1).get(1), ports.get(4).get(2))), // 2 to Walter.3
+                new Edge(Arrays.asList(ports.get(1).get(2), ports.get(0).get(0))), // 3 to Alexander.1
+                new Edge(Arrays.asList(ports.get(1).get(3), ports.get(4).get(6))), // 4 to Walter.7
+                //edges adjacent to Walter (vertex index 4)
+                new Edge(Arrays.asList(ports.get(4).get(0), ports.get(0).get(2))), // 1 to Alexander.3
+                new Edge(Arrays.asList(ports.get(4).get(1), ports.get(2).get(1))), // 2 to Johannes.2
+                new Edge(Arrays.asList(ports.get(4).get(3), ports.get(3).get(0))), // 4 to Julian.1
+                new Edge(Arrays.asList(ports.get(4).get(4), ports.get(0).get(1))), // 5 to Alexander.2
+                new Edge(Arrays.asList(ports.get(4).get(5), ports.get(0).get(3))), // 6 to Alexander.4
+                new Edge(Arrays.asList(ports.get(4).get(7), ports.get(2).get(0)))  // 8 to Johannes.1
+        );
+
+        /*
+        create graph
+         */
+        return new Graph(vertices, dummyVertexGroups, edges, null);
     }
 }
