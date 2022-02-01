@@ -83,8 +83,8 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/fabian-04.05.2021/send-johannes2.json";
             "MINIMAL_RUNNING_EXAMPLE";
 
-    private static final String TARGET_PATH =
-            "Praline-Layouting/results/singleTest.svg";
+    private static final String PATH_RESULTS = "Praline-Layouting/results";
+    private static final String TARGET_FILE_NAME = "singleTest.svg";
 
     private static final boolean CHECK_COMPLETENESS_OF_GRAPH = true;
 
@@ -148,13 +148,15 @@ public class MainDrawSinglePlan {
             }
 
             if (i == NUMBER_OF_REPETITIONS_PER_GRAPH - 1) {
-                bestRun.drawResult(TARGET_PATH);
+                new File(PATH_RESULTS).mkdirs();
+                String targetPath = PATH_RESULTS + File.separator + TARGET_FILE_NAME;
+                bestRun.drawResult(targetPath);
 
                 if (i > 1) {
                     System.out.println();
                     System.out.println("Best run had " + fewestCrossings + " crossings -> to be saved as svg");
                 }
-                System.out.println("Created svg " + TARGET_PATH);
+                System.out.println("Created svg " + targetPath);
                 System.out.println();
             }
 

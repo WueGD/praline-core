@@ -22,6 +22,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class MainDrawKielerPackage {
 
     public static final String PATH_DATA_SET =
+//            "Praline-Layouting/data/topology-zoo";
 //            "Praline-Layouting/data/generated_2020-06-04_18-39-49";
 //            "Praline-Layouting/data/generated_2020-08-20_04-42-39";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18";
@@ -57,15 +58,22 @@ public class MainDrawKielerPackage {
         return ++progressCounter;
     }
 
+    /**
+     *
+     * @param args
+     *      optional: you may add a path to a directory containing praline json files as first parameter. All the graphs
+     *      contained there will be drawn.
+     */
     public static void main(String[] args) throws InterruptedException {
         List<File> files = new LinkedList<>();
+        String pathToGraph = args.length > 0 && args[0].length() > 0 ? args[0] : PATH_DATA_SET;
 
-        File dir = new File(PATH_DATA_SET);
+        File dir = new File(pathToGraph);
         File[] directoryListing = dir.listFiles();
         if (directoryListing != null) {
             for (File child : directoryListing) {
                 if (child.getName().endsWith(".json") &&
-                        (!PATH_DATA_SET.endsWith("readable-2020-09-04") || child.getName().endsWith("-praline.json"))) {
+                        (!pathToGraph.endsWith("readable-2020-09-04") || child.getName().endsWith("-praline.json"))) {
                     files.add(child);
                 }
             }

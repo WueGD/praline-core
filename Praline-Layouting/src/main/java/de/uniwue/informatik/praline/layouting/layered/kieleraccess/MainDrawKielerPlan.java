@@ -56,7 +56,8 @@ public class MainDrawKielerPlan {
 //            "Praline-Layouting/data/example-very-small/praline-a0b0b5a2-2c23-43b0-bb87-4ddeb34d5a02.json";
 //            "Praline-Layouting/data/example-very-small/praline-pseudo-plan-0e59d04df679e020.json";
 
-    public static final String TARGET_PATH = "Praline-Layouting/results/testKIELER.svg";
+    private static final String PATH_RESULTS = "Praline-Layouting/results";
+    private static final String TARGET_FILE_NAME = "testKIELER.svg";
 
     private static final boolean CHECK_COMPLETENESS_OF_GRAPH = true;
 
@@ -68,12 +69,18 @@ public class MainDrawKielerPlan {
 
     private static final int NUMBER_OF_FORCE_DIRECTED_ITERATIONS = 1; //10;
 
+    /**
+     *
+     * @param args
+     *      optional: you may add a path to a praline json file as first parameter. This graph will be drawn.
+     */
     public static void main(String[] args) {
         KielerLayouter bestRun = null;
         int fewestCrossings = Integer.MAX_VALUE;
+        String pathToGraph = args.length > 0 && args[0].length() > 0 ? args[0] : SOURCE_PATH;
 
         for (int i = 0; i < NUMBER_OF_REPETITIONS_PER_GRAPH; i++) {
-            File file = new File(SOURCE_PATH);
+            File file = new File(pathToGraph);
             Graph graph = null;
             try {
                 graph = Serialization.read(file, Graph.class);
@@ -81,7 +88,7 @@ public class MainDrawKielerPlan {
                 e.printStackTrace();
             }
 
-            System.out.println("Read graph " + SOURCE_PATH);
+            System.out.println("Read graph " + pathToGraph);
             System.out.println();
 
             KielerLayouter kielerLayouter =
@@ -102,13 +109,15 @@ public class MainDrawKielerPlan {
             }
 
             if (i == NUMBER_OF_REPETITIONS_PER_GRAPH - 1) {
-                bestRun.generateSVG(TARGET_PATH);
+                new File(PATH_RESULTS).mkdirs();
+                String targetPath = PATH_RESULTS + File.separator + TARGET_FILE_NAME;
+                bestRun.generateSVG(targetPath);
 
                 if (i > 1) {
                     System.out.println();
                     System.out.println("Best run had " + fewestCrossings + " crossings -> to be saved as svg");
                 }
-                System.out.println("Created svg " + TARGET_PATH);
+                System.out.println("Created svg " + targetPath);
                 System.out.println();
             }
 
