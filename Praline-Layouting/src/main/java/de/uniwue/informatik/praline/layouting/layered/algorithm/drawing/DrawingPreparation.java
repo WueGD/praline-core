@@ -670,6 +670,12 @@ public class DrawingPreparation {
     }
 
     private void restoreVertexGroup(Vertex dummyUnificationVertex, VertexGroup vertexGroup) {
+        //special case: the vertex group had just one vertex -> we have not replaced anything,
+        // so just continue
+        if (vertexGroup.getContainedVertices().size() <= 1) {
+            return;
+        }
+
         //find for each original vertex to which side of the unification vertex it has ports to the outside
         //-1: bottom side, 0: device vertex (whole length + can be both or in the middle) or undefined, 1: top side
         Map<Integer, List<Vertex>> vertexSide2origVertex = new LinkedHashMap<>();

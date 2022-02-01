@@ -261,7 +261,8 @@ public class NodePlacement {
                     if (sugy.isUnionNode(currentNode)) {
                         currentUnionNode = currentNode;
                         currentWidthUnionNode = delta + portValues.getWidth();
-                        currentNode = sugy.getReplacedPorts().get(port).getVertex();
+                        currentNode = sugy.getReplacedPorts().containsKey(port) ?
+                                sugy.getReplacedPorts().get(port).getVertex() : port.getVertex();
                     }
                     currentWidth = delta + portValues.getWidth();
                     minWidth = 0;
@@ -1249,7 +1250,7 @@ public class NodePlacement {
                     // inserting dummy ports
 //                        && (nodeInTheGraph.getShape() == null || isNanShape(nodeInTheGraph.getShape()))
                 ) {
-                    createNodeShape(layerIndex, nodeInTheGraph, xPosOld, yPos, portValues);
+                    createNodeShape(layerIndex, nodeInTheGraph, xPos, yPos, portValues);
                 }
             }
 

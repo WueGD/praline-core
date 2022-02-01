@@ -210,9 +210,38 @@ public class GraphPreprocessor {
     }
 
     private void handleVertexGroups() {
+        /*
+        TODO: so far quite limited functionality -- e.g. we cannot handle non-touching-pair vertex groups.
+        TODO: also we do not yet consider contained vertex groups at all (they are just ignored and information of
+                contained vertex groups is not even read.
+         */
+
         int indexVG = -1;
         Set<VertexGroup> connectors = new LinkedHashSet<>();
         for (VertexGroup group : new ArrayList<>(sugy.getGraph().getVertexGroups())) {
+            //for now we ignore vertex groups without vertices (we do not yet consider vertex groups in vertex groups
+            if (group.getContainedVertices().isEmpty()) {
+                continue;
+            }
+            // if it is just one vertex, this is a "dummy group", e.g. to save port pairings, and we just keep the
+            // vertex and register all port parings
+            if (group.getContainedVertices().size() == 1) {
+                Vertex vertex = group.getContainedVertices().get(0);
+                Map<Port, Set<Port>> allPairings = new LinkedHashMap<>();
+                fillAllPairings(allPairings, group);
+                if (!allPairings.isEmpty()) {
+                    Map<Port, Port> identiyMap = new LinkedHashMap<>();
+                    for (Port port : vertex.getPorts()) {
+                        identiyMap.put(port, port);
+                    }
+                    keepPortPairings(identiyMap, allPairings);
+                    sugy.getPlugs().put(vertex, group);
+                }
+                continue;
+            }
+
+            // otherwise it is more than 1 vertex and we add a new representative fusion vertex
+            // and we remove the single vertices of that group
             boolean isDeviceConnector = false;
             if (ImplicitCharacteristics.isConnector(group, sugy.getGraph())) {
                 connectors.add(group);
@@ -222,10 +251,6 @@ public class GraphPreprocessor {
                     sugy.getDeviceVertices().add(containedVertex);
                     isDeviceConnector = true;
                 }
-            }
-
-            if (group.getContainedVertices().isEmpty()) {
-                continue;
             }
 
             boolean stickTogether = false; //todo revisit distinguishing between sticking together and not later

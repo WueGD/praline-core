@@ -30,7 +30,7 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     public static final DirectionMethod DEFAULT_DIRECTION_METHOD = DirectionMethod.FORCE;
     public static final LayerAssignmentMethod DEFAULT_LAYER_ASSIGNMENT_METHOD = LayerAssignmentMethod.NETWORK_SIMPLEX;
-    public static final int DEFAULT_NUMBER_OF_FD_ITERATIONS = 10;
+    public static final int DEFAULT_NUMBER_OF_FD_ITERATIONS = 1;
     public static final CrossingMinimizationMethod DEFAULT_CROSSING_MINIMIZATION_METHOD =
             CrossingMinimizationMethod.PORTS;
     public static final int DEFAULT_NUMBER_OF_CM_ITERATIONS = 5; //iterations for crossing minimization
