@@ -52,7 +52,7 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0024-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0282-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0414-praline.json";
-//            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0434-praline.json";
+            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0434-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0462-praline.json"; //1 component
 //            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0001-praline.json";
 //            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0002-praline.json";
@@ -81,7 +81,7 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/fabian-problemgraphen/send-johannes.json";
 //            "Praline-Layouting/data/fabian-problemgraphen/send-johannes2.json";
 //            "Praline-Layouting/data/fabian-04.05.2021/send-johannes2.json";
-            "MINIMAL_RUNNING_EXAMPLE";
+//            "MINIMAL_RUNNING_EXAMPLE";
 
     private static final String PATH_RESULTS = "Praline-Layouting/results";
     private static final String TARGET_FILE_NAME = "singleTest.svg";

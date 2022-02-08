@@ -8,6 +8,7 @@ import de.uniwue.informatik.praline.datastructure.placements.Orientation;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
+import de.uniwue.informatik.praline.io.output.svg.SVGRectangleDrawer;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
@@ -63,6 +64,10 @@ public class NodePlacement {
         }
         //find alignments
         List<LinkedList<Pair<PortValues>>> alignments = findAlignments(alignmentMethod, alignmentPreference);
+
+        //draw everything for intermediate output after creating the port structure and before node placement
+        //TODO: you may uncomment this for debugging
+//        drawCurrentStructure("Praline-Layouting/results/step4.svg");
 
         for (int i = 0; i < 4; i++) {
             switch (i) {
@@ -127,6 +132,12 @@ public class NodePlacement {
         }
 
         reTransformStructure(true);
+
+        //draw everything for intermediate output after creating the port structure and before node placement
+        //TODO: you may uncomment this for debugging
+//        drawCurrentStructure("Praline-Layouting/results/step5.svg");
+
+        removeDummyEdges();
 
         return dummyPorts;
     }
@@ -208,17 +219,6 @@ public class NodePlacement {
             List<PortValues> portLayer = structure.get(i);
             for (int j = 0; j < portLayer.size(); j++) {
                 portLayer.get(j).lateInit(j > 0 ? portLayer.get(j - 1) : null, i, j);
-            }
-        }
-    }
-
-    public void reTransformStructure(boolean drawShapes) {
-        // creates shapes for all nodes
-        drawAndSetOrder(drawShapes);
-        // remove the dummy edges of port pairings und dummy vertices of multiple-layers-spanning edges
-        for (Edge dummy : dummyEdges) {
-            for (Port port : new LinkedList<>(dummy.getPorts())) {
-                port.removeEdge(dummy);
             }
         }
     }
@@ -1180,7 +1180,17 @@ public class NodePlacement {
         }
     }
 
-    private void drawAndSetOrder(boolean drawShapes) {
+    private void removeDummyEdges() {
+        // remove the dummy edges of port pairings und dummy vertices of multiple-layers-spanning edges
+        for (Edge dummy : dummyEdges) {
+            for (Port port : new LinkedList<>(dummy.getPorts())) {
+                port.removeEdge(dummy);
+            }
+        }
+    }
+
+    public void reTransformStructure(boolean drawShapes) {
+        // creates shapes for all nodes
         double currentY = drawInfo.getPortHeight();
         double yPos = currentY;
         for (int layerIndex = 0; layerIndex < structure.size(); layerIndex++) {
@@ -1330,5 +1340,46 @@ public class NodePlacement {
         Label newLabel = new TextLabel("dummyPort" + portNumber++);
         lo.getLabelManager().addLabel(newLabel);
         lo.getLabelManager().setMainLabel(newLabel);
+    }
+
+    private void drawCurrentStructure(String svgPath) {
+        List<Rectangle> blackRectangles = new ArrayList<>();
+        List<Pair<Rectangle>> edges = new ArrayList<>();
+        LinkedHashMap<Port, Rectangle> port2Rectangle = new LinkedHashMap<>();
+        double currentY = 0;
+        for (int layerIndex = 0; layerIndex < structure.size(); layerIndex++) {
+            double currentX = 0;
+            List<PortValues> layer = structure.get(layerIndex);
+            for (PortValues portValue : layer) {
+                double x = Double.isFinite(portValue.getX()) ? portValue.getX() : currentX;
+                Rectangle rectangle = new Rectangle(x, currentY, drawInfo.getPortWidth(), drawInfo.getPortHeight());
+                blackRectangles.add(rectangle);
+                Port port = portValue.getPort();
+                port2Rectangle.put(port, rectangle);
+                for (Edge edge : port.getEdges()) {
+                    Port otherPort = PortUtils.getOtherEndPoint(edge, port);
+                    if (port2Rectangle.containsKey(otherPort)) {
+                        edges.add(new Pair<>(rectangle, port2Rectangle.get(otherPort)));
+                    }
+                }
+                currentX += drawInfo.getPortWidth() + drawInfo.getPortSpacing();
+            }
+            if (layerIndex % 2 == 0) {
+                currentY += heightOfLayers.get(layerIndex / 2) +
+                        Math.min(1.0, heightOfLayers.get(layerIndex / 2)) * 2.0 * drawInfo.getBorderWidth();
+            } else {
+                currentY += ((2 * drawInfo.getPortHeight()) + drawInfo.getDistanceBetweenLayers());
+            }
+        }
+        List<Rectangle> grayRectangles = new ArrayList<>();
+        for (Vertex vertex : sugy.getGraph().getVertices()) {
+            if (vertex.getShape() instanceof Rectangle && !sugy.isDummyNodeOfLongEdge(vertex)) {
+                grayRectangles.add((Rectangle) vertex.getShape());
+            }
+        }
+        SVGRectangleDrawer dr = new SVGRectangleDrawer();
+        dr.draw(svgPath, blackRectangles, grayRectangles,
+                (drawInfo.getPortWidth() + drawInfo.getPortSpacing())/2.0 - 1.0, -drawInfo.getPortHeight() / 2.0,
+                edges);
     }
 }

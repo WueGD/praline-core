@@ -16,6 +16,7 @@ import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 
 import java.awt.*;
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
@@ -134,7 +135,7 @@ public class SVGDrawer {
                             edge.getPorts().get(0).getShape().getYPosition());
                     Point2D.Double end = new Point2D.Double(edge.getPorts().get(1).getShape().getXPosition(),
                             edge.getPorts().get(1).getShape().getYPosition());
-                    g2d.drawLine(((int) Math.round(start.getX())), ((int) Math.round(start.getY())), ((int) Math.round(end.getX())), ((int) Math.round(end.getY())));
+                    g2d.draw(new Line2D.Double(start.getX(), start.getY(), end.getX(), end.getY()));
                 }
                 else {
                     String moreOrLess = edge.getPorts().size() > 2 ? "more" : "less";
@@ -147,8 +148,7 @@ public class SVGDrawer {
                     Point2D.Double start = null;
                     for (Point2D.Double end : edgePoints) {
                         if (start != null) {
-                            g2d.drawLine(((int) Math.round(start.getX())), ((int) Math.round(start.getY())),
-                                    ((int) Math.round(end.getX())), ((int) Math.round(end.getY())));
+                            g2d.draw(new Line2D.Double(start.getX(), start.getY(), end.getX(), end.getY()));
                         }
                         start = end;
                     }
@@ -200,7 +200,7 @@ public class SVGDrawer {
                 lowerPort.getShape().getYPosition());
         Point2D.Double end = new Point2D.Double(upperPort.getShape().getXPosition() + drawInfo.getPortWidth() / 2.0,
                 upperPort.getShape().getYPosition() + drawInfo.getPortHeight());
-        g2d.drawLine(((int) Math.round(start.getX())), ((int) Math.round(start.getY())), ((int) Math.round(end.getX())), ((int) Math.round(end.getY())));
+        g2d.draw(new Line2D.Double(start.getX(), start.getY(), end.getX(), end.getY()));
 
         g2d.setColor(saveColor);
 

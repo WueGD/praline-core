@@ -2,13 +2,18 @@ package de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreducti
 
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
+import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
+import de.uniwue.informatik.praline.io.output.svg.SVGRectangleDrawer;
+import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.Constants;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
 import org.eclipse.elk.core.util.Pair;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -71,6 +76,10 @@ public class CrossingMinimization {
         initialize(method, new SortingOrder(orders), randomStartPermutation, movePortsAdjToTurningDummiesToTheOutside,
                 placeTurningDummiesNextToTheirVertex);
 
+
+        //TODO: you may uncomment this for debugging
+//        drawCurrentStructure("Praline-Layouting/results/step2.svg");
+
         //do sweeping and allow movement of ports
         doSweeping(handlePortPairings, true, handlingDeadEnds, method != CrossingMinimizationMethod.VERTICES, originalOrders);
         SortingOrder ordersAfterFirstSweeping = transformSortingNodes2SortingOrder(layers,
@@ -83,6 +92,9 @@ public class CrossingMinimization {
         }
 //      handleTurningVerticesFinally(true);
 
+        //TODO: you may uncomment this for debugging
+//        drawCurrentStructure("Praline-Layouting/results/step3.svg");
+
         //do sweeping while fixing the order of ports, this also eliminates multiple crossings of the same pair of edges
         initSortingNodes(ordersAfterFirstSweeping, true);
         doSweeping(false, false, handlingDeadEnds, false, ordersAfterFirstSweeping);
@@ -91,7 +103,6 @@ public class CrossingMinimization {
         for (int i = 0; i < iterations; i++) {
             orderPortsFinally(finalOrders, i % 2 == 0, true, false, true);
         }
-
 
         return finalOrders;
     }
@@ -1927,5 +1938,99 @@ public class CrossingMinimization {
         public void setCurrentBarycenterFromOtherSide(double currentBarycenterFromOtherSide) {
             this.currentBarycenterFromOtherSide = currentBarycenterFromOtherSide;
         }
+    }
+
+
+
+
+    private void drawCurrentStructure(String svgPath) {
+        DrawingInformation drawInfo = sugy.getDrawingInformation();
+        List<Rectangle> blackRectangles = new ArrayList<>();
+        List<edu.uci.ics.jung.graph.util.Pair<Rectangle>> edges = new ArrayList<>();
+        LinkedHashMap<Port, Rectangle> port2Rectangle = new LinkedHashMap<>();
+        LinkedHashMap<Vertex, Polygon> vertex2polygon = new LinkedHashMap<>();
+        double currentY = 0;
+        for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
+            List<SortingNode> layer = layers.get(layerIndex);
+            for (SortingNode sortingNode : layer) {
+                //find position of each port
+                double x =
+                        sortingNode.getCurrentPosition() * (drawInfo.getPortWidth() + 2.0 * drawInfo.getPortSpacing());
+                Rectangle rectangle = new Rectangle(x, currentY, drawInfo.getPortWidth(),
+                        drawInfo.getPortHeight());
+                blackRectangles.add(rectangle);
+                Vertex vertex = sortingNode.getVertex();
+                if (sortingNode.representsPort()) {
+                    //register port to later create edges
+                    Port port = sortingNode.getPort();
+                    port2Rectangle.put(port, rectangle);
+                    for (Edge edge : port.getEdges()) {
+                        Port otherPort = PortUtils.getOtherEndPoint(edge, port);
+                        if (port2Rectangle.containsKey(otherPort)) {
+                            edges.add(new edu.uci.ics.jung.graph.util.Pair<>(rectangle, port2Rectangle.get(otherPort)));
+                        }
+                    }
+                    vertex = port.getVertex();
+                }
+                //update rectangle of corresponding vertex
+                if (!vertex2polygon.containsKey(vertex)) {
+                    int[] xCoords = {Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE};
+                    int[] yCoords = {Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE};
+                    vertex2polygon.put(vertex, new Polygon(xCoords, yCoords, 4));
+                }
+                Polygon vertexPolygon = vertex2polygon.get(vertex);
+                //check if we need to set the y coordinates
+                int yVertexLower = (int) currentY;
+                int yVertexUpper = (int) (currentY + drawInfo.getPortHeight());
+                if (vertexPolygon.ypoints[0] == Integer.MAX_VALUE){
+                    //set them for the first time
+                    vertexPolygon.ypoints[0] = yVertexLower;
+                    vertexPolygon.ypoints[1] = yVertexLower;
+                    vertexPolygon.ypoints[2] = yVertexUpper;
+                    vertexPolygon.ypoints[3] = yVertexUpper;
+                }
+                if (vertexPolygon.ypoints[2] < yVertexUpper){
+                    //set them on the next level
+                    vertexPolygon.ypoints[2] = yVertexUpper;
+                    vertexPolygon.ypoints[3] = yVertexUpper;
+                }
+                //check if we need to set the x coordinates
+                //we are on the lower level
+                int xVertexLeft = (int) (x);
+                int xVertexRight = (int) (x + drawInfo.getPortWidth());
+                if (vertexPolygon.ypoints[0] == yVertexLower) {
+                    if (xVertexLeft < vertexPolygon.xpoints[0]) {
+                        vertexPolygon.xpoints[0] = xVertexLeft;
+                    }
+                    if (xVertexRight > vertexPolygon.xpoints[1]) {
+                        vertexPolygon.xpoints[1] = xVertexRight;
+                    }
+                }
+                //we are on the upper level
+                else {
+                    if (xVertexRight > vertexPolygon.xpoints[2]) {
+                        vertexPolygon.xpoints[2] = xVertexRight;
+                    }
+                    if (xVertexLeft < vertexPolygon.xpoints[3]) {
+                        vertexPolygon.xpoints[3] = xVertexLeft;
+                    }
+                }
+            }
+            currentY += ((2 * drawInfo.getPortHeight()) + drawInfo.getDistanceBetweenLayers());
+        }
+        List<Polygon> grayPolygons = new ArrayList<>();
+        for (Vertex vertex : sugy.getGraph().getVertices()) {
+            if (vertex2polygon.containsKey(vertex)) {
+                Polygon vertexPolygon = vertex2polygon.get(vertex);
+                //we need to filter out infinity values that may still be contained
+                if (vertexPolygon.xpoints[2] == Integer.MIN_VALUE) {
+                    vertexPolygon.xpoints[2] = vertexPolygon.xpoints[1];
+                    vertexPolygon.xpoints[3] = vertexPolygon.xpoints[0];
+                }
+                grayPolygons.add(vertexPolygon);
+            }
+        }
+        SVGRectangleDrawer dr = new SVGRectangleDrawer();
+        dr.draw(svgPath, blackRectangles, grayPolygons,0, 0, edges);
     }
 }

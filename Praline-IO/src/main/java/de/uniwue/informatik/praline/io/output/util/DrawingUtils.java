@@ -8,6 +8,7 @@ import de.uniwue.informatik.praline.datastructure.shapes.*;
 
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.Collection;
 import java.util.List;
 
 public class DrawingUtils {
@@ -41,6 +42,26 @@ public class DrawingUtils {
             }
         }
 
+
+        minX = Math.min(minX - margin, Double.MAX_VALUE);
+        maxX = Math.max(maxX + margin, minX);
+        minY = Math.min(minY - margin, Double.MAX_VALUE);
+        maxY = Math.max(maxY + margin, minY);
+        return new Rectangle2D.Double(minX, minY, maxX - minX, maxY - minY);
+    }
+
+    public static Rectangle2D determineDrawingBounds(Collection<Rectangle> rectangles, double margin) {
+        double minX = Double.POSITIVE_INFINITY;
+        double maxX = Double.NEGATIVE_INFINITY;
+        double minY = Double.POSITIVE_INFINITY;
+        double maxY = Double.NEGATIVE_INFINITY;
+
+        for (Rectangle rectangle : rectangles) {
+            minX = Math.min(minX, rectangle.getX());
+            maxX = Math.max(maxX, rectangle.getX() + rectangle.getWidth());
+            minY = Math.min(minY, rectangle.getY());
+            maxY = Math.max(maxY, rectangle.getY() + rectangle.getHeight());
+        }
 
         minX = Math.min(minX - margin, Double.MAX_VALUE);
         maxX = Math.max(maxX + margin, minX);
