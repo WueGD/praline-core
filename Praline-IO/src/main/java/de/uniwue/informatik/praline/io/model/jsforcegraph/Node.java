@@ -38,6 +38,9 @@ public class Node {
     @SerializedName("icon")
     @Expose
     private String icon;
+    @SerializedName("group")
+    @Expose
+    private String group;
 
     public String getId() {
         return this.id;
@@ -131,5 +134,15 @@ public class Node {
     public void setIcon(String icon)
     {
         this.icon = icon;
+    }
+
+    public String getGroup()
+    {
+        return group;
+    }
+
+    public void setGroup(String group)
+    {
+        this.group = group;
     }
 }

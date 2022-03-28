@@ -3,15 +3,18 @@ package de.uniwue.informatik.praline.io.output.jsforcegraph;
 import de.uniwue.informatik.praline.datastructure.graphs.Edge;
 import de.uniwue.informatik.praline.datastructure.graphs.Graph;
 import de.uniwue.informatik.praline.datastructure.graphs.Vertex;
+import de.uniwue.informatik.praline.datastructure.graphs.VertexGroup;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.ReferenceIconLabel;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
+import de.uniwue.informatik.praline.io.model.jsforcegraph.Group;
 import de.uniwue.informatik.praline.io.model.jsforcegraph.JsForceGraph;
 import de.uniwue.informatik.praline.io.model.jsforcegraph.Link;
 import de.uniwue.informatik.praline.io.model.jsforcegraph.Node;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,6 +26,7 @@ public class JsForceGraphExporter
         int jsIdCounter = 1;
         final Set<String> usedIds = new HashSet<>();
         final Map<Vertex, Node> vertexMap = new LinkedHashMap<>();
+        final Map<VertexGroup, Group> groupMap = new LinkedHashMap<>();
 
         for (Vertex vertex : graph.getVertices())
         {
@@ -89,6 +93,51 @@ public class JsForceGraphExporter
             }
             this.addEdgeAttributes(edge, link);
             jsForceGraph.getLinks().add(link);
+        }
+
+        List<VertexGroup> vertexGroups = graph.getAllRecursivelyContainedVertexGroups();
+        for (VertexGroup vertexGroup : vertexGroups)
+        {
+            Group group = new Group();
+
+            while (group.getId() == null)
+            {
+                String newId = "c" + jsIdCounter++;
+                if (!usedIds.contains(newId))
+                {
+                    group.setId(newId);
+                }
+            }
+            usedIds.add(group.getId());
+
+            // Handle main label (usually this is a TextLabel)
+            Label<?> mainLabel = vertexGroup.getLabelManager().getMainLabel();
+            if (mainLabel instanceof TextLabel)
+            {
+                group.setName(mainLabel.toString());
+            }
+
+            jsForceGraph.getGroups().add(group);
+            groupMap.put(vertexGroup, group);
+        }
+
+        for (VertexGroup vertexGroup : vertexGroups)
+        {
+            String groupId = groupMap.get(vertexGroup).getId();
+            for (VertexGroup containedVertexGroup : vertexGroup.getContainedVertexGroups())
+            {
+                if (groupMap.containsKey(containedVertexGroup))
+                {
+                    groupMap.get(containedVertexGroup).setParent(groupId);
+                }
+            }
+            for (Vertex containedVertex : vertexGroup.getContainedVertices())
+            {
+                if (vertexMap.containsKey(containedVertex))
+                {
+                    vertexMap.get(containedVertex).setGroup(groupId);
+                }
+            }
         }
 
         return jsForceGraph;

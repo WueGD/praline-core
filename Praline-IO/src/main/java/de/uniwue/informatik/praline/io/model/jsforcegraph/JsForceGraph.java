@@ -15,6 +15,9 @@ public class JsForceGraph
     @SerializedName("links")
     @Expose
     private List<Link> links = new LinkedList<>();
+    @SerializedName("groups")
+    @Expose
+    private List<Group> groups = new LinkedList<>();
 
     public List<Node> getNodes() {
         return this.nodes;
@@ -32,4 +35,13 @@ public class JsForceGraph
         this.links = links;
     }
 
+    public List<Group> getGroups()
+    {
+        return groups;
+    }
+
+    public void setGroups(List<Group> groups)
+    {
+        this.groups = groups;
+    }
 }
