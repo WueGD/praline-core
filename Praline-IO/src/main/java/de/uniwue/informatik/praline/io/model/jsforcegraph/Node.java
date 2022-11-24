@@ -26,6 +26,9 @@ public class Node {
     @SerializedName("metrics")
     @Expose
     private Map<String, Double> metrics;
+    @SerializedName("properties")
+    @Expose
+    private Map<String, String> properties;
     @SerializedName("fx")
     @Expose
     private Double fx;
@@ -94,6 +97,16 @@ public class Node {
     public void setMetrics(Map<String, Double> metrics)
     {
         this.metrics = metrics;
+    }
+
+    public Map<String, String> getProperties()
+    {
+        return properties;
+    }
+
+    public void setProperties(Map<String, String> properties)
+    {
+        this.properties = properties;
     }
 
     public Double getFx()

@@ -26,6 +26,9 @@ public class Link {
     @SerializedName("metrics")
     @Expose
     private Map<String, Double> metrics;
+    @SerializedName("properties")
+    @Expose
+    private Map<String, String> properties;
 
     public String getSource() {
         return this.source;
@@ -79,5 +82,15 @@ public class Link {
     public void setMetrics(Map<String, Double> metrics)
     {
         this.metrics = metrics;
+    }
+
+    public Map<String, String> getProperties()
+    {
+        return properties;
+    }
+
+    public void setProperties(Map<String, String> properties)
+    {
+        this.properties = properties;
     }
 }

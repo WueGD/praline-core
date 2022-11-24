@@ -63,6 +63,9 @@ public class JsForceGraphExporter
                     .findFirst()
                     .ifPresent(l -> node.setIcon(l.getReference()));
 
+            // Handle properties
+            node.setProperties(vertex.getProperties());
+
             // Store coordinates if requested
             if (exportCoordinates)
             {
@@ -91,6 +94,7 @@ public class JsForceGraphExporter
             {
                 link.setName(mainLabel.toString());
             }
+            link.setProperties(edge.getProperties());
             this.addEdgeAttributes(edge, link);
             jsForceGraph.getLinks().add(link);
         }
