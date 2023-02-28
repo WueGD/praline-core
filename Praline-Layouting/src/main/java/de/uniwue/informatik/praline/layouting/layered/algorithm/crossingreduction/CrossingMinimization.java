@@ -1275,7 +1275,7 @@ public class CrossingMinimization {
             int maxIteration = 2 * (bottomOrder.size() + topOrder.size());
             int currIteration = 0;
             boolean forceSwapping = false;
-            while (indexBottom != indexTop && currIteration++ < maxIteration) {
+            while (indexBottom >= 0 && indexTop >= 0 && indexBottom != indexTop && currIteration++ < maxIteration) {
                 //first we move ports with swapping ports on the preferred side until it is not possible any more
                 // because of port constraints
                 //then we try to swap the port groups
