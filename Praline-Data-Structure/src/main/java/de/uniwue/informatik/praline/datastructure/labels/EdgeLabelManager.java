@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.uniwue.informatik.praline.datastructure.graphs.Edge;
 import de.uniwue.informatik.praline.datastructure.graphs.Port;
 import de.uniwue.informatik.praline.datastructure.graphs.PortComposition;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 
 import java.util.*;
@@ -32,7 +33,7 @@ public class EdgeLabelManager extends LabelManager {
      * Instance variables
      *==========*/
 
-    private final Map<Port, List<Label>> portLabels;
+    private final Map<Port, List<Label<? extends LabelStyle>>> portLabels;
 
 
     /*==========
@@ -43,17 +44,17 @@ public class EdgeLabelManager extends LabelManager {
         this(managedLabeledObject,null, null, null);
     }
 
-    public EdgeLabelManager(Edge managedLabeledObject, Collection<Label> innerLabels,
-                            Map<Port, List<Label>> portLabels) {
+    public EdgeLabelManager(Edge managedLabeledObject, Collection<Label<? extends LabelStyle>> innerLabels,
+                            Map<Port, List<Label<? extends LabelStyle>>> portLabels) {
         this(managedLabeledObject, innerLabels, portLabels, null);
         findNewMainLabel();
     }
 
     @JsonCreator
     private EdgeLabelManager(
-            @JsonProperty("innerLabels") final List<Label> innerLabels,
+            @JsonProperty("innerLabels") final List<Label<? extends LabelStyle>> innerLabels,
             @JsonProperty("allPortLabels") final Set<PairPort2Labels> allPortLabels,
-            @JsonProperty("mainLabel") final Label mainLabel
+            @JsonProperty("mainLabel") final Label<? extends LabelStyle> mainLabel
     ) {
         this(null, innerLabels, null, mainLabel);
         for (PairPort2Labels pair : allPortLabels) {
@@ -72,8 +73,8 @@ public class EdgeLabelManager extends LabelManager {
      * @param mainLabel
      *      can be null if there is no label that should become the main label
      */
-    public EdgeLabelManager(Edge managedLabeledObject, Collection<Label> innerLabels,
-                        Map<Port, List<Label>> portLabels, Label mainLabel) {
+    public EdgeLabelManager(Edge managedLabeledObject, Collection<Label<? extends LabelStyle>> innerLabels,
+                        Map<Port, List<Label<? extends LabelStyle>>> portLabels, Label<? extends LabelStyle> mainLabel) {
 
         super(managedLabeledObject, innerLabels, mainLabel);
         this.portLabels = new LinkedHashMap<>(portLabels == null ? 2 : portLabels.size());
@@ -95,11 +96,11 @@ public class EdgeLabelManager extends LabelManager {
      * Getters
      *==========*/
 
-    public List<Label> getInnerLabels() {
+    public List<Label<? extends LabelStyle>> getInnerLabels() {
         return Collections.unmodifiableList(super.labels);
     }
 
-    public List<Label> getPortLabels(Port p) {
+    public List<Label<? extends LabelStyle>> getPortLabels(Port p) {
         if (portLabels.containsKey(p)) {
             return Collections.unmodifiableList(portLabels.get(p));
         }
@@ -110,11 +111,11 @@ public class EdgeLabelManager extends LabelManager {
         @JsonProperty
         public final Port port;
         @JsonProperty
-        public final List<Label> labels;
+        public final List<Label<? extends LabelStyle>> labels;
         @JsonCreator
         PairPort2Labels(
                 @JsonProperty("port") final Port p,
-                @JsonProperty("labels") final Collection<Label> l
+                @JsonProperty("labels") final Collection<Label<? extends LabelStyle>> l
         ){
             port = p;
             labels = newArrayListNullSafe(l);
@@ -143,8 +144,8 @@ public class EdgeLabelManager extends LabelManager {
     }
 
     @Override
-    public List<Label> getLabels() {
-        ArrayList<Label> labels = new ArrayList<>(getInnerLabels());
+    public List<Label<? extends LabelStyle>> getLabels() {
+        ArrayList<Label<? extends LabelStyle>> labels = new ArrayList<>(getInnerLabels());
         if (portLabels != null) {
             for (Port port : portLabels.keySet()) {
                 if (portLabels.get(port) != null) {
@@ -169,7 +170,7 @@ public class EdgeLabelManager extends LabelManager {
      *      false if not all (but maybe some!) are added
      */
     @Override
-    public boolean addAllLabels(Collection<Label> labels) {
+    public boolean addAllLabels(Collection<Label<? extends LabelStyle>> labels) {
         return super.addAllLabels(labels);
     }
 
@@ -180,7 +181,7 @@ public class EdgeLabelManager extends LabelManager {
      * @return
      */
     @Override
-    public boolean addLabel(Label l){
+    public boolean addLabel(Label<? extends LabelStyle> l){
         return super.addLabel(l);
     }
 
@@ -191,34 +192,34 @@ public class EdgeLabelManager extends LabelManager {
      *      true if all labels are added
      *      false if not all (but maybe some!) are added
      */
-    public boolean addPortLabels(Port p, Collection<Label> labels) {
+    public boolean addPortLabels(Port p, Collection<Label<? extends LabelStyle>> labels) {
         if (!this.portLabels.containsKey(p)) {
             portLabels.put(p, new ArrayList<>(labels.size()));
         }
         return super.addAllLabelsInternally(portLabels.get(p), labels);
     }
 
-    public boolean addPortLabel(Port p, Label l) {
+    public boolean addPortLabel(Port p, Label<? extends LabelStyle> l) {
         if (!this.portLabels.containsKey(p)) {
             portLabels.put(p, new ArrayList<>(labels.size()));
         }
         return super.addLabelInternally(this.portLabels.get(p), l, true);
     }
 
-    public boolean removePortLabel(Port p, Label l) {
+    public boolean removePortLabel(Port p, Label<? extends LabelStyle> l) {
         if (this.portLabels.containsKey(p)) {
-            List<Label> labelsOfThisPort = this.portLabels.get(p);
+            List<Label<? extends LabelStyle>> labelsOfThisPort = this.portLabels.get(p);
             return super.removeLabelInternally(labelsOfThisPort, l);
         }
         return false;
     }
 
-    public boolean removeInnerLabel(Label l) {
+    public boolean removeInnerLabel(Label<? extends LabelStyle> l) {
         return super.removeLabelInternally(this.labels, l);
     }
 
     @Override
-    public boolean removeLabel(Label l) {
+    public boolean removeLabel(Label<? extends LabelStyle> l) {
         boolean success = removeInnerLabel(l);
         for (Port port : portLabels.keySet()) {
             success = success | removePortLabel(port, l);

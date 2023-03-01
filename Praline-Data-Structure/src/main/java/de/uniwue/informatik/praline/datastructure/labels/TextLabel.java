@@ -3,6 +3,7 @@ package de.uniwue.informatik.praline.datastructure.labels;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 import de.uniwue.informatik.praline.datastructure.styles.TextLabelStyle;
 
 import java.util.Objects;
@@ -91,7 +92,7 @@ public class TextLabel extends Label<TextLabelStyle> {
      *==========*/
 
     @Override
-    public boolean equalLabeling(Label o) {
+    public boolean equalLabeling(Label<? extends LabelStyle> o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TextLabel textLabel = (TextLabel) o;

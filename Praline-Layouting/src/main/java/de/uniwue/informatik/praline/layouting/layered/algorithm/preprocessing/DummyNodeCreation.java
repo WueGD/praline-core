@@ -4,6 +4,7 @@ import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.placements.Orientation;
+import de.uniwue.informatik.praline.datastructure.styles.TextLabelStyle;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.PortSideAssignment;
@@ -574,8 +575,7 @@ public class DummyNodeCreation {
         // create dummyNode and ID
         Vertex dummy = new Vertex();
         String place = lowerTurningPoint ? "lower" : "upper";
-        Label idDummy =
-                new TextLabel(place + "_turning_dummy_for_" + vertex);
+        Label<TextLabelStyle> idDummy = new TextLabel(place + "_turning_dummy_for_" + vertex);
         dummy.getLabelManager().addLabel(idDummy);
         dummy.getLabelManager().setMainLabel(idDummy);
 
@@ -599,8 +599,8 @@ public class DummyNodeCreation {
         ArrayList<Port> portsFor2 = new ArrayList<>();
         Port p1 = new Port();
         Port p2 = new Port();
-        Label idp1 = new TextLabel("DummyPort_to_" + edge.getPorts().get(0));
-        Label idp2 = new TextLabel("DummyPort_to_" + edge.getPorts().get(1));
+        Label<TextLabelStyle> idp1 = new TextLabel("DummyPort_to_" + edge.getPorts().get(0));
+        Label<TextLabelStyle> idp2 = new TextLabel("DummyPort_to_" + edge.getPorts().get(1));
         p1.getLabelManager().addLabel(idp1);
         p2.getLabelManager().addLabel(idp2);
         p1.getLabelManager().setMainLabel(idp1);
@@ -615,8 +615,8 @@ public class DummyNodeCreation {
         portsFor2.add(edge.getPorts().get(1));
         Edge e1 = new Edge(portsFor1);
         Edge e2 = new Edge(portsFor2);
-        Label ide1 = new TextLabel("TurnedEdge" + edge + "#1");
-        Label ide2 = new TextLabel("TurnedEdge" + edge + "#2");
+        Label<TextLabelStyle> ide1 = new TextLabel("TurnedEdge" + edge + "#1");
+        Label<TextLabelStyle> ide2 = new TextLabel("TurnedEdge" + edge + "#2");
         e1.getLabelManager().addLabel(ide1);
         e2.getLabelManager().addLabel(ide2);
         e1.getLabelManager().setMainLabel(ide1);
@@ -682,7 +682,7 @@ public class DummyNodeCreation {
         sugy.assignDirection(dummyEdge, lowerNode, upperPort.getVertex());
 
         // Label/ID
-        Label ide = new TextLabel("DummyEdge_for_" + edgeName + "_L_" + (layer-1) + "_to_L_" + layer);
+        Label<TextLabelStyle> ide = new TextLabel("DummyEdge_for_" + edgeName + "_L_" + (layer-1) + "_to_L_" + layer);
         dummyEdge.getLabelManager().addLabel(ide);
         dummyEdge.getLabelManager().setMainLabel(ide);
 
@@ -721,10 +721,10 @@ public class DummyNodeCreation {
         sugy.assignDirection(dummyEdge, lowerNode, dummy);
 
         // Label/ID
-        Label idn = new TextLabel("DummyV_" + edgeName + "_#" + layer);
-        Label idlp = new TextLabel("lDummyPort_" + edgeName + "_#" + layer);
-        Label idup = new TextLabel("uDummyPort_" + edgeName + "_#" + layer);
-        Label ide = new TextLabel("DummyE_" + edgeName + "_L_" + (layer-1) + "_to_L_" + layer);
+        Label<TextLabelStyle> idn = new TextLabel("DummyV_" + edgeName + "_#" + layer);
+        Label<TextLabelStyle> idlp = new TextLabel("lDummyPort_" + edgeName + "_#" + layer);
+        Label<TextLabelStyle> idup = new TextLabel("uDummyPort_" + edgeName + "_#" + layer);
+        Label<TextLabelStyle> ide = new TextLabel("DummyE_" + edgeName + "_L_" + (layer-1) + "_to_L_" + layer);
         dummy.getLabelManager().addLabel(idn);
         dummy.getLabelManager().setMainLabel(idn);
         lowerDummyPort.getLabelManager().addLabel(idlp);

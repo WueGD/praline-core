@@ -6,6 +6,7 @@ import de.uniwue.informatik.praline.datastructure.ReferenceObject;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 
 import java.util.*;
@@ -52,7 +53,7 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
         this(containedEdges, null, null, null, null);
     }
 
-    public EdgeBundle(Collection<Edge> containedEdges, Label mainLabel) {
+    public EdgeBundle(Collection<Edge> containedEdges, Label<? extends LabelStyle> mainLabel) {
         this(containedEdges, null, Collections.singleton(mainLabel), mainLabel);
     }
 
@@ -61,16 +62,17 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
     }
 
     public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles,
-                      Collection<Label> labels) {
+                      Collection<Label<? extends LabelStyle>> labels) {
         this(containedEdges, containedEdgeBundles, labels, null);
     }
 
-    public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles, Label mainLabel) {
+    public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles,
+                      Label<? extends LabelStyle> mainLabel) {
         this(containedEdges, containedEdgeBundles, Collections.singleton(mainLabel), mainLabel);
     }
 
     public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles,
-                      Collection<Label> labels, Label mainlabel) {
+                      Collection<Label<? extends LabelStyle>> labels, Label<? extends LabelStyle> mainlabel) {
         this(containedEdges, containedEdgeBundles, labels, mainlabel, null);
     }
 
@@ -85,7 +87,8 @@ public class EdgeBundle implements LabeledObject, ReferenceObject, PropertyObjec
     }
 
     public EdgeBundle(Collection<Edge> containedEdges, Collection<EdgeBundle> containedEdgeBundles,
-                      Collection<Label> labels, Label mainlabel, Map<String, String> properties) {
+                      Collection<Label<? extends LabelStyle>> labels, Label<? extends LabelStyle> mainlabel,
+                      Map<String, String> properties) {
         this.containedEdges = newArrayListNullSafe(containedEdges);
         for (Edge e : this.containedEdges) {
             e.setEdgeBundle(this);

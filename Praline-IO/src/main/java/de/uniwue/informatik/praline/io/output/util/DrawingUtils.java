@@ -5,6 +5,7 @@ import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.paths.Path;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.*;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -73,19 +74,19 @@ public class DrawingUtils {
     public static void translate(Graph graph, double xOffset, double yOffset) {
         for (Vertex vertex : graph.getVertices()) {
             safeTranslate(vertex, xOffset, yOffset);
-            for (Label label : vertex.getLabelManager().getLabels()) {
+            for (Label<? extends LabelStyle> label : vertex.getLabelManager().getLabels()) {
                 safeTranslate(label, xOffset, yOffset);
             }
             for (Port port : vertex.getPorts()) {
                 safeTranslate(port, xOffset, yOffset);
-                for (Label label : port.getLabelManager().getLabels()) {
+                for (Label<? extends LabelStyle> label : port.getLabelManager().getLabels()) {
                     safeTranslate(label, xOffset, yOffset);
                 }
             }
         }
         for (VertexGroup vertexGroup : graph.getAllRecursivelyContainedVertexGroups()) {
             safeTranslate(vertexGroup, xOffset, yOffset);
-            for (Label label : vertexGroup.getLabelManager().getLabels()) {
+            for (Label<? extends LabelStyle> label : vertexGroup.getLabelManager().getLabels()) {
                 safeTranslate(label, xOffset, yOffset);
             }
         }
@@ -95,12 +96,12 @@ public class DrawingUtils {
                     path.translate(xOffset, yOffset);
                 }
             }
-            for (Label label : edge.getLabelManager().getLabels()) {
+            for (Label<? extends LabelStyle> label : edge.getLabelManager().getLabels()) {
                 safeTranslate(label, xOffset, yOffset);
             }
         }
         for (EdgeBundle edgeBundle : graph.getEdgeBundles()) {
-            for (Label label : edgeBundle.getLabelManager().getLabels()) {
+            for (Label<? extends LabelStyle> label : edgeBundle.getLabelManager().getLabels()) {
                 safeTranslate(label, xOffset, yOffset);
             }
         }

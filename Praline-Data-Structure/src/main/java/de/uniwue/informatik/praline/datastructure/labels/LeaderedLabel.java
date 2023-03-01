@@ -49,7 +49,7 @@ public class LeaderedLabel extends Label<LabelStyle> implements LabeledObject {
             null);
     }
 
-    public LeaderedLabel(Label mainLabel) {
+    public LeaderedLabel(Label<? extends LabelStyle> mainLabel) {
         this(LeaderedLabel.DEFAULT_SHAPE_TO_BE_CLONED.clone(), null, null, null, Collections.singleton(mainLabel),
                 mainLabel);
     }
@@ -66,7 +66,7 @@ public class LeaderedLabel extends Label<LabelStyle> implements LabeledObject {
         this(arrowHead, pathStyle, null, null, null, null);
     }
 
-    public LeaderedLabel(Shape arrowHead, PathStyle pathStyle, Label mainLabel) {
+    public LeaderedLabel(Shape arrowHead, PathStyle pathStyle, Label<? extends LabelStyle> mainLabel) {
         this(arrowHead, pathStyle, null, null, Collections.singleton(mainLabel), mainLabel);
     }
 
@@ -84,7 +84,7 @@ public class LeaderedLabel extends Label<LabelStyle> implements LabeledObject {
     }
 
     public LeaderedLabel(Shape arrowHead, PathStyle pathStyle, LabelStyle labelStyle, Shape shape,
-                         Collection<Label> labels, Label mainLabel) {
+                         Collection<Label<? extends LabelStyle>> labels, Label<? extends LabelStyle> mainLabel) {
         super(labelStyle == null ? LabelStyle.DEFAULT_LABEL_STYLE : labelStyle, shape);
         this.arrowHead = arrowHead;
         this.pathStyle = pathStyle == null ? PathStyle.DEFAULT_PATH_STYLE : pathStyle;
@@ -141,7 +141,7 @@ public class LeaderedLabel extends Label<LabelStyle> implements LabeledObject {
      *==========*/
 
     @Override
-    public boolean equalLabeling(Label o) {
+    public boolean equalLabeling(Label<? extends LabelStyle> o) {
         return equalLabelingInternal(o);
     }
 
