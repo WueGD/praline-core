@@ -1084,8 +1084,7 @@ public class CrossingMinimization {
                     if (isFinalSorting) {
                         //check port pairings
                         if (!allPortPairingsSeparated) {
-                            System.out.println("Warning! No valid arrangement of port pairings found for plug "
-                                    + sugy.getPlugs().get(node).getContainedVertices() + ".");
+                            System.out.println("Warning! No valid arrangement of port pairings found for plug " + node + ".");
                         }
                         //check port groups
                         List<Port> allPortsCombined = new ArrayList<>(currentBPortOrder.get(node));
@@ -1093,7 +1092,7 @@ public class CrossingMinimization {
                         if (!PortUtils.arrangmentOfPortsIsValidAccordingToPortGroups(allPortsCombined, node.getPortCompositions())) {
                             System.out.println("Warning! Constraints due to port groups " +
                                     "not completely fulfilled (possibly because of conflicts with port pairings) at plug "
-                                    + sugy.getPlugs().get(node).getContainedVertices() + ".");
+                                    + node + ".");
                         }
                     }
                 }
