@@ -439,12 +439,12 @@ public class PortUtils {
                     indicesOfPorts.add(ports.indexOf(port));
                 }
                 if (!((PortGroup) portComposition).isOrdered()) {
-                    //if the order is not fixed, they indices must only appear somewhere in the block so we can sort
-                    // them, otherwise they must be in order also internally and we must not sort them
+                    //if the order is not fixed, they indices must only appear somewhere in the block, so we can sort
+                    // them, otherwise they must be in order also internally, and we must not sort them
                     Collections.sort(indicesOfPorts);
                 }
-                //check if the indices form an contiguous block
-                int expectedIndex = indicesOfPorts.get(0);
+                //check if the indices form a contiguous block
+                int expectedIndex = indicesOfPorts.isEmpty() ? 0 : indicesOfPorts.get(0);
                 for (Integer index : indicesOfPorts) {
                     if (index != expectedIndex) {
                         return false;
