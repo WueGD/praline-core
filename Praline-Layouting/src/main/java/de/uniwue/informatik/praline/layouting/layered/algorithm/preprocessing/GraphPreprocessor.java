@@ -80,7 +80,11 @@ public class GraphPreprocessor {
 
 
     private void handleEdgeBundles() {
-        for (EdgeBundle edgeBundle : sugy.getGraph().getEdgeBundles()) {
+        List<EdgeBundle> edgeBundlesBySize = new ArrayList<>(sugy.getGraph().getEdgeBundles());
+        //we do first the large edge bundles because then we can keep more ordered ports of a vertex together
+        // when creating new port groups for the ports of these edge bundles
+        edgeBundlesBySize.sort(Comparator.comparingInt(b -> b.getAllRecursivelyContainedEdges().size()));
+        for (EdgeBundle edgeBundle : edgeBundlesBySize) {
             handleEdgeBundle(edgeBundle);
         }
     }
@@ -109,25 +113,43 @@ public class GraphPreprocessor {
                 group2bundlePorts.putIfAbsent(portGroup, new ArrayList<>());
                 group2bundlePorts.get(portGroup).add(port);
             }
-            //and now create these port groups
             for (PortGroup portGroup : group2bundlePorts.keySet()) {
                 List<PortComposition> portCompositions = group2bundlePorts.get(portGroup);
-                PortGroup portGroupForEdgeBundle = new PortGroup(null, false);
-                if (portGroup == nullGroup) {
-                    //if not port group add it directly to the vertex
-                    vertex.addPortComposition(portGroupForEdgeBundle);
+                //if all ports of this port group are involved, we do not need to create a new group;
+                // for checking this, we can ignore ports without edges
+                if (!portsAreTheSameOrEmptyPorts(portGroup, portCompositions)) {
+                    //sort the ports of the edge bundles in case the parent port group is ordered
+                    if (portGroup.isOrdered()) {
+                        portCompositions.sort(Comparator.comparingInt(p -> portGroup.getPortCompositions().indexOf(p)));
+                    }
+                    PortGroup portGroupForEdgeBundle = new PortGroup(null, portGroup.isOrdered());
+                    if (portGroup == nullGroup) {
+                        //if not port group add it directly to the vertex
+                        vertex.addPortComposition(portGroupForEdgeBundle);
+                    } else {
+                        portGroup.addPortComposition(portGroupForEdgeBundle);
+                    }
+                    PortUtils.movePortCompositionsToPortGroup(portCompositions, portGroupForEdgeBundle);
+                    sugy.getDummyPortGroupsForEdgeBundles().add(portGroupForEdgeBundle);
                 }
-                else {
-                    portGroup.addPortComposition(portGroupForEdgeBundle);
-                }
-                PortUtils.movePortCompositionsToPortGroup(portCompositions, portGroupForEdgeBundle);
-                sugy.getDummyPortGroupsForEdgeBundles().add(portGroupForEdgeBundle);
             }
         }
         //do this recursively for contained edge bundles
         for (EdgeBundle containedEdgeBundle : edgeBundle.getContainedEdgeBundles()) {
             handleEdgeBundle(containedEdgeBundle);
         }
+    }
+
+    private boolean portsAreTheSameOrEmptyPorts(PortGroup portGroup, List<PortComposition> portCompositions) {
+        for (PortComposition pc : portGroup.getPortCompositions()) {
+            if (pc instanceof Port) {
+                if (((Port) pc).getEdges().isEmpty() || portCompositions.contains(pc)) {
+                    continue;
+                }
+            }
+            return false;
+        }
+        return true;
     }
 
     private void handlePortsWithoutNode() {
@@ -213,7 +235,7 @@ public class GraphPreprocessor {
         /*
         TODO: so far quite limited functionality -- e.g. we cannot handle non-touching-pair vertex groups.
         TODO: also we do not yet consider contained vertex groups at all (they are just ignored and information of
-                contained vertex groups is not even read.
+                contained vertex groups is not even read).
          */
 
         int indexVG = -1;
