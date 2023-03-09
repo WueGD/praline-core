@@ -136,19 +136,22 @@ public class SortingOrder {
 
     private static List<Port> shufflePortCompositions(Collection<PortComposition> portCompositions) {
         List<Port> order = new ArrayList<>();
-        shufflePortCompositionsRecursively(portCompositions, order);
+        shufflePortCompositionsRecursively(portCompositions, order, true);
         return order;
     }
 
     private static void shufflePortCompositionsRecursively(Collection<PortComposition> portCompositions,
-                                                           List<Port> order) {
+                                                           List<Port> order, boolean doShuffeling) {
         List<PortComposition> toShuffle = new ArrayList<>(portCompositions);
-        Collections.shuffle(toShuffle, Constants.random);
+        if (doShuffeling) {
+            Collections.shuffle(toShuffle, Constants.random);
+        }
         for (PortComposition portComposition : toShuffle) {
             if (portComposition instanceof Port) {
                 order.add((Port)portComposition);
             } else if (portComposition instanceof PortGroup) {
-                shufflePortCompositionsRecursively(((PortGroup)portComposition).getPortCompositions(), order);
+                shufflePortCompositionsRecursively(((PortGroup)portComposition).getPortCompositions(), order,
+                        !((PortGroup) portComposition).isOrdered());
             }
         }
     }
