@@ -1,16 +1,19 @@
 package de.uniwue.informatik.praline.datastructure.utils;
+
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+
 import de.uniwue.informatik.praline.datastructure.graphs.Graph;
 import de.uniwue.informatik.praline.datastructure.utils.subserializer.ColorDeserializer;
 import de.uniwue.informatik.praline.datastructure.utils.subserializer.ColorSerializer;
 import de.uniwue.informatik.praline.datastructure.utils.subserializer.FontDeserializer;
 import de.uniwue.informatik.praline.datastructure.utils.subserializer.FontSerializer;
-
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Here are some static methods for serialization provided.
@@ -63,5 +66,16 @@ public class Serialization {
      */
     public static String write(Graph graph) throws JsonProcessingException {
         return mapper.writeValueAsString(graph);
+    }
+
+    /**
+     * Writes the graph to a pretty printed JSON string.
+     *
+     * @param graph Diagram to write
+     * @return pretty JSON string
+     * @throws JsonProcessingException if subserializer failed
+     */
+    public static String writePretty(Graph graph) throws JsonProcessingException {
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(graph);
     }
 }
