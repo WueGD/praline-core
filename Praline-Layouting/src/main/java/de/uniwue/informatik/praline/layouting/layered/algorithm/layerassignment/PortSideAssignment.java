@@ -14,7 +14,7 @@ public class PortSideAssignment {
 
     private SugiyamaLayouter sugy;
 
-    public PortSideAssignment (SugiyamaLayouter sugy) {
+    public PortSideAssignment(SugiyamaLayouter sugy) {
         this.sugy = sugy;
         if (sugy.getOrders() == null) {
             sugy.setOrders(new SortingOrder());
@@ -40,44 +40,73 @@ public class PortSideAssignment {
             List<PortComposition> portCompositionsBottom = new ArrayList<>();
             Set<PortComposition> freePortCompositions = new LinkedHashSet<>();
 
-            List<Collection<PortComposition>> allPCsGrouped = new ArrayList<>(node.getPortCompositions().size());
+            List<Pair<Set<PortComposition>>> pairedPCs = new ArrayList<>();
+            List<PortComposition> allOtherPcs = new ArrayList<>(node.getPortCompositions().size());
             if (sugy.isPlug(node)) {
                 // special case: if we have a plug, we need some port( group)s to be on the same side
-                Pair<Set<PortComposition>> pairedPCs = fixPortSidesOfPlug(node);
-                allPCsGrouped.add(pairedPCs.getFirst());
-                allPCsGrouped.add(pairedPCs.getSecond());
+                pairedPCs = fixPortSidesOfPlug(node);
                 //find the other pcs of this plug that are not paired and also add them
                 for (PortComposition pc : node.getPortCompositions()) {
-                    if (!pairedPCs.getFirst().contains(pc) && !pairedPCs.getSecond().contains(pc)) {
-                        allPCsGrouped.add(Collections.singleton(pc));
+                    if (!containsPc(pairedPCs, pc)) {
+                        allOtherPcs.add(pc);
                     }
                 }
+            } else {
+                allOtherPcs = node.getPortCompositions();
             }
-            else {
-                for (PortComposition pc : node.getPortCompositions()) {
-                    allPCsGrouped.add(Collections.singleton(pc));
+
+            //handle groups of paired ports
+            for (Pair<Set<PortComposition>> pair : pairedPCs) {
+                //see comments below how scores are computed and how they are defined
+                int scoreFirst = predefinedPortSide(pair.getFirst());
+                int scoreSecond = predefinedPortSide(pair.getSecond());
+                if ((scoreFirst < 0 && scoreSecond < 0) || (scoreFirst > 0 && scoreSecond > 0)) {
+                    System.out.println("Warning! Predefined NORTH and SOUTH sides of ports could not all be fulfilled" +
+                            " due to port pairings.");
+                }
+                //if they are both equal use 2nd criterion
+                if (scoreFirst == scoreSecond) {
+                    scoreFirst = countEdgesUpwardsMinusEdgesDownwards(pair.getFirst());
+                    scoreSecond = countEdgesUpwardsMinusEdgesDownwards(pair.getSecond());
+                }
+                //if they are still the same -> do random decision
+                if (scoreFirst == scoreSecond) {
+                    if (Constants.random.nextBoolean()) {
+                        scoreFirst = 1;
+                        scoreSecond = -1;
+                    } else {
+                        scoreFirst = -1;
+                        scoreSecond = 1;
+                    }
+                }
+                //now assign them according to their score
+                if (scoreFirst < scoreSecond) {
+                    portCompositionsBottom.addAll(pair.getFirst());
+                    portCompositionsTop.addAll(pair.getSecond());
+                } else {
+                    portCompositionsTop.addAll(pair.getFirst());
+                    portCompositionsBottom.addAll(pair.getSecond());
                 }
             }
 
-
-            for (Collection<PortComposition> portCompositionGroup : allPCsGrouped) {
+            //handle all other
+            for (PortComposition portComposition : allOtherPcs) {
                 //for each collection of port compositions (usually a single port group), compute a score that equals
                 // the number of edges
                 // going upwards minus the number of edges going downwards. Depending on the sign of the score, we
                 // will assign the port composition.
                 // Maybe vertex side is also predefined, then set it to a positive or negative value first
-                int score = predefinedPortSide(portCompositionGroup);
+                int score = predefinedPortSide(Collections.singleton(portComposition));
                 if (score == 0) {
-                    score = countEdgesUpwardsMinusEdgesDownwards(portCompositionGroup);
+                    score = countEdgesUpwardsMinusEdgesDownwards(portComposition);
                 }
                 //assign to side acc. to score
                 if (score < 0) {
-                    portCompositionsBottom.addAll(portCompositionGroup);
-                }
-                else if (score > 0) {
-                    portCompositionsTop.addAll(portCompositionGroup);
+                    portCompositionsBottom.add(portComposition);
+                } else if (score > 0) {
+                    portCompositionsTop.add(portComposition);
                 } else {
-                    freePortCompositions.addAll(portCompositionGroup);
+                    freePortCompositions.add(portComposition);
                 }
             }
             // handle PortCompositions with no edges by adding them to the side with fewer ports
@@ -98,6 +127,15 @@ public class PortSideAssignment {
             sugy.getOrders().getBottomPortOrder().put(node, bottomPorts);
             setContainedPortsToVertexSide(bottomPorts, Orientation.SOUTH);
         }
+    }
+
+    private boolean containsPc(List<Pair<Set<PortComposition>>> pairedPCs, PortComposition pc) {
+        for (Pair<Set<PortComposition>> pair : pairedPCs) {
+            if (pair.getFirst().contains(pc) || pair.getSecond().contains(pc)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void setContainedPortsToVertexSide(List<Port> ports, Orientation vertexSide) {
@@ -172,20 +210,30 @@ public class PortSideAssignment {
     }
 
 
-    private Pair<Set<PortComposition>> fixPortSidesOfPlug(Vertex plug) {
+    private List<Pair<Set<PortComposition>>> fixPortSidesOfPlug(Vertex plug) {
         List<Pair<PortComposition>> pairedPairs = getPairedPairs(plug.getPortCompositions());
 
-        Set<PortComposition> firstSide = new LinkedHashSet<>();
-        Set<PortComposition> secondSide = new LinkedHashSet<>();
+        List<Pair<Set<PortComposition>>> groups = new ArrayList<>();
+        Set<PortComposition> oneSide = new LinkedHashSet<>();
+        Set<PortComposition> otherSide = new LinkedHashSet<>();
 
         while (!pairedPairs.isEmpty()) {
             //try to find a pair where we already know 1 endpoint
-            Pair<PortComposition> nextPair = pairedPairs.get(0);
+            Pair<PortComposition> nextPair = null;
             for (Pair<PortComposition> pairedPair : pairedPairs) {
-                if (firstSide.contains(pairedPair.getFirst()) || firstSide.contains(pairedPair.getSecond()) ||
-                        secondSide.contains(pairedPair.getFirst()) || secondSide.contains(pairedPair.getSecond())) {
+                if (oneSide.contains(pairedPair.getFirst()) || oneSide.contains(pairedPair.getSecond()) ||
+                        otherSide.contains(pairedPair.getFirst()) || otherSide.contains(pairedPair.getSecond())) {
                     nextPair = pairedPair;
                     break;
+                }
+            }
+            if (nextPair == null) {
+                //we did not find another pair with a connection to what we have already -> start new group
+                nextPair = pairedPairs.get(0);
+                if (!oneSide.isEmpty()) {
+                    groups.add(new Pair<>(oneSide, otherSide));
+                    oneSide = new LinkedHashSet<>();
+                    otherSide = new LinkedHashSet<>();
                 }
             }
             //now resolve this pair and remove it from the remaining paired pairs
@@ -193,32 +241,33 @@ public class PortSideAssignment {
             PortComposition second = nextPair.getSecond();
             pairedPairs.remove(nextPair);
 
-            if ((firstSide.contains(first) && firstSide.contains(second)) ||
-                    (secondSide.contains(first) && secondSide.contains(second))) {
+            if ((oneSide.contains(first) && oneSide.contains(second)) ||
+                    (otherSide.contains(first) && otherSide.contains(second))) {
                 System.out.println("Warning! Port Pairings at " + plug + " are not paired in a bipartite way. Some " +
                         "port pairings could not be added.");
                 continue;
             }
 
-            if (firstSide.contains(first)) {
-                secondSide.add(second);
+            if (oneSide.contains(first)) {
+                otherSide.add(second);
             }
-            else if (firstSide.contains(second)) {
-                secondSide.add(first);
+            else if (oneSide.contains(second)) {
+                otherSide.add(first);
             }
-            else if (secondSide.contains(first)) {
-                firstSide.add(second);
+            else if (otherSide.contains(first)) {
+                oneSide.add(second);
             }
-            else if (secondSide.contains(second)) {
-                firstSide.add(first);
+            else if (otherSide.contains(second)) {
+                oneSide.add(first);
             }
             else {
-                firstSide.add(first);
-                secondSide.add(second);
+                oneSide.add(first);
+                otherSide.add(second);
             }
         }
+        groups.add(new Pair<>(oneSide, otherSide));
 
-        return new Pair<>(firstSide, secondSide);
+        return groups;
     }
 
     private List<Pair<PortComposition>> getPairedPairs(List<PortComposition> portCompositions) {
