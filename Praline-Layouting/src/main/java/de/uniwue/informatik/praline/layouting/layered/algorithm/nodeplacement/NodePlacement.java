@@ -261,7 +261,8 @@ public class NodePlacement {
                     if (sugy.isUnionNode(currentNode)) {
                         currentUnionNode = currentNode;
                         currentWidthUnionNode = delta + portValues.getWidth();
-                        currentNode = sugy.getReplacedPorts().containsKey(port) ?
+                        currentNode = sugy.getReplacedPorts().containsKey(port) &&
+                                sugy.getReplacedPorts().get(port).getVertex() != null ?
                                 sugy.getReplacedPorts().get(port).getVertex() : port.getVertex();
                     }
                     currentWidth = delta + portValues.getWidth();
