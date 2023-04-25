@@ -8,6 +8,9 @@ import java.util.Map;
 
 public class Link {
 
+    @SerializedName("id")
+    @Expose
+    private String id;
     @SerializedName("source")
     @Expose
     private String source;
@@ -29,6 +32,16 @@ public class Link {
     @SerializedName("properties")
     @Expose
     private Map<String, String> properties;
+
+    public String getId()
+    {
+        return id;
+    }
+
+    public void setId(String id)
+    {
+        this.id = id;
+    }
 
     public String getSource() {
         return this.source;

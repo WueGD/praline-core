@@ -1,10 +1,12 @@
 package de.uniwue.informatik.praline.io.output.jsforcegraph;
 
+import de.uniwue.informatik.praline.datastructure.ReferenceObject;
 import de.uniwue.informatik.praline.datastructure.graphs.Edge;
 import de.uniwue.informatik.praline.datastructure.graphs.Graph;
 import de.uniwue.informatik.praline.datastructure.graphs.Vertex;
 import de.uniwue.informatik.praline.datastructure.graphs.VertexGroup;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
+import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.labels.ReferenceIconLabel;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.io.model.jsforcegraph.Group;
@@ -17,44 +19,24 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class JsForceGraphExporter
 {
+    private final Set<String> usedIds = new HashSet<>();
+    private int jsIdCounter = 1;
+
     public JsForceGraph convertGraph(Graph graph, boolean exportCoordinates)
     {
         JsForceGraph jsForceGraph = new JsForceGraph();
-        int jsIdCounter = 1;
-        final Set<String> usedIds = new HashSet<>();
         final Map<Vertex, Node> vertexMap = new LinkedHashMap<>();
         final Map<VertexGroup, Group> groupMap = new LinkedHashMap<>();
 
         for (Vertex vertex : graph.getVertices())
         {
             Node node = new Node();
-
-            // We first try to use the reference as ID, otherwise we construct a unique ID using the counter.
-            // We also ensure that we do not accidentally construct one of the already used references using the counter.
-            String reference = vertex.getReference();
-            if (reference != null && !reference.isBlank() && !usedIds.contains(reference))
-            {
-                node.setId(reference);
-            }
-            while (node.getId() == null)
-            {
-                String newId = "c" + jsIdCounter++;
-                if (!usedIds.contains(newId))
-                {
-                    node.setId(newId);
-                }
-            }
-            usedIds.add(node.getId());
-
-            // Handle main label (usually this is a TextLabel)
-            Label<?> mainLabel = vertex.getLabelManager().getMainLabel();
-            if (mainLabel instanceof TextLabel)
-            {
-                node.setName(mainLabel.toString());
-            }
+            node.setId(this.getId(vertex));
+            JsForceGraphExporter.handleMainLabel(vertex, node::setName);
 
             // Handle ReferenceIconLabel if existing
             vertex.getLabelManager().getLabels().stream()
@@ -84,15 +66,13 @@ public class JsForceGraphExporter
         for (Edge edge : graph.getEdges())
         {
             Link link = new Link();
+            link.setId(this.getId(edge));
+            JsForceGraphExporter.handleMainLabel(edge, link::setName);
+
             if (edge.getPorts().size() > 1)
             {
                 link.setSource(vertexMap.get(edge.getPorts().get(0).getVertex()).getId());
                 link.setTarget(vertexMap.get(edge.getPorts().get(1).getVertex()).getId());
-            }
-            Label<?> mainLabel = edge.getLabelManager().getMainLabel();
-            if (mainLabel instanceof TextLabel)
-            {
-                link.setName(mainLabel.toString());
             }
             link.setProperties(edge.getProperties());
             this.addEdgeAttributes(edge, link);
@@ -103,23 +83,8 @@ public class JsForceGraphExporter
         for (VertexGroup vertexGroup : vertexGroups)
         {
             Group group = new Group();
-
-            while (group.getId() == null)
-            {
-                String newId = "c" + jsIdCounter++;
-                if (!usedIds.contains(newId))
-                {
-                    group.setId(newId);
-                }
-            }
-            usedIds.add(group.getId());
-
-            // Handle main label (usually this is a TextLabel)
-            Label<?> mainLabel = vertexGroup.getLabelManager().getMainLabel();
-            if (mainLabel instanceof TextLabel)
-            {
-                group.setName(mainLabel.toString());
-            }
+            group.setId(this.getId(vertexGroup));
+            JsForceGraphExporter.handleMainLabel(vertexGroup, group::setName);
 
             jsForceGraph.getGroups().add(group);
             groupMap.put(vertexGroup, group);
@@ -145,6 +110,36 @@ public class JsForceGraphExporter
         }
 
         return jsForceGraph;
+    }
+
+    private String getId(ReferenceObject referenceObject)
+    {
+        // We first try to use the reference as ID, otherwise we construct a unique ID using the counter.
+        // We also ensure that we do not accidentally construct one of the already used references using the counter.
+        String reference = referenceObject.getReference();
+        if (reference != null && !reference.isBlank() && !this.usedIds.contains(reference))
+        {
+            this.usedIds.add(reference);
+            return reference;
+        }
+
+        String newId;
+        do
+        {
+            newId = "c" + this.jsIdCounter++;
+        } while (this.usedIds.contains(newId));
+        this.usedIds.add(newId);
+        return newId;
+    }
+
+    private static void handleMainLabel(LabeledObject labeledObject, Consumer<String> labelConsumer)
+    {
+        // Handle main label (usually this is a TextLabel)
+        Label<?> mainLabel = labeledObject.getLabelManager().getMainLabel();
+        if (mainLabel instanceof TextLabel)
+        {
+            labelConsumer.accept(mainLabel.toString());
+        }
     }
 
     // Possibility to extend exported data using inheritance
