@@ -44,6 +44,7 @@ public class JsForceGraphImporter
             if (name != null) {
                 edge.getLabelManager().setMainLabel(new TextLabel(link.getName()));
             }
+            edge.setReference(link.getId());
             graph.addEdge(edge);
         }
 
