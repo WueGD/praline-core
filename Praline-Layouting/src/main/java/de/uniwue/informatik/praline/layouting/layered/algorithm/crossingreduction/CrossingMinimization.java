@@ -1805,7 +1805,7 @@ public class CrossingMinimization {
             // this side
             for (int i = 0; i < portNodes.size(); i++) {
                 SortingNode pairedPort = portNodes.get(i).getPairedPortSortingNode();
-                if (pairedPort != null) {
+                if (pairedPort != null && !adjPortNodes.contains(pairedPort)) {
                     adjPortNodes.add(Math.min(i, adjPortNodes.size()), pairedPort);
                 }
             }
