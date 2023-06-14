@@ -377,19 +377,12 @@ public class GraphPreprocessor {
         for (PortPairing portPairing : group.getPortPairings()) {
             Port p0 = portPairing.getPort0();
             Port p1 = portPairing.getPort1();
-            if (!allPairings.containsKey(p0)) {
-                allPairings.put(p0, new LinkedHashSet<>());
-            }
-            if (!allPairings.containsKey(p1)) {
-                allPairings.put(p1, new LinkedHashSet<>());
-            }
-            allPairings.get(p0).add(p0);
-            allPairings.get(p0).add(p1);
-            allPairings.get(p0).addAll(allPairings.get(p1));
-            allPairings.get(p1).addAll(allPairings.get(p0));
-            for (Port port : allPairings.get(p0)) {
-                allPairings.get(port).addAll(allPairings.get(p0));
-            }
+            Set<Port> p0Pairings = allPairings.computeIfAbsent(p0, k -> new LinkedHashSet<>());
+            Set<Port> p1Pairings = allPairings.computeIfAbsent(p1, k -> new LinkedHashSet<>());
+            p0Pairings.add(p0);
+            p0Pairings.add(p1);
+            p1Pairings.add(p0);
+            p1Pairings.add(p1);
         }
     }
 
