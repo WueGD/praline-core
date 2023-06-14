@@ -109,6 +109,7 @@ public class Rectangle extends Rectangle2D.Double implements Shape {
      *==========*/
 
     public boolean liesOnBoundary(Point2D.Double point) {
+        if (point == null) return false;
         if ((ArithmeticOperation.precisionEqual(point.x, this.x) ||
                 ArithmeticOperation.precisionEqual(point.x, this.x + this.width))
                 && ArithmeticOperation.precisionInRange(point.y, this.y, this.y + this.height)) {
