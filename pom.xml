@@ -15,7 +15,7 @@
     </modules>
 
     <properties>
-        <revision>1.0.4-SNAPSHOT</revision>
+        <revision>1.0.4-des</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -25,7 +25,7 @@
         <repository>
             <id>praline</id>
             <name>praline-repo</name>
-            <url>${env.MAVEN_REPO_URL}/praline</url>
+            <url>https://repo.denkbares.com/praline/</url>
         </repository>
     </distributionManagement>
 
