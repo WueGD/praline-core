@@ -501,7 +501,7 @@ public class SugiyamaLayouter implements PralineLayouter {
             if (xOffset != 0) {
                 DrawingUtils.translate(componentLayouter.getGraph(), xOffset, 0);
             }
-            xOffset += drawingBounds.getWidth() + drawingBounds.getX() + drawInfo.getEdgeDistanceHorizontal();
+            xOffset += drawingBounds.getWidth() + drawingBounds.getX() + drawInfo.getDistanceBetweenConnectedComponents();
         }
     }
 

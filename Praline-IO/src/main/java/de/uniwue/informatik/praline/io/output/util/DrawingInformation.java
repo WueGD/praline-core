@@ -26,6 +26,7 @@ public class DrawingInformation {
     public final static double DEFAULT_EDGE_DISTANCE_HORIZONTAL = 10;
     public final static double DEFAULT_EDGE_DISTANCE_VERTICAL = 10;
     public final static double DEFAULT_DISTANCE_BETWEEN_LAYERS = 20;
+    public final static double DEFAULT_DISTANCE_BETWEEN_CONNECTED_COMPONENTS = 20;
     public final static double DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET = 2;
     public final static double DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET = 0;
     public final static double DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET = -2;
@@ -58,6 +59,7 @@ public class DrawingInformation {
     private double edgeDistanceHorizontal;
     private double edgeDistanceVertical;
     private double distanceBetweenLayers;
+    private double distanceBetweenConnectedComponents;
     private double horizontalVertexLabelOffset;
     private double verticalVertexLabelOffset;
     private double horizontalPortLabelOffset;
@@ -77,22 +79,24 @@ public class DrawingInformation {
                 DEFAULT_VERTEX_WIDTH_MAX_STRETCH_FACTOR, DEFAULT_VERTEX_COLOR, DEFAULT_PORT_WIDTH, DEFAULT_PORT_HEIGHT,
                 DEFAULT_PORT_SPACING, DEFAULT_PORT_COLOR, DEFAULT_EDGE_DISTANCE_HORIZONTAL,
                 DEFAULT_EDGE_DISTANCE_VERTICAL, DEFAULT_DISTANCE_BETWEEN_LAYERS,
-                DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET, DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET,
-                DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET, DEFAULT_VERTICAL_PORT_LABEL_OFFSET, DEFAULT_PORT_PAIRING_COLOR,
-                DEFAULT_SHOW_VERTEX_LABELS, DEFAULT_SHOW_PORT_LABELS, DEFAULT_SHOW_VERTEX_LABEL_FRAMES,
-                DEFAULT_SHOW_PORT_LABEL_FRAMES, DEFAULT_SHOW_PORT_PAIRINGS, DEFAULT_PORT_GROUP_COLOR,
-                DEFAULT_PORT_GROUP_BORDER, DEFAULT_SHOW_PORT_GROUPS);
+                DEFAULT_DISTANCE_BETWEEN_CONNECTED_COMPONENTS, DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET,
+                DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET, DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET,
+                DEFAULT_VERTICAL_PORT_LABEL_OFFSET, DEFAULT_PORT_PAIRING_COLOR, DEFAULT_SHOW_VERTEX_LABELS,
+                DEFAULT_SHOW_PORT_LABELS, DEFAULT_SHOW_VERTEX_LABEL_FRAMES, DEFAULT_SHOW_PORT_LABEL_FRAMES,
+                DEFAULT_SHOW_PORT_PAIRINGS, DEFAULT_PORT_GROUP_COLOR, DEFAULT_PORT_GROUP_BORDER,
+                DEFAULT_SHOW_PORT_GROUPS);
     }
 
     public DrawingInformation(double borderWidth, double vertexHeight, double vertexMinimumWidth,
                               double vertexWidthMaxStretchFactor, Color vertexColor, double portWidth,
                               double portHeight, double portSpacing, Color portColor, double edgeDistanceHorizontal,
                               double edgeDistanceVertical, double distanceBetweenLayers,
-                              double horizontalVertexLabelOffset, double verticalVertexLabelOffset,
-                              double horizontalPortLabelOffset, double verticalPortLabelOffset,
-                              Color portPairingColor, boolean showVertexLabels, boolean showPortLabels,
-                              boolean showVertexLabelFrames, boolean showPortLabelFrames, boolean showPortPairings,
-                              Color portGroupColor, double portGroupBorder, boolean showPortGroups) {
+                              double distanceBetweenConnectedComponents, double horizontalVertexLabelOffset,
+                              double verticalVertexLabelOffset, double horizontalPortLabelOffset,
+                              double verticalPortLabelOffset, Color portPairingColor, boolean showVertexLabels,
+                              boolean showPortLabels, boolean showVertexLabelFrames, boolean showPortLabelFrames,
+                              boolean showPortPairings, Color portGroupColor, double portGroupBorder,
+                              boolean showPortGroups) {
         this.borderWidth = borderWidth;
         this.vertexHeight = vertexHeight;
         this.vertexMinimumWidth = vertexMinimumWidth;
@@ -105,6 +109,7 @@ public class DrawingInformation {
         this.edgeDistanceHorizontal = edgeDistanceHorizontal;
         this.edgeDistanceVertical = edgeDistanceVertical;
         this.distanceBetweenLayers = distanceBetweenLayers;
+        this.distanceBetweenConnectedComponents = distanceBetweenConnectedComponents;
         this.horizontalVertexLabelOffset = horizontalVertexLabelOffset;
         this.verticalVertexLabelOffset = verticalVertexLabelOffset;
         this.horizontalPortLabelOffset = horizontalPortLabelOffset;
@@ -237,6 +242,10 @@ public class DrawingInformation {
         return distanceBetweenLayers;
     }
 
+    public double getDistanceBetweenConnectedComponents() {
+        return distanceBetweenConnectedComponents;
+    }
+
     public double getHorizontalVertexLabelOffset() {
         return horizontalVertexLabelOffset;
     }
@@ -323,6 +332,10 @@ public class DrawingInformation {
 
     public void setDistanceBetweenLayers(double distanceBetweenLayers) {
         this.distanceBetweenLayers = distanceBetweenLayers;
+    }
+
+    public void setDistanceBetweenConnectedComponents(double distanceBetweenConnectedComponents) {
+        this.distanceBetweenConnectedComponents = distanceBetweenConnectedComponents;
     }
 
     public void setHorizontalVertexLabelOffset(double horizontalVertexLabelOffset) {
