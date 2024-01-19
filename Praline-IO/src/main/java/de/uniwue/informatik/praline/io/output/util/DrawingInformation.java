@@ -125,6 +125,25 @@ public class DrawingInformation {
         this.showPortGroups = showPortGroups;
     }
 
+    //old constructor to be removed later (is still here to avoid potential compatibility issues)
+    @Deprecated
+    public DrawingInformation(double borderWidth, double vertexHeight, double vertexMinimumWidth,
+                              double vertexWidthMaxStretchFactor, Color vertexColor, double portWidth,
+                              double portHeight, double portSpacing, Color portColor, double edgeDistanceHorizontal,
+                              double edgeDistanceVertical, double distanceBetweenLayers,
+                              double horizontalVertexLabelOffset, double verticalVertexLabelOffset,
+                              double horizontalPortLabelOffset, double verticalPortLabelOffset,
+                              Color portPairingColor, boolean showVertexLabels, boolean showPortLabels,
+                              boolean showVertexLabelFrames, boolean showPortLabelFrames, boolean showPortPairings,
+                              Color portGroupColor, double portGroupBorder, boolean showPortGroups) {
+        this(borderWidth, vertexHeight, vertexMinimumWidth, vertexWidthMaxStretchFactor, vertexColor, portWidth,
+                portHeight, portSpacing, portColor, edgeDistanceHorizontal, edgeDistanceVertical,
+                distanceBetweenLayers, DEFAULT_DISTANCE_BETWEEN_CONNECTED_COMPONENTS, horizontalVertexLabelOffset,
+                verticalVertexLabelOffset, horizontalPortLabelOffset, verticalPortLabelOffset, portPairingColor,
+                showVertexLabels, showPortLabels, showVertexLabelFrames, showPortLabelFrames, showPortPairings,
+                portGroupColor, portGroupBorder, showPortGroups);
+    }
+
     public double computeMinVertexWidth(Vertex vertex) {
         double labelWidth = getMinLabelWidth(vertex.getLabelManager().getLabels());
         double labelWithBufferWidth = labelWidth + 2.0 * this.horizontalVertexLabelOffset;
