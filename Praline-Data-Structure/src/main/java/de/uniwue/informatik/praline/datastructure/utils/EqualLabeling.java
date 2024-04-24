@@ -5,6 +5,7 @@ import de.uniwue.informatik.praline.datastructure.graphs.PortPairing;
 import de.uniwue.informatik.praline.datastructure.graphs.TouchingPair;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -40,7 +41,7 @@ public class EqualLabeling {
             return ((LabeledObject) lo).equalLabeling((LabeledObject) otherLo);
         }
         if (lo instanceof Label && otherLo instanceof Label) {
-            return ((Label) lo).equalLabeling((Label) otherLo);
+            return ((Label<? extends LabelStyle>) lo).equalLabeling((Label<? extends LabelStyle>) otherLo);
         }
         if (lo instanceof PortComposition && otherLo instanceof PortComposition) {
             return ((PortComposition) lo).equalLabeling((PortComposition) otherLo);

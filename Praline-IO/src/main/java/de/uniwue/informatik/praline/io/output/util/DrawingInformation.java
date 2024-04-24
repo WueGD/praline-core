@@ -10,6 +10,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
 
 public class DrawingInformation {
@@ -171,9 +172,9 @@ public class DrawingInformation {
         return Math.max(labelWithBufferWidth, givenWidth);
     }
 
-    private double getMinLabelWidth(Collection<Label> labels) {
+    private double getMinLabelWidth(Collection<Label<? extends LabelStyle>> labels) {
         double minWidth = 0;
-        for (Label label : labels) {
+        for (Label<? extends LabelStyle> label : labels) {
             if (label instanceof TextLabel) {
                 g2d.setFont(FontManager.fontOf((TextLabel) label));
                 if (((TextLabel) label).getLayoutText() != null) {
@@ -199,9 +200,9 @@ public class DrawingInformation {
         return Math.max(labelHeight, givenHeight);
     }
 
-    private double getMinLabelHeight(Collection<Label> labels) {
+    private double getMinLabelHeight(Collection<Label<? extends LabelStyle>> labels) {
         double minHeight = vertexHeight;
-        for (Label label : labels) {
+        for (Label<? extends LabelStyle> label : labels) {
             if (label instanceof TextLabel) {
                 g2d.setFont(FontManager.fontOf((TextLabel) label));
                 if (((TextLabel) label).getLayoutText() != null) {

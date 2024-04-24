@@ -114,5 +114,5 @@ public abstract class Label<LS extends LabelStyle> implements ShapedObject {
         this.shape = shape;
     }
 
-    public abstract boolean equalLabeling(Label o);
+    public abstract boolean equalLabeling(Label<? extends LabelStyle> o);
 }

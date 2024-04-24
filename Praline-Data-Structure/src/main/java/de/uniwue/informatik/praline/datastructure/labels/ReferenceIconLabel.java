@@ -54,7 +54,7 @@ public class ReferenceIconLabel extends IconLabel implements ReferenceObject
      *==========*/
 
     @Override
-    public boolean equalLabeling(Label o) {
+    public boolean equalLabeling(Label<? extends LabelStyle> o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ReferenceIconLabel that = (ReferenceIconLabel) o;

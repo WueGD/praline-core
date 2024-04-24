@@ -3,6 +3,7 @@ package de.uniwue.informatik.praline.datastructure.labels;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 
 import java.util.*;
@@ -26,8 +27,8 @@ public class LabelManager {
      *==========*/
 
     private final LabeledObject managedLabeledObject;
-    protected final List<Label> labels;
-    protected Label mainLabel;
+    protected final List<Label<? extends LabelStyle>> labels;
+    protected Label<? extends LabelStyle> mainLabel;
 
 
     /*==========
@@ -38,15 +39,15 @@ public class LabelManager {
         this(managedLabeledObject,null, null);
     }
 
-    public LabelManager(LabeledObject managedLabeledObject, Collection<Label> labels) {
+    public LabelManager(LabeledObject managedLabeledObject, Collection<Label<? extends LabelStyle>> labels) {
         this(managedLabeledObject, labels, null);
         findNewMainLabel();
     }
 
     @JsonCreator
     private LabelManager(
-            @JsonProperty("labels") final List<Label> labels,
-            @JsonProperty("mainLabel") final Label mainLabel
+            @JsonProperty("labels") final List<Label<? extends LabelStyle>> labels,
+            @JsonProperty("mainLabel") final Label<? extends LabelStyle> mainLabel
     ) {
         this(null, labels, mainLabel);
     }
@@ -60,7 +61,8 @@ public class LabelManager {
      * @param mainLabel
      *      can be null if there is no label that should become the main label
      */
-    public LabelManager(LabeledObject managedLabeledObject, Collection<Label> labels, Label mainLabel) {
+    public LabelManager(LabeledObject managedLabeledObject, Collection<Label<? extends LabelStyle>> labels,
+                        Label<? extends LabelStyle> mainLabel) {
         this.managedLabeledObject = managedLabeledObject;
         this.labels = new ArrayList<>();
         if (labels != null) {
@@ -80,15 +82,15 @@ public class LabelManager {
         return managedLabeledObject;
     }
 
-    public List<Label> getLabels() {
+    public List<Label<? extends LabelStyle>> getLabels() {
         return Collections.unmodifiableList(labels);
     }
 
-    public Label getMainLabel() {
+    public Label<? extends LabelStyle> getMainLabel() {
         return mainLabel;
     }
 
-    public boolean setMainLabel(Label mainLabel) {
+    public boolean setMainLabel(Label<? extends LabelStyle> mainLabel) {
         if (mainLabel != null && !labels.contains(mainLabel)) {
             if (!addLabel(mainLabel)) {
                 return false;
@@ -110,7 +112,7 @@ public class LabelManager {
      *      true if all labels are added
      *      false if not all (but maybe some!) are added
      */
-    public boolean addAllLabels(Collection<Label> labels) {
+    public boolean addAllLabels(Collection<Label<? extends LabelStyle>> labels) {
         if (labels == null) {
             return false;
         }
@@ -122,19 +124,21 @@ public class LabelManager {
         return returnValue;
     }
 
-    protected boolean addAllLabelsInternally(List<Label> toThisList, Collection<Label> toBeAdded) {
+    protected boolean addAllLabelsInternally(List<Label<? extends LabelStyle>> toThisList,
+                                             Collection<Label<? extends LabelStyle>> toBeAdded) {
         boolean success = true;
-        for (Label label : new ArrayList<>(toBeAdded)) {
+        for (Label<? extends LabelStyle> label : new ArrayList<>(toBeAdded)) {
             success = success & addLabelInternally(toThisList, label, false);
         }
         return success;
     }
 
-    public boolean addLabel(Label l) {
+    public boolean addLabel(Label<? extends LabelStyle> l) {
         return addLabelInternally(labels, l, true);
     }
 
-    protected  boolean addLabelInternally(List<Label> toThisList, Label l, boolean checkMainLabel) {
+    protected boolean addLabelInternally(List<Label<? extends LabelStyle>> toThisList, Label<? extends LabelStyle> l,
+                                         boolean checkMainLabel) {
         if (!toThisList.contains(l)) {
             toThisList.add(l);
             //change value associated object at the label
@@ -154,11 +158,12 @@ public class LabelManager {
         return false;
     }
 
-    public boolean removeLabel(Label l) {
+    public boolean removeLabel(Label<? extends LabelStyle> l) {
         return removeLabelInternally(labels, l);
     }
 
-    protected  boolean removeLabelInternally(List<Label> fromThisList, Label l) {
+    protected  boolean removeLabelInternally(List<Label<? extends LabelStyle>> fromThisList,
+                                             Label<? extends LabelStyle> l) {
         if (fromThisList.contains(l)) {
             fromThisList.remove(l);
             l.setAssociatedLabelManager(null);

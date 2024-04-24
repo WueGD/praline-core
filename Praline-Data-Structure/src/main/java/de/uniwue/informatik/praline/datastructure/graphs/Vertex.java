@@ -8,6 +8,7 @@ import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 
 import java.util.*;
@@ -69,20 +70,21 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, Pro
         this(portCompositions, null, null, shape);
     }
 
-    public Vertex(Collection<PortComposition> portCompositions, Collection<Label> labels) {
+    public Vertex(Collection<PortComposition> portCompositions, Collection<Label<? extends LabelStyle>> labels) {
         this(portCompositions, labels, null, null);
     }
 
-    public Vertex(Collection<PortComposition> portCompositions, Label mainLabel) {
+    public Vertex(Collection<PortComposition> portCompositions, Label<? extends LabelStyle> mainLabel) {
         this(portCompositions, Collections.singleton(mainLabel), mainLabel, null);
     }
 
-    public Vertex(Collection<PortComposition> portCompositions, Collection<Label> labels, Shape shape) {
+    public Vertex(Collection<PortComposition> portCompositions, Collection<Label<? extends LabelStyle>> labels,
+                  Shape shape) {
         this(portCompositions, labels, null, shape);
     }
 
-    public Vertex(Collection<PortComposition> portCompositions, Collection<Label> labels, Label mainLabel,
-                  Shape shape) {
+    public Vertex(Collection<PortComposition> portCompositions, Collection<Label<? extends LabelStyle>> labels,
+                  Label<? extends LabelStyle> mainLabel, Shape shape) {
         this(portCompositions, labels, mainLabel, shape, null);
     }
 
@@ -107,8 +109,8 @@ public class Vertex implements ShapedObject, LabeledObject, ReferenceObject, Pro
      * @param shape
      * @param properties
      */
-    public Vertex(Collection<PortComposition> portCompositions, Collection<Label> labels, Label mainLabel,
-                  Shape shape, Map<String, String> properties) {
+    public Vertex(Collection<PortComposition> portCompositions, Collection<Label<? extends LabelStyle>> labels,
+                  Label<? extends LabelStyle> mainLabel, Shape shape, Map<String, String> properties) {
         this.ports = new LinkedHashSet<>();
         this.portCompositions = new ArrayList<>();
         if (portCompositions != null) {

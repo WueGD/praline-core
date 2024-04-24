@@ -7,6 +7,7 @@ import de.uniwue.informatik.praline.datastructure.labels.EdgeLabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.paths.Path;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 import de.uniwue.informatik.praline.datastructure.styles.PathStyle;
 import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 import de.uniwue.informatik.praline.datastructure.utils.InconsistentStateException;
@@ -54,20 +55,21 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
         this(ports, null, null, null, null, null);
     }
 
-    public Edge(Collection<Port> ports, Collection<Label> innerLabels) {
+    public Edge(Collection<Port> ports, Collection<Label<? extends LabelStyle>> innerLabels) {
         this(ports, innerLabels, null, null, null);
     }
 
-    public Edge(Collection<Port> ports, Label mainLabel) {
+    public Edge(Collection<Port> ports, Label<? extends LabelStyle> mainLabel) {
         this(ports, Collections.singleton(mainLabel), null, mainLabel, null);
     }
 
-    public Edge(Collection<Port> ports, Collection<Label> innerLabels, Map<Port, List<Label>> portLabels) {
+    public Edge(Collection<Port> ports, Collection<Label<? extends LabelStyle>> innerLabels, Map<Port,
+            List<Label<? extends LabelStyle>>> portLabels) {
         this(ports, innerLabels, portLabels, null, null);
     }
 
-    public Edge(Collection<Port> ports, Collection<Label> innerLabels, Map<Port, List<Label>> portLabels, Label mainLabel,
-                PathStyle pathStyle){
+    public Edge(Collection<Port> ports, Collection<Label<? extends LabelStyle>> innerLabels, Map<Port,
+            List<Label<? extends LabelStyle>>> portLabels, Label<? extends LabelStyle> mainLabel, PathStyle pathStyle) {
         this(ports, innerLabels, portLabels, mainLabel,pathStyle, null);
     }
 
@@ -100,7 +102,8 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
      * @param properties
      */
     public Edge(
-            Collection<Port> ports, Collection<Label> innerLabels, Map<Port, List<Label>> portLabels, Label mainLabel,
+            Collection<Port> ports, Collection<Label<? extends LabelStyle>> innerLabels, Map<Port,
+            List<Label<? extends LabelStyle>>> portLabels, Label<? extends LabelStyle> mainLabel,
             PathStyle pathStyle, Map<String, String> properties
     ) {
         this.ports = newArrayListNullSafe(ports);

@@ -5,6 +5,8 @@ import de.uniwue.informatik.praline.datastructure.labels.Label;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.labels.LeaderedLabel;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
+import de.uniwue.informatik.praline.datastructure.styles.TextLabelStyle;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.ImplicitCharacteristics;
@@ -64,7 +66,7 @@ public class GraphPreprocessor {
 
     private void setLayoutText(LabeledObject labeledObject) {
         //for all labeled object, set the layout text to be the input text
-        for (Label label : labeledObject.getLabelManager().getLabels()) {
+        for (Label<? extends LabelStyle> label : labeledObject.getLabelManager().getLabels()) {
             if (label instanceof TextLabel) {
                 String inputText = ((TextLabel) label).getInputText();
                 if (inputText == null) {
@@ -511,7 +513,7 @@ public class GraphPreprocessor {
     }
 
     private void createMainLabel (String id, LabeledObject lo) {
-        Label newLabel = new TextLabel(id);
+        Label<TextLabelStyle> newLabel = new TextLabel(id);
         lo.getLabelManager().addLabel(newLabel);
         lo.getLabelManager().setMainLabel(newLabel);
     }

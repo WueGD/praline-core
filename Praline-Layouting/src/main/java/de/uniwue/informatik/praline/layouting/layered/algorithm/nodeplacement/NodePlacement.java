@@ -7,6 +7,7 @@ import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.placements.Orientation;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
+import de.uniwue.informatik.praline.datastructure.styles.TextLabelStyle;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.io.output.svg.SVGRectangleDrawer;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
@@ -1338,7 +1339,7 @@ public class NodePlacement {
     }
 
     private void createMainLabel (LabeledObject lo) {
-        Label newLabel = new TextLabel("dummyPort" + portNumber++);
+        Label<TextLabelStyle> newLabel = new TextLabel("dummyPort" + portNumber++);
         lo.getLabelManager().addLabel(newLabel);
         lo.getLabelManager().setMainLabel(newLabel);
     }

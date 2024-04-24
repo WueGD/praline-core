@@ -13,6 +13,7 @@ import de.uniwue.informatik.praline.datastructure.placements.Orientation;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 import de.uniwue.informatik.praline.datastructure.utils.InconsistentStateException;
 
 import java.util.*;
@@ -83,11 +84,11 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
         this(edges, null, null, null);
     }
 
-    public Port(Collection<Edge> edges, Collection<Label> labels) {
+    public Port(Collection<Edge> edges, Collection<Label<? extends LabelStyle>> labels) {
         this(edges, labels, null, null);
     }
 
-    public Port(Collection<Edge> edges, Label mainLabel) {
+    public Port(Collection<Edge> edges, Label<? extends LabelStyle> mainLabel) {
         this(edges, Collections.singleton(mainLabel), mainLabel, null);
     }
 
@@ -95,11 +96,12 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
         this(edges, null, null, shape);
     }
 
-    public Port(Collection<Edge> edges, Collection<Label> labels, Shape shape) {
+    public Port(Collection<Edge> edges, Collection<Label<? extends LabelStyle>> labels, Shape shape) {
         this(edges, labels, null, shape);
     }
 
-    public Port(Collection<Edge> edges, Collection<Label> labels, Label mainLabel, Shape shape) {
+    public Port(Collection<Edge> edges, Collection<Label<? extends LabelStyle>> labels,
+                Label<? extends LabelStyle> mainLabel, Shape shape) {
         this(edges, labels, mainLabel, shape, null);
     }
 
@@ -112,7 +114,8 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
         this(null, labelManager.getLabels(), labelManager.getMainLabel(), shape, properties);
     }
 
-    public Port(Collection<Edge> edges, Collection<Label> labels, Label mainLabel, Shape shape, Map<String, String> properties) {
+    public Port(Collection<Edge> edges, Collection<Label<? extends LabelStyle>> labels,
+                Label<? extends LabelStyle> mainLabel, Shape shape, Map<String, String> properties) {
         this.edges = newArrayListNullSafe(edges);
         for (Edge edge : this.edges) {
             edge.addPortButNotEdge(this);

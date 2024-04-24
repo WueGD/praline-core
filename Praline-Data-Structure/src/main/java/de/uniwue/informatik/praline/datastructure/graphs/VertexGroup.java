@@ -8,6 +8,7 @@ import de.uniwue.informatik.praline.datastructure.labels.LabelManager;
 import de.uniwue.informatik.praline.datastructure.labels.LabeledObject;
 import de.uniwue.informatik.praline.datastructure.shapes.Shape;
 import de.uniwue.informatik.praline.datastructure.shapes.ShapedObject;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 
 import java.util.*;
@@ -74,13 +75,14 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
         this(containedVertices, null, null, null, null, null, null, DEFAULT_DRAW_FRAME, null);
     }
 
-    public VertexGroup(Collection<Vertex> containedVertices, Label mainLabel) {
+    public VertexGroup(Collection<Vertex> containedVertices, Label<? extends LabelStyle> mainLabel) {
         this(containedVertices, null, null, null, Collections.singleton(mainLabel), mainLabel, null, DEFAULT_DRAW_FRAME, null);
     }
 
     public VertexGroup(Collection<Vertex> containedVertices, Collection<VertexGroup> containedVertexGroups,
                        Collection<TouchingPair> touchingPairs, Collection<PortPairing> portPairings,
-                       Collection<Label> labels, Label mainLabel, Shape shape, boolean drawnFrame) {
+                       Collection<Label<? extends LabelStyle>> labels, Label<? extends LabelStyle> mainLabel,
+                       Shape shape, boolean drawnFrame) {
         this(containedVertices, containedVertexGroups, touchingPairs, portPairings, labels, mainLabel, shape, drawnFrame, null);
     }
 
@@ -105,7 +107,8 @@ public class VertexGroup implements ShapedObject, LabeledObject, ReferenceObject
      */
     public VertexGroup(Collection<Vertex> containedVertices, Collection<VertexGroup> containedVertexGroups,
                        Collection<TouchingPair> touchingPairs, Collection<PortPairing> portPairings,
-                       Collection<Label> labels, Label mainLabel, Shape shape, boolean drawnFrame, Map<String, String> properties) {
+                       Collection<Label<? extends LabelStyle>> labels, Label<? extends LabelStyle> mainLabel,
+                       Shape shape, boolean drawnFrame, Map<String, String> properties) {
         this.containedVertices = newArrayListNullSafe(containedVertices);
         for (Vertex v : this.containedVertices) {
             v.setVertexGroup(this);

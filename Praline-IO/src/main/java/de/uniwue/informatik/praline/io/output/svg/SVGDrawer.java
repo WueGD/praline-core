@@ -6,6 +6,7 @@ import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.paths.Path;
 import de.uniwue.informatik.praline.datastructure.paths.PolygonalPath;
 import de.uniwue.informatik.praline.datastructure.shapes.Rectangle;
+import de.uniwue.informatik.praline.datastructure.styles.LabelStyle;
 import de.uniwue.informatik.praline.datastructure.utils.PortUtils;
 import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.io.output.util.DrawingUtils;
@@ -159,7 +160,7 @@ public class SVGDrawer {
 
     private void drawNodeLabel(SVGGraphics2D g2d, Vertex node) {
         Rectangle2D nodeRectangle = (Rectangle2D) node.getShape();
-        Label mainLabel = node.getLabelManager().getMainLabel(); //TODO: draw all labels, not only main label
+        Label<? extends LabelStyle> mainLabel = node.getLabelManager().getMainLabel(); //TODO: draw all labels, not only main label
         if (mainLabel instanceof TextLabel) {
             g2d.setFont(FontManager.fontOf((TextLabel) mainLabel));
             String text = ((TextLabel) mainLabel).getLayoutText();
@@ -250,7 +251,7 @@ public class SVGDrawer {
     }
 
     private void drawPortLabel(Port port, Graphics2D g2d, Rectangle nodeRectangle, Rectangle2D portRectangle) {
-        Label mainLabel = port.getLabelManager().getMainLabel(); //TODO: draw all labels, not only main label
+        Label<? extends LabelStyle> mainLabel = port.getLabelManager().getMainLabel(); //TODO: draw all labels, not only main label
         if (mainLabel instanceof TextLabel) {
             g2d.setFont(FontManager.fontOf((TextLabel) mainLabel));
             String text = ((TextLabel) mainLabel).getLayoutText();
