@@ -21,6 +21,7 @@ import java.util.List;
 public class MainDrawSinglePlan {
 
     private static final String SOURCE_PATH =
+            "";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18/lc-praline-1dda4e2a-ae64-4e76-916a-822c4e838c41.json";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18/lc-praline-5c5becad-d634-4081-b7c1-8a652fc6d023.json";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18/lc-praline-1f8afa02-a5a7-4646-abe1-83d91173cff4.json";
@@ -51,7 +52,7 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0019-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0024-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0282-praline.json";
-            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0414-praline.json";
+//            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0414-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0434-praline.json";
 //            "Praline-Layouting/data/praline-readable-2020-09-04/diagram_0462-praline.json"; //1 component
 //            "Praline-Layouting/data/denkbares_08_06_2021/praline/diagram_0001-praline.json";
