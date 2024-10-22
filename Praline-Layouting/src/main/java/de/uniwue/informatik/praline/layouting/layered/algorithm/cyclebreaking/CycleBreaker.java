@@ -162,7 +162,7 @@ public class CycleBreaker {
             }
         }
 
-        boolean edgesLeft = edges.size() > 0;
+        boolean edgesLeft = !edges.isEmpty();
         edges.addAll(removedEdges);
         vertices.addAll(removedVertices);
         return edgesLeft;
@@ -246,7 +246,6 @@ public class CycleBreaker {
 
     public void assignEdgeDirectionsWithoutCycles(SugiyamaLayouter sugy, List<Vertex> vertices, List<Edge> edges) {
         // Weise den Kanten die richtigen Richtungen zu
-        int sizeOfFas = 0;
         for (Edge edge : edges) {
             Vertex node0 = edge.getPorts().get(0).getVertex();
             Vertex node1 = edge.getPorts().get(1).getVertex();
@@ -254,10 +253,8 @@ public class CycleBreaker {
                 sugy.assignDirection(edge, node0, node1);
             } else {
                 sugy.assignDirection(edge, node1, node0);
-                sizeOfFas += 1;
             }
         }
-        //sugy.setSizeOfFas(sizeOfFas);
     }
 
     public void linearArrange(List<Vertex> vertices, List<Edge> edges) {
@@ -318,7 +315,7 @@ public class CycleBreaker {
             }
         }
 
-        while (vertices.size() > 0) {
+        while (!vertices.isEmpty()) {
             // Finde den Knoten mit max. Diff. zwischen ein- und ausgehenden Kanten
             Optional<Vertex> maxDegVertex = findSinkSourceOrMaxDegVertex(vertices, edges, CycleBreakingNodeType.OTHER);
             if (maxDegVertex.isPresent()) {
@@ -392,7 +389,7 @@ public class CycleBreaker {
 
         // Es wurde nach einer Senke gefragt
         if (type.equals(CycleBreakingNodeType.SINK)) {
-            if (sinks.size() > 0) {
+            if (!sinks.isEmpty()) {
                 // Gib die erste Senke aus der Liste zurück
                 return Optional.of(sinks.get(0));
             } else {
@@ -402,7 +399,7 @@ public class CycleBreaker {
 
         // Es wurde nach einer Quelle gefragt
         if (type.equals(CycleBreakingNodeType.SOURCE)) {
-            if (sources.size() > 0) {
+            if (!sources.isEmpty()) {
                 return Optional.of(sources.get(0));
             } else {
                 return Optional.empty();
