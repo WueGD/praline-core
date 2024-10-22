@@ -3,9 +3,6 @@ package de.uniwue.informatik.praline.layouting.layered.main;
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.utils.Serialization;
-import de.uniwue.informatik.praline.io.input.processdata.EdgeLabelStyle;
-import de.uniwue.informatik.praline.io.input.processdata.ProcessDataConverter;
-import de.uniwue.informatik.praline.io.output.util.SVGLineShape;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.cyclebreaking.CycleBreakingMethod;
@@ -119,7 +116,7 @@ public class MainDrawSinglePlan {
     public static void main(String[] args) {
         SugiyamaLayouter bestRun = null;
         int fewestCrossings = Integer.MAX_VALUE;
-        String pathToGraph = args.length > 0 && args[0].length() > 0 ? args[0] : SOURCE_PATH;
+        String pathToGraph = args.length > 0 && !args[0].isEmpty() ? args[0] : SOURCE_PATH;
 
         for (int i = 0; i < NUMBER_OF_REPETITIONS_PER_GRAPH; i++) {
             Graph graph = null;

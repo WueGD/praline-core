@@ -325,7 +325,6 @@ public class SVGDrawer {
     public void drawBezier2dEdge(SVGGraphics2D g2d, Edge edge, Map<Vertex, List<Point2D>> nodeBannedArea) {
 
         List<List<Point2D>> edgeSegments = new ArrayList<>();
-        //graph.addSegment(edgeSegments);
         Path2D bezierPath = new Path2D.Double();
         boolean bezierPathInit = false;
 
@@ -442,7 +441,7 @@ public class SVGDrawer {
                             }
 
                             // Falls Knoten innerhalb des Dreiecks liegen
-                            if (verticesInTriangle.size() > 0) {
+                            if (!verticesInTriangle.isEmpty()) {
                                 // Finde den nächsten Knoten an P1 liegt und bestimme die nächste Ecke
                                 Point2D nearest = nodeBannedArea.get(verticesInTriangle.get(0)).get(0);
                                 double nearestDistance = distance(p1, nearest);
@@ -720,7 +719,7 @@ public class SVGDrawer {
                             if (triangleIndex == 0) { control = p1; control2 = p2; }
                             else { control = p2; control2 = p1; }
 
-                            if (verticesInTriangle.get(triangleIndex).size() > 0) {
+                            if (!verticesInTriangle.get(triangleIndex).isEmpty()) {
                                 pointsInAnyTriangle = true;
 
                                 // Finde den nächsten Knoten am Kontrollpunkt liegt und bestimme die nächste Ecke
@@ -853,9 +852,8 @@ public class SVGDrawer {
     public Point2D adjustPoint3D(Point2D point, Point2D nearest, double slope) {
 
         // Passe point an, sodass Überschneidungen vermieden werden
-        Point2D newPoint = new Point2D.Double(
+        return new Point2D.Double(
                 point.getX(), nearest.getY() - (nearest.getX() - point.getX()) * slope);
-        return newPoint;
     }
 
     public static void drawStraightEdge(SVGGraphics2D g2d, double x1, double y1, double x2, double y2) {
