@@ -4,6 +4,7 @@ import de.uniwue.informatik.praline.datastructure.graphs.Graph;
 import de.uniwue.informatik.praline.datastructure.utils.Serialization;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.cyclebreaking.CycleBreakingMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignmentMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.nodeplacement.AlignmentParameters;
@@ -43,6 +44,8 @@ public class MainDrawPackage {
             "Praline-Layouting/results/all-svgs-" + DATE_FORMAT.format(new Date());
 
     private static final boolean CHECK_COMPLETENESS_OF_GRAPH = true;
+
+    private static final CycleBreakingMethod CYCLE_BREAKING_METHOD = CycleBreakingMethod.IGNORE;
 
     private static final DirectionMethod DIRECTION_METHOD = DirectionMethod.FORCE;
 
@@ -124,11 +127,21 @@ public class MainDrawPackage {
         for (int i = 0; i < NUMBER_OF_REPETITIONS_PER_GRAPH; i++) {
             Graph graph = Serialization.read(file, Graph.class);
 
+            //ProcessDataConverter converter = new ProcessDataConverter(EdgeLabelStyle.FREQUENCY, 1.0);
+            //ProcessDataConverter converter = new ProcessDataConverter();
+            //graph = converter.getGraphFromProcessData(pathToGraph);
+
             numberOfVertices = graph.getVertices().size();
 
             SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
 
-            sugy.computeLayout(DIRECTION_METHOD, LAYER_ASSIGNMENT_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS,
+            /*
+            sugy.getDrawingInformation().setLineShape(SVGLineShape.BEZIER2D);
+            sugy.getDrawingInformation().setShowEdgeLabels(true);
+            sugy.getDrawingInformation().setShowEdgeDirection(true);
+             */
+
+            sugy.computeLayout(CYCLE_BREAKING_METHOD, DIRECTION_METHOD, LAYER_ASSIGNMENT_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS,
                     CROSSING_MINIMIZATION_METHOD, NUMBER_OF_CROSSING_REDUCTION_ITERATIONS, ALIGNMENT_METHOD, ALIGNMENT_PREFERENCE);
 
             int numberOfCrossings = CrossingsCounting.countNumberOfCrossings(sugy.getGraph());

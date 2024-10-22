@@ -3,8 +3,12 @@ package de.uniwue.informatik.praline.layouting.layered.main;
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.utils.Serialization;
+import de.uniwue.informatik.praline.io.input.processdata.EdgeLabelStyle;
+import de.uniwue.informatik.praline.io.input.processdata.ProcessDataConverter;
+import de.uniwue.informatik.praline.io.output.util.SVGLineShape;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.cyclebreaking.CycleBreakingMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignmentMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.nodeplacement.AlignmentParameters;
@@ -21,7 +25,7 @@ import java.util.List;
 public class MainDrawSinglePlan {
 
     private static final String SOURCE_PATH =
-            "";
+            "Praline-Layouting/data/process-data/activities_small.csv";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18/lc-praline-1dda4e2a-ae64-4e76-916a-822c4e838c41.json";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18/lc-praline-5c5becad-d634-4081-b7c1-8a652fc6d023.json";
 //            "Praline-Layouting/data/lc-praline-package-2020-05-18/lc-praline-1f8afa02-a5a7-4646-abe1-83d91173cff4.json";
@@ -89,6 +93,8 @@ public class MainDrawSinglePlan {
 
     private static final boolean CHECK_COMPLETENESS_OF_GRAPH = true;
 
+    private static final CycleBreakingMethod CYCLE_BREAKING_METHOD = CycleBreakingMethod.IGNORE;
+
     private static final DirectionMethod DIRECTION_METHOD = DirectionMethod.FORCE;
 
     private static final LayerAssignmentMethod LAYER_ASSIGNMENT_METHOD = LayerAssignmentMethod.NETWORK_SIMPLEX;
@@ -118,10 +124,13 @@ public class MainDrawSinglePlan {
         for (int i = 0; i < NUMBER_OF_REPETITIONS_PER_GRAPH; i++) {
             Graph graph = null;
 
-
             File file = new File(pathToGraph);
             try {
                 graph = Serialization.read(file, Graph.class);
+
+                //ProcessDataConverter converter = new ProcessDataConverter(EdgeLabelStyle.FREQUENCY, 1.0);
+                //ProcessDataConverter converter = new ProcessDataConverter();
+                //graph = converter.getGraphFromProcessData(pathToGraph);
 
                 System.out.println("Read graph " + pathToGraph);
                 System.out.println();
@@ -135,7 +144,13 @@ public class MainDrawSinglePlan {
 
             SugiyamaLayouter sugy = new SugiyamaLayouter(graph);
 
-            sugy.computeLayout(DIRECTION_METHOD, LAYER_ASSIGNMENT_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS,
+            /*
+            sugy.getDrawingInformation().setLineShape(SVGLineShape.BEZIER2D);
+            sugy.getDrawingInformation().setShowEdgeLabels(true);
+            sugy.getDrawingInformation().setShowEdgeDirection(true);
+             */
+
+            sugy.computeLayout(CYCLE_BREAKING_METHOD, DIRECTION_METHOD, LAYER_ASSIGNMENT_METHOD, NUMBER_OF_FORCE_DIRECTED_ITERATIONS,
                     CROSSING_MINIMIZATION_METHOD, NUMBER_OF_CROSSING_REDUCTION_ITERATIONS, ALIGNMENT_METHOD, ALIGNMENT_PREFERENCE);
 
             int crossings = CrossingsCounting.countNumberOfCrossings(graph);

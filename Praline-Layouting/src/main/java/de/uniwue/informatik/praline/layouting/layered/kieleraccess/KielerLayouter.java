@@ -10,6 +10,7 @@ import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.layouting.PralineLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimization;
+import de.uniwue.informatik.praline.layouting.layered.algorithm.cyclebreaking.CycleBreakingMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.edgeorienting.DirectionMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.layerassignment.LayerAssignmentMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.util.SortingOrder;
@@ -68,7 +69,7 @@ public class KielerLayouter implements PralineLayouter {
 
         sugiyForInternalUse.construct();
 
-        sugiyForInternalUse.assignDirections(directionMethod, numberOfIterationsFD);
+        sugiyForInternalUse.assignDirections(CycleBreakingMethod.IGNORE, directionMethod, numberOfIterationsFD);
 
         sugiyForInternalUse.assignLayers(layerAssignmentMethod, directionMethod);
 

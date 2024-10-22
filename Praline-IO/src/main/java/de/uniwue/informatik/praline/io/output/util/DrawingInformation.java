@@ -36,11 +36,14 @@ public class DrawingInformation {
     public final static boolean DEFAULT_SHOW_PORT_PAIRINGS = true;
     public static final boolean DEFAULT_SHOW_VERTEX_LABELS = true;
     public static final boolean DEFAULT_SHOW_PORT_LABELS = true;
+    public static final boolean DEFAULT_SHOW_EDGE_LABELS = false;
     public static final boolean DEFAULT_SHOW_VERTEX_LABEL_FRAMES = false;
     public static final boolean DEFAULT_SHOW_PORT_LABEL_FRAMES = false;
     public final static Color DEFAULT_PORT_GROUP_COLOR = Color.LIGHT_GRAY;
     public final static double DEFAULT_PORT_GROUP_BORDER = 2;
     public final static boolean DEFAULT_SHOW_PORT_GROUPS = false;
+    public final static boolean DEFAULT_SHOW_EDGE_DIRECTION = false;
+    public final static SVGLineShape DEFAULT_LINE_SHAPE = SVGLineShape.STRAIGHT;
 
 
     //TODO: JZ: I think this should not be static, but instance-wide, moreover set font in constructor
@@ -68,12 +71,15 @@ public class DrawingInformation {
     private Color portPairingColor;
     private boolean showVertexLabels;
     private boolean showPortLabels;
+    private boolean showEdgeLabels;
     private boolean showVertexLabelFrames;
     private boolean showPortLabelFrames;
     private boolean showPortPairings;
     private Color portGroupColor;
     private double portGroupBorder;
     private boolean showPortGroups;
+    private boolean showEdgeDirection;
+    private SVGLineShape lineShape;
 
     public DrawingInformation() {
         this(DEFAULT_BORDER_WIDTH, DEFAULT_VERTEX_HEIGHT, DEFAULT_VERTEX_MINIMUM_WIDTH,
@@ -83,9 +89,9 @@ public class DrawingInformation {
                 DEFAULT_DISTANCE_BETWEEN_CONNECTED_COMPONENTS, DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET,
                 DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET, DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET,
                 DEFAULT_VERTICAL_PORT_LABEL_OFFSET, DEFAULT_PORT_PAIRING_COLOR, DEFAULT_SHOW_VERTEX_LABELS,
-                DEFAULT_SHOW_PORT_LABELS, DEFAULT_SHOW_VERTEX_LABEL_FRAMES, DEFAULT_SHOW_PORT_LABEL_FRAMES,
+                DEFAULT_SHOW_PORT_LABELS, DEFAULT_SHOW_EDGE_LABELS, DEFAULT_SHOW_VERTEX_LABEL_FRAMES, DEFAULT_SHOW_PORT_LABEL_FRAMES,
                 DEFAULT_SHOW_PORT_PAIRINGS, DEFAULT_PORT_GROUP_COLOR, DEFAULT_PORT_GROUP_BORDER,
-                DEFAULT_SHOW_PORT_GROUPS);
+                DEFAULT_SHOW_PORT_GROUPS, DEFAULT_SHOW_EDGE_DIRECTION, DEFAULT_LINE_SHAPE);
     }
 
     public DrawingInformation(double borderWidth, double vertexHeight, double vertexMinimumWidth,
@@ -95,9 +101,9 @@ public class DrawingInformation {
                               double distanceBetweenConnectedComponents, double horizontalVertexLabelOffset,
                               double verticalVertexLabelOffset, double horizontalPortLabelOffset,
                               double verticalPortLabelOffset, Color portPairingColor, boolean showVertexLabels,
-                              boolean showPortLabels, boolean showVertexLabelFrames, boolean showPortLabelFrames,
+                              boolean showPortLabels, boolean showEdgeLabels, boolean showVertexLabelFrames, boolean showPortLabelFrames,
                               boolean showPortPairings, Color portGroupColor, double portGroupBorder,
-                              boolean showPortGroups) {
+                              boolean showPortGroups, boolean showEdgeDirection, SVGLineShape lineShape) {
         this.borderWidth = borderWidth;
         this.vertexHeight = vertexHeight;
         this.vertexMinimumWidth = vertexMinimumWidth;
@@ -118,12 +124,15 @@ public class DrawingInformation {
         this.portPairingColor = portPairingColor;
         this.showVertexLabels = showVertexLabels;
         this.showPortLabels = showPortLabels;
+        this.showEdgeLabels = showEdgeLabels;
         this.showVertexLabelFrames = showVertexLabelFrames;
         this.showPortLabelFrames = showPortLabelFrames;
         this.showPortPairings = showPortPairings;
         this.portGroupColor = portGroupColor;
         this.portGroupBorder = portGroupBorder;
         this.showPortGroups = showPortGroups;
+        this.showEdgeDirection = showEdgeDirection;
+        this.lineShape = lineShape;
     }
 
     //old constructor to be removed later (is still here to avoid potential compatibility issues)
@@ -141,8 +150,8 @@ public class DrawingInformation {
                 portHeight, portSpacing, portColor, edgeDistanceHorizontal, edgeDistanceVertical,
                 distanceBetweenLayers, DEFAULT_DISTANCE_BETWEEN_CONNECTED_COMPONENTS, horizontalVertexLabelOffset,
                 verticalVertexLabelOffset, horizontalPortLabelOffset, verticalPortLabelOffset, portPairingColor,
-                showVertexLabels, showPortLabels, showVertexLabelFrames, showPortLabelFrames, showPortPairings,
-                portGroupColor, portGroupBorder, showPortGroups);
+                showVertexLabels, showPortLabels, DEFAULT_SHOW_EDGE_LABELS, showVertexLabelFrames, showPortLabelFrames, showPortPairings,
+                portGroupColor, portGroupBorder, showPortGroups, DEFAULT_SHOW_EDGE_DIRECTION, DEFAULT_LINE_SHAPE);
     }
 
     public double computeMinVertexWidth(Vertex vertex) {
@@ -294,6 +303,10 @@ public class DrawingInformation {
         return showPortLabels;
     }
 
+    public boolean isShowEdgeLabels() {
+        return showEdgeLabels;
+    }
+
     public boolean isShowPortPairings() {
         return showPortPairings;
     }
@@ -309,6 +322,12 @@ public class DrawingInformation {
     public boolean isShowPortGroups() {
         return showPortGroups;
     }
+
+    public boolean isShowEdgeDirection() {
+        return showEdgeDirection;
+    }
+
+    public SVGLineShape getLineShape() { return lineShape; }
 
     public void setBorderWidth(double borderWidth) {
         this.borderWidth = borderWidth;
@@ -386,6 +405,10 @@ public class DrawingInformation {
         this.showPortLabels = showPortLabels;
     }
 
+    public void setShowEdgeLabels(boolean showEdgeLabels) {
+        this.showEdgeLabels = showEdgeLabels;
+    }
+
     public boolean isShowVertexLabelFrames() {
         return showVertexLabelFrames;
     }
@@ -408,5 +431,13 @@ public class DrawingInformation {
 
     public void setShowPortGroups(boolean showPortGroups) {
         this.showPortGroups = showPortGroups;
+    }
+
+    public void setShowEdgeDirection(boolean showEdgeDirection) {
+        this.showEdgeDirection = showEdgeDirection;
+    }
+
+    public void setLineShape(SVGLineShape lineShape) {
+        this.lineShape = lineShape;
     }
 }
