@@ -3,6 +3,8 @@ package de.uniwue.informatik.praline.layouting.layered.main;
 import de.uniwue.informatik.praline.datastructure.graphs.*;
 import de.uniwue.informatik.praline.datastructure.labels.TextLabel;
 import de.uniwue.informatik.praline.datastructure.utils.Serialization;
+import de.uniwue.informatik.praline.io.input.processdata.EdgeLabelStyle;
+import de.uniwue.informatik.praline.io.input.processdata.ProcessDataConverter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.SugiyamaLayouter;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.crossingreduction.CrossingMinimizationMethod;
 import de.uniwue.informatik.praline.layouting.layered.algorithm.cyclebreaking.CycleBreakingMethod;

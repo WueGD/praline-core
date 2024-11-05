@@ -154,6 +154,25 @@ public class DrawingInformation {
                 portGroupColor, portGroupBorder, showPortGroups, DEFAULT_SHOW_EDGE_DIRECTION, DEFAULT_LINE_SHAPE);
     }
 
+    @Deprecated
+    public DrawingInformation(double borderWidth, double vertexHeight, double vertexMinimumWidth,
+                              double vertexWidthMaxStretchFactor, Color vertexColor, double portWidth,
+                              double portHeight, double portSpacing, Color portColor, double edgeDistanceHorizontal,
+                              double edgeDistanceVertical, double distanceBetweenLayers,
+                              double distanceBetweenConnectedComponents, double horizontalVertexLabelOffset,
+                              double verticalVertexLabelOffset, double horizontalPortLabelOffset,
+                              double verticalPortLabelOffset, Color portPairingColor, boolean showVertexLabels,
+                              boolean showPortLabels, boolean showVertexLabelFrames, boolean showPortLabelFrames,
+                              boolean showPortPairings, Color portGroupColor, double portGroupBorder,
+                              boolean showPortGroups) {
+        this(borderWidth, vertexHeight, vertexMinimumWidth, vertexWidthMaxStretchFactor, vertexColor, portWidth,
+                portHeight, portSpacing, portColor, edgeDistanceHorizontal, edgeDistanceVertical, distanceBetweenLayers,
+                distanceBetweenConnectedComponents, horizontalVertexLabelOffset, verticalVertexLabelOffset,
+                horizontalPortLabelOffset, verticalPortLabelOffset, portPairingColor, showVertexLabels, showPortLabels,
+                DEFAULT_SHOW_EDGE_LABELS, showVertexLabelFrames, showPortLabelFrames, showPortPairings, portGroupColor,
+                portGroupBorder, showPortGroups, DEFAULT_SHOW_EDGE_DIRECTION, DEFAULT_LINE_SHAPE);
+    }
+
     public double computeMinVertexWidth(Vertex vertex) {
         double labelWidth = getMinLabelWidth(vertex.getLabelManager().getLabels());
         double labelWithBufferWidth = labelWidth + 2.0 * this.horizontalVertexLabelOffset;

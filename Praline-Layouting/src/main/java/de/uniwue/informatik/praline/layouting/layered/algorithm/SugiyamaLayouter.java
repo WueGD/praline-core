@@ -145,13 +145,14 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     @Override
     public void computeLayout() {
-        computeLayout(DEFAULT_CYCLE_BREAKING_METHOD, DEFAULT_DIRECTION_METHOD, DEFAULT_LAYER_ASSIGNMENT_METHOD, DEFAULT_NUMBER_OF_FD_ITERATIONS,
-                DEFAULT_CROSSING_MINIMIZATION_METHOD, DEFAULT_NUMBER_OF_CM_ITERATIONS, DEFAULT_ALIGNMENT_METHOD,
-                DEFAULT_ALIGNMENT_PREFERENCE);
+        computeLayout(DEFAULT_CYCLE_BREAKING_METHOD, DEFAULT_DIRECTION_METHOD, DEFAULT_LAYER_ASSIGNMENT_METHOD,
+                DEFAULT_NUMBER_OF_FD_ITERATIONS, DEFAULT_CROSSING_MINIMIZATION_METHOD,
+                DEFAULT_NUMBER_OF_CM_ITERATIONS, DEFAULT_ALIGNMENT_METHOD, DEFAULT_ALIGNMENT_PREFERENCE);
     }
 
     /**
-     *  @param directionMethod
+     * @param cycleBreakingMethod
+     * @param directionMethod
      * @param layerAssignmentMethod
      * @param numberOfIterationsFD
  *      when employing a force-directed algo, it uses so many iterations with different random start positions
@@ -167,6 +168,31 @@ public class SugiyamaLayouter implements PralineLayouter {
                               AlignmentParameters.Preference alignmentPreference) {
         construct();
         assignDirections(cycleBreakingMethod, directionMethod, numberOfIterationsFD);
+        assignLayers(layerAssignmentMethod, directionMethod);
+        createDummyNodesAndDoCrossingMinimization(cmMethod, numberOfIterationsCM);
+        nodePositioning(alignmentMethod, alignmentPreference);
+        edgeRouting();
+        prepareDrawing();
+    }
+
+    /**
+     *  @param directionMethod
+     * @param layerAssignmentMethod
+     * @param numberOfIterationsFD
+     *      when employing a force-directed algo, it uses so many iterations with different random start positions
+     *      and takes the one that yields the fewest crossings.
+     *      If you use anything different from {@link DirectionMethod#FORCE}, then this value will be ignored.
+     * @param cmMethod
+     * @param numberOfIterationsCM
+     *      for the crossing minimization phase you may have several independent random iterations of which the one
+     */
+    @Deprecated
+    public void computeLayout(DirectionMethod directionMethod, LayerAssignmentMethod layerAssignmentMethod,
+                              int numberOfIterationsFD, CrossingMinimizationMethod cmMethod, int numberOfIterationsCM,
+                              AlignmentParameters.Method alignmentMethod,
+                              AlignmentParameters.Preference alignmentPreference) {
+        construct();
+        assignDirections(DEFAULT_CYCLE_BREAKING_METHOD, directionMethod, numberOfIterationsFD);
         assignLayers(layerAssignmentMethod, directionMethod);
         createDummyNodesAndDoCrossingMinimization(cmMethod, numberOfIterationsCM);
         nodePositioning(alignmentMethod, alignmentPreference);
@@ -223,6 +249,7 @@ public class SugiyamaLayouter implements PralineLayouter {
 
     /**
      *
+     * @param cycleBreakingMethod
      * @param method
      * @param numberOfIterationsForForceDirected
      *      when employing a force-directed algo, it uses so many iterations with different random start positions
@@ -265,6 +292,17 @@ public class SugiyamaLayouter implements PralineLayouter {
             }
         }
     }
+
+    @Deprecated
+    public void assignDirections(DirectionMethod method) {
+        assignDirections(DEFAULT_CYCLE_BREAKING_METHOD, method);
+    }
+
+    @Deprecated
+    public void assignDirections(DirectionMethod directionMethod, int numberOfIterationsForForceDirected) {
+        assignDirections(DEFAULT_CYCLE_BREAKING_METHOD, directionMethod, numberOfIterationsForForceDirected);
+    }
+
 //    public void copyDirections(SugiyamaLayouter otherSugiyamaLayouterWithSameGraph)  {
 //        for (Edge edge : otherSugiyamaLayouterWithSameGraph.getGraph().getEdges()) {
 //            this.assignDirection(edge, otherSugiyamaLayouterWithSameGraph.getStartNode(edge),

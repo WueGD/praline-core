@@ -104,8 +104,7 @@ public class ProcessDataConverter {
         //create port pairings via dummy vertex groups
         List<VertexGroup> dummyVertexGroups = new ArrayList<>(2);
 
-        //create edges
-        // Zähle für jeden Knoten die Anzahl der Ports und wie viele Ports bereits belegt sind
+        //create edges, count ports for each vertex
         List<Integer> portsCount = new ArrayList<>();
         List<Integer> portsCounter = new ArrayList<>();
         for (List<Port> portlist : ports) {
@@ -193,13 +192,13 @@ public class ProcessDataConverter {
             int csvIndex = 0;
             while ((line = br.readLine()) != null && csvIndex < 25000) {
 
-                // Überspringe die erste Zeile (Header)
+                // start with the second row (first is the header)
                 if (csvIndex == 0) {
                     csvIndex += 1;
                     continue;
                 }
 
-                // Verwende das Trennzeichen, um die Zeile in Felder zu trennen
+                // split columns by separator
                 String[] fields = line.split(cvsSplitBy);
 
                 String caseId = fields[0];
@@ -207,10 +206,10 @@ public class ProcessDataConverter {
                 String user = fields[2];
                 String date = fields[3];
 
-                // Erstelle die Aktivität
+                // create activity
                 Activity activity = new Activity(name, date, user);
 
-                // Prüfe, ob der Fall bereits existiert
+                // check if case already exists
                 boolean caseExists = false;
                 Case currentCase = new Case(caseId);
                 for (Case _case : cases) {
@@ -220,17 +219,17 @@ public class ProcessDataConverter {
                     }
                 }
 
-                // Füge die Aktivität dem Fall hinzu
+                // add activity to case
                 currentCase.addActivity(activity);
 
-                // Wenn der Fall noch nicht erfasst wurde, füge ihn der Fallliste hinzu
+                // if case doesn't exist: add it to the list of cases
                 if (!caseExists) {
                     cases.add(currentCase);
                 }
                 csvIndex += 1;
             }
 
-            // Füge jedem Fall eine Start- und Endaktivität hinzu
+            // add start and end activity to each case
             for (Case _case : cases) {
                 _case.addStartAndEndActivity();
             }
@@ -260,7 +259,7 @@ public class ProcessDataConverter {
         try {
 
             if (percentage < 1) {
-                // Varianten erfassen und deren Häufigkeit berechnen
+                // register all variants and their frequencies
                 Map<List<Activity>, Integer> variants = new HashMap<>();
                 for (Case _case : cases) {
                     if (!variants.containsKey(_case.getActivities())) {
@@ -269,7 +268,7 @@ public class ProcessDataConverter {
                     variants.replace(_case.getActivities(), variants.get(_case.getActivities()) + 1);
                 }
 
-                // Varianten-Map nach Häufigkeit sortieren
+                // sort variants by frequency
                 int numberOfVariants = variants.keySet().size() * (int) (percentage * 100) / 100;
                 if (numberOfVariants > 0) {
                     List<Map.Entry<List<Activity>, Integer>> variantsList = new ArrayList<>(variants.entrySet());
@@ -279,7 +278,7 @@ public class ProcessDataConverter {
                         sortedVariants.put(entry.getKey(), entry.getValue());
                     }
 
-                    // Die numberOfVariants häufigsten Varianten filtern und in eine List schreiben
+                    // filter for the most frequent variants and add them to the list
                     int i = 0;
                     List<List<Activity>> relevantVariants = new ArrayList<>();
                     for (List<Activity> variant : sortedVariants.keySet()) {
@@ -289,7 +288,7 @@ public class ProcessDataConverter {
                         i += 1;
                     }
 
-                    // Alle Fälle filtern, die einer der häufigsten Varianten entsprechen
+                    // filter for all cases which belong to one of the variants
                     List<Case> relevantCases = new ArrayList<>();
                     for (Case _case : cases) {
                         for (List<Activity> activityList : relevantVariants) {
