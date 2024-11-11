@@ -46,6 +46,7 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
     private final EdgeLabelManager labelManager;
     private String reference;
     private final Map<String, String> properties;
+    private EdgeDirection direction = EdgeDirection.UNDIRECTED;
 
     /*==========
      * Constructors
@@ -252,6 +253,13 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
         return ports.remove(p);
     }
 
+    public void setDirection(EdgeDirection direction) {
+        this.direction = direction;
+    }
+
+    public EdgeDirection getDirection() {
+        return direction;
+    }
 
     /*==========
      * toString

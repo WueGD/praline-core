@@ -4,6 +4,7 @@ Jung-Layouting/data/
 Praline-Layouting/data/*
 !Praline-Layouting/data/example-cgta
 !Praline-Layouting/data/example-very-small
+!Praline-Layouting/data/process-data
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
