@@ -12,8 +12,8 @@ import de.uniwue.informatik.praline.io.output.util.DrawingInformation;
 import de.uniwue.informatik.praline.io.output.util.DrawingUtils;
 import de.uniwue.informatik.praline.io.output.util.FontManager;
 import de.uniwue.informatik.praline.io.output.util.SVGLineShape;
-import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
+import org.apache.batik.anim.dom.SVGDOMImplementation;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 
@@ -69,11 +69,10 @@ public class SVGDrawer {
 
     private SVGGraphics2D getSvgGenerator() {
         // Get a DOMImplementation.
-        DOMImplementation domImpl =
-                GenericDOMImplementation.getDOMImplementation();
+        DOMImplementation domImpl = SVGDOMImplementation.getDOMImplementation();
 
         // Create an instance of org.w3c.dom.Document.
-        String svgNS = "http://www.w3.org/2000/svg";
+        String svgNS = SVGDOMImplementation.SVG_NAMESPACE_URI;
         Document document = domImpl.createDocument(svgNS, "svg", null);
 
         // Create an instance of the SVG Generator.
@@ -352,7 +351,7 @@ public class SVGDrawer {
 
                 List<Point2D.Double> edgePoints = ((PolygonalPath) path).getTerminalAndBendPoints();
 
-                // Kante hat nur zwei Eckpunkte, d.h. ist eine gerade Linie
+                // edge with only two bend points -> straight-line segment
                 if (edgePoints.size() == 2) {
                     drawStraightEdge(g2d, edgePoints.get(0).getX(), edgePoints.get(0).getY(),
                             edgePoints.get(1).getX(), edgePoints.get(1).getY());
@@ -363,11 +362,11 @@ public class SVGDrawer {
                     edgeSegments.add(seg);
 
                 } else if (edgePoints.size() > 2 && edgePoints.size() % 2 == 0) {
-                    // Die Kante hat mehr als 2 Eckpunkte und ist eine echte Bezierkurve
+                    // edge with more than 2 bend points -> "real" Bezier curve
                     List<List<Point2D>> pointList = new ArrayList<>();
 
-                    // 1. Abschnitt: Startpunkt als Start, 1. Eckpunkt als Kontrollpunkt,
-                    // Mittelpunkt zw. 1. und 2. Eckpunkt als Endpunkt
+                    // 1. part: start point, 1. bend point as control point
+                    // middle point btw. 1. and 2. bend point as end points
                     List<Point2D> firstPoints = new ArrayList<>();
                     pointList.add(firstPoints);
                     firstPoints.add(edgePoints.get(0));
@@ -376,7 +375,7 @@ public class SVGDrawer {
                             + (edgePoints.get(2).getX() - edgePoints.get(1).getX()) / 2,
                             edgePoints.get(1).getY()));
 
-                    // Mittlere Abschnitte: Mittelpunkte als Start- und Endpunkt, Eckpunkte als Kontrollpunkt
+                    // middle part: middle points as start and end point, bend points as control points
                     for (int i = 2; i < edgePoints.size() - 2; i ++) {
 
                         List<Point2D> points = new ArrayList<>();
@@ -386,11 +385,11 @@ public class SVGDrawer {
                         Point2D cur = edgePoints.get(i);
                         Point2D af = edgePoints.get(i + 1);
 
-                        // Knick von vertikal zu horizontal (Ändere y bei st, x bei en)
+                        // bend from vertical to horizontal (change y at st, s at en)
                         if (i % 2 == 1) {
                             st = new Point2D.Double(cur.getX(), bf.getY() + (cur.getY() - bf.getY()) / 2);
                             en = new Point2D.Double(cur.getX() + (af.getX() - cur.getX()) / 2, cur.getY());
-                            // Knick von horizontal zu vertikal (Ändere x bei st, y bei en)
+                            // bend from horizontal to vertical (change x at st, y at en)
                         } else {
                             st = new Point2D.Double(bf.getX() + (cur.getX() - bf.getX()) / 2, cur.getY());
                             en = new Point2D.Double(cur.getX(), cur.getY() + (af.getY() - cur.getY()) / 2);
@@ -400,8 +399,8 @@ public class SVGDrawer {
                         points.add(en);
                     }
 
-                    // Letzter Abschnitte: Mittelpunkt zw. vorletztem und letztem Eckpunkt als Start,
-                    // letzter Eckpunkt als Kontrollpunkt, Endpunkt als Ende
+                    // last part: middle point btw. second to last and last corner point as start,
+                    // last bend point as control point, end point as terminal
                     List<Point2D> lastPoints = new ArrayList<>();
                     pointList.add(lastPoints);
                     lastPoints.add(new Point2D.Double(edgePoints.get(edgePoints.size() - 3).getX()
@@ -411,7 +410,7 @@ public class SVGDrawer {
                     lastPoints.add(edgePoints.get(edgePoints.size() - 2));
                     lastPoints.add(edgePoints.get(edgePoints.size() - 1));
 
-                    // Bezierkurven abschnittsweise zeichnen
+                    // draw Bezier curves part-wise
                     for (List<Point2D> points : pointList) {
 
                         // p0: Start, p1: Kontrollpunkt, p2: Ende
@@ -419,7 +418,7 @@ public class SVGDrawer {
                         Point2D p1 = points.get(1);
                         Point2D p2 = points.get(2);
 
-                        // Finde alle Punkte aus dem Dreieck aus P0, P1, P2
+                        // find all points of the triangle from P0, P1, P2
                         boolean controlPointsNeedAdjustments = true;
                         int maxAdjustmentIterations = 5, iteration = 0;
                         while (controlPointsNeedAdjustments && iteration < maxAdjustmentIterations) {
@@ -440,9 +439,9 @@ public class SVGDrawer {
                                 }
                             }
 
-                            // Falls Knoten innerhalb des Dreiecks liegen
+                            // if vertices lie inside the triangle
                             if (!verticesInTriangle.isEmpty()) {
-                                // Finde den nächsten Knoten an P1 liegt und bestimme die nächste Ecke
+                                // find the next vertex that lies at P1 and determine the next bend point
                                 Point2D nearest = nodeBannedArea.get(verticesInTriangle.get(0)).get(0);
                                 double nearestDistance = distance(p1, nearest);
                                 for (Vertex vertex : verticesInTriangle) {
@@ -453,7 +452,7 @@ public class SVGDrawer {
                                         }
                                     }
                                 }
-                                // Berechne die Steigung der Geraden zwischen P0, P2
+                                // Compute the slope of the line through P0 and P2
                                 double slope = (p2.getY() - p0.getY()) / (p2.getX() - p0.getX());
                                 Point2D newP0 = adjustPoint2D(p0, nearest, p1, slope);
                                 Point2D newP2 = adjustPoint2D(p2, nearest, p1, slope);
@@ -494,7 +493,7 @@ public class SVGDrawer {
         }
         g2d.draw(bezierPath);
 
-        // Zeichne das Kantenlabel auf die Mitte der gezeichneten Linie
+        // draw the edge label at the middle of the drawn curve
         if (drawInfo.isShowEdgeLabels()) {
             Point2D midpoint = null;
             if (edgeSegments.size() == 1) {
@@ -552,7 +551,7 @@ public class SVGDrawer {
 
     public Point2D adjustPoint2D(Point2D point, Point2D nearest, Point2D controlPoint, double slope) {
 
-        // Passe point an, sodass Überschneidungen vermieden werden
+        // adjust point such that overlaps are avoided
         Point2D newPoint;
         if (point.getX() != controlPoint.getX()) {
             newPoint = new Point2D.Double(
@@ -563,7 +562,7 @@ public class SVGDrawer {
                     point.getX(), nearest.getY() - (nearest.getX() - point.getX()) * slope);
         }
 
-        // Checke, ob der neue point außerhalb des Bezierbereiches liegt
+        // check if the next point lies outside the Bezier area
         if ((controlPoint.getX() < point.getX() && point.getX() < newPoint.getX())
                 ||(controlPoint.getX() > point.getX() && point.getX() > newPoint.getX())) {
             newPoint.setLocation(point.getX(), newPoint.getY());
@@ -616,7 +615,7 @@ public class SVGDrawer {
                 List<Point2D.Double> edgePoints = ((PolygonalPath) path).getTerminalAndBendPoints();
                 List<List<Point2D>> pointList = new ArrayList<>();
 
-                // Kante hat nur 2 Eckpunkte, d.h. ist gerade
+                // edge has only two corner points, i.e., it is a line segment
                 if (edgePoints.size() == 2) {
                     drawStraightEdge(g2d, edgePoints.get(0).getX(), edgePoints.get(0).getY(),
                             edgePoints.get(1).getX(), edgePoints.get(1).getY());
@@ -627,7 +626,7 @@ public class SVGDrawer {
                     edgeSegments.add(seg);
 
                 } else if (edgePoints.size() == 4) {
-                    // Kante hat 4 Eckpunkte und wird zu einer Bezierkurve
+                    // edge has 4 bend points and becomes a Bezier curve
                     List<Point2D> points = new ArrayList<>();
                     pointList.add(points);
                     points.add(edgePoints.get(0));
@@ -639,6 +638,8 @@ public class SVGDrawer {
 
                     // Erste Kante: Start als Startpunkt, erste 2 Eckpunkte als Kontrollpunkte,
                     // Mitte zwischen 3. und 4. Eckpunkt als Endpunkt
+                    // first edge: start at start point, first two bend points as control points,
+                    // middle between 3. and 4. bend point as end point
                     List<Point2D> firstPoints = new ArrayList<>();
                     pointList.add(firstPoints);
                     firstPoints.add(edgePoints.get(0));
@@ -650,7 +651,7 @@ public class SVGDrawer {
 
                     for (int i = 3; i < edgePoints.size() - 4; i += 2) {
 
-                        // Mittlere Kanten: Mittelpunkte als Start- und Endpunkt, je 2 Eckpunkte als Kontrollpunkte
+                        // middle edges: middle points as start and end points, each 2 bend points as control points
                         List<Point2D> points = new ArrayList<>();
                         pointList.add(points);
                         Point2D bf = edgePoints.get(i - 1);
@@ -664,8 +665,8 @@ public class SVGDrawer {
                         points.add(new Point2D.Double(cur2.getX(), af.getY() + (cur2.getY() - af.getY()) / 2));
                     }
 
-                    // Letzte Kante: Mittelpunkt zw. 3- und 2-letztem Eckpunkt als Start,
-                    // vorletzter und letzter Eckpunkt als Kontrollpunkte, Ende als Endpunkt
+                    // last edge: middle point btw. 3.- and 2.-last bend point as start
+                    // second to last and last bend point as control points, last as terminal point
                     List<Point2D> lastPoints = new ArrayList<>();
                     pointList.add(lastPoints);
                     lastPoints.add(new Point2D.Double(edgePoints.get(edgePoints.size() - 3).getX(),
@@ -689,7 +690,7 @@ public class SVGDrawer {
                     while (controlPointsNeedAdjustments && iteration < maxAdjustmentIterations) {
                         iteration += 1;
 
-                        // Finde alle Punkte aus dem Dreieck aus P0, P1, P2 und P1, P2, P3
+                        // find all points of the triangle from P0, P1, P2 and P1, P2, P3
                         Map<Integer, List<Vertex>> verticesInTriangle = new HashMap<>();
                         verticesInTriangle.put(0, new ArrayList<>());
                         verticesInTriangle.put(1, new ArrayList<>());
@@ -712,7 +713,7 @@ public class SVGDrawer {
 
                         boolean pointsInAnyTriangle = false;
 
-                        // Falls Knoten innerhalb des Dreiecks liegen
+                        // if vertices lie inside the triangle
                         for (Integer triangleIndex : verticesInTriangle.keySet()) {
 
                             Point2D control, control2;
@@ -722,7 +723,7 @@ public class SVGDrawer {
                             if (!verticesInTriangle.get(triangleIndex).isEmpty()) {
                                 pointsInAnyTriangle = true;
 
-                                // Finde den nächsten Knoten am Kontrollpunkt liegt und bestimme die nächste Ecke
+                                // find the next vertex that lies at the control point and determine the next bend
                                 Point2D nearest = nodeBannedArea.get(verticesInTriangle.get(triangleIndex).get(0)).get(0);
                                 double nearestDistance = distance(control, nearest);
                                 for (Vertex vertex : verticesInTriangle.get(triangleIndex)) {
@@ -734,7 +735,7 @@ public class SVGDrawer {
                                     }
                                 }
 
-                                // Berechne die Steigung der Geraden zwischen P0, P2
+                                // compute the slope of the line through P0 and P2
                                 double slope = (control2.getY() - nearest.getY()) / (control2.getX() - nearest.getX());
 
                                 Point2D newPoint;
@@ -747,7 +748,7 @@ public class SVGDrawer {
                                     edgeSegments.add(seg);
                                     p0 = newPoint;
 
-                                    // Kontrollpunkt adjustieren, um Knicke zu vermeiden
+                                    // adjust control point to avoid bends
                                     double percNP = Math.max(60 - Math.abs(p1.getY() - newPoint.getY()), 0) / 100;
                                     p1.setLocation(p1.getX(), p1.getY() * (1 - percNP) + newPoint.getY() * percNP);
 
@@ -760,7 +761,7 @@ public class SVGDrawer {
                                     edgeSegments.add(seg);
                                     p3 = newPoint;
 
-                                    // Kontrollpunkt adjustieren, um Knicke zu vermeiden
+                                    // adjust control point to avoid bends
                                     double percNP = Math.max(60 - Math.abs(p2.getY() - newPoint.getY()), 0) / 100;
                                     p2.setLocation(p2.getX(), p2.getY() * (1 - percNP) + newPoint.getY() * percNP);
                                 }
@@ -788,7 +789,7 @@ public class SVGDrawer {
         }
         g2d.draw(bezierPath);
 
-        // Zeichne das Kantenlabel auf die Mitte der gezeichneten Linie
+        // draw the edge label at the middle of the drawn curve
         if (drawInfo.isShowEdgeLabels()) {
             Point2D midpoint = null;
             if (edgeSegments.size() == 1) {
@@ -851,7 +852,7 @@ public class SVGDrawer {
 
     public Point2D adjustPoint3D(Point2D point, Point2D nearest, double slope) {
 
-        // Passe point an, sodass Überschneidungen vermieden werden
+        // adjust point such that overlaps are avoided
         return new Point2D.Double(
                 point.getX(), nearest.getY() - (nearest.getX() - point.getX()) * slope);
     }

@@ -17,7 +17,19 @@ public class TextLabelStyle extends LabelStyle {
      * Default values
      *==========*/
 
-    public static final Font DEFAULT_FONT = new Font(Font.SANS_SERIF, Font.PLAIN, 10);
+    public static final Font DEFAULT_SANS_SERIF_FONT;
+    static {
+        String[] preferredFonts = {"Arial", Font.SANS_SERIF};
+        Font font = null;
+        for (String fontName : preferredFonts) {
+            font = new Font(fontName, Font.PLAIN, 10);
+            if (font.getFamily().equals(fontName)) {
+                break;
+            }
+        }
+        DEFAULT_SANS_SERIF_FONT = font != null ? font : new Font(Font.SANS_SERIF, Font.PLAIN, 10);
+    }
+    public static final Font DEFAULT_FONT = DEFAULT_SANS_SERIF_FONT;
     public static final boolean DEFAULT_NO_BREAK = false;
     public static final Color DEFAULT_COLOR = Color.BLACK;
 
@@ -64,7 +76,15 @@ public class TextLabelStyle extends LabelStyle {
             @JsonProperty("verticalPlacement") final VerticalPlacement verticalPlacement
     ) {
         super(description, showLabel, placement, horizontalPlacement, verticalPlacement);
-        this.font = font == null ? DEFAULT_FONT : font;
+        if (font == null) {
+            this.font = DEFAULT_FONT;
+        }
+        else if (font.getFontName().startsWith("SansSerif")) {
+            this.font = DEFAULT_SANS_SERIF_FONT;
+        }
+        else {
+            this.font = font;
+        }
         this.noBreak = noBreak;
         this.color = color == null ? DEFAULT_COLOR : color;
     }

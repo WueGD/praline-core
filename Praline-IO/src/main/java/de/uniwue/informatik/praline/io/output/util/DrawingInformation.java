@@ -28,7 +28,7 @@ public class DrawingInformation {
     public final static double DEFAULT_EDGE_DISTANCE_VERTICAL = 10;
     public final static double DEFAULT_DISTANCE_BETWEEN_LAYERS = 20;
     public final static double DEFAULT_DISTANCE_BETWEEN_CONNECTED_COMPONENTS = 20;
-    public final static double DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET = 2;
+    public final static double DEFAULT_HORIZONTAL_VERTEX_LABEL_OFFSET = 5;
     public final static double DEFAULT_VERTICAL_VERTEX_LABEL_OFFSET = 0;
     public final static double DEFAULT_HORIZONTAL_PORT_LABEL_OFFSET = -2;
     public final static double DEFAULT_VERTICAL_PORT_LABEL_OFFSET = 0;
