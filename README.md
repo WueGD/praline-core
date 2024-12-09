@@ -124,8 +124,8 @@ To get an overview and to try out modifications of the default parameters, the b
 
 ## Related repositories
 
-- [pseudo-praline-plan-generation](https://github.com/j-zink-wuerzburg/pseudo-praline-plan-generation)
-- [wueortho](https://github.com/hegetim/wueortho)
+- [praline-pseudo-plans](https://github.com/WueGD/praline-pseudo-plans)
+- [wueortho](https://github.com/WueGD/wueortho)
 
 ## Creators and contact
 
@@ -140,7 +140,7 @@ For contact, you can write an email to ``praline *at* informatik *dot* uni-wuerz
 
 ## Funding
 
-Substantial parts of this library were developed in the context of the iPRALINE (interaktive Problemanalyse und -lösung in komplexen industriellen Netzwerken) project
+Substantial parts of this library were developed in the context of the project iPRALINE – grant ZF4117505 (interaktive Problemanalyse und -lösung in komplexen industriellen Netzwerken)
 from 2019–2021, which has been funded by the German Federal Ministry for Economic Affairs and Energy as part of the ZIM (Zentrales Innovationsprogramm Mittelstand) funding program.
 
 
