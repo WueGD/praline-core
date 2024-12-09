@@ -15,7 +15,7 @@
     </modules>
 
     <properties>
-        <revision>1.2.0</revision>
+        <revision>1.2.1-SNAPSHOT</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
