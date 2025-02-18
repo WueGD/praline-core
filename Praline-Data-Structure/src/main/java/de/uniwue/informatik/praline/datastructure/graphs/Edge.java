@@ -15,6 +15,7 @@ import de.uniwue.informatik.praline.datastructure.utils.InconsistentStateExcepti
 import java.util.*;
 
 import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
+import static de.uniwue.informatik.praline.datastructure.graphs.Edge.Direction.*;
 
 /**
  * In typical applications, {@link Edge}s of the {@link Graph} are wires or logical connections.
@@ -40,20 +41,20 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
      *==========*/
 
     private final List<Port> ports;
-    private List<Path> paths;
+    private final List<Direction> directions;
+    private final List<Path> paths;
     private PathStyle pathStyle;
     private EdgeBundle edgeBundle;
     private final EdgeLabelManager labelManager;
     private String reference;
     private final Map<String, String> properties;
-    private EdgeDirection direction = EdgeDirection.UNDIRECTED;
 
     /*==========
      * Constructors
      *==========*/
 
     public Edge(Collection<Port> ports) {
-        this(ports, null, null, null, null, null);
+        this(ports, null, null, null, null, null, null);
     }
 
     public Edge(Collection<Port> ports, Collection<Label<? extends LabelStyle>> innerLabels) {
@@ -71,20 +72,20 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
 
     public Edge(Collection<Port> ports, Collection<Label<? extends LabelStyle>> innerLabels, Map<Port,
             List<Label<? extends LabelStyle>>> portLabels, Label<? extends LabelStyle> mainLabel, PathStyle pathStyle) {
-        this(ports, innerLabels, portLabels, mainLabel,pathStyle, null);
+        this(ports, null, innerLabels, portLabels, mainLabel,pathStyle, null);
     }
-
 
     @JsonCreator
     protected Edge(
             @JsonProperty("ports") final Collection<Port> ports,
+            @JsonProperty("directions") final Collection<DirAtPort> directions,
             @JsonProperty("labelManager") final EdgeLabelManager labelManager,
             @JsonProperty("pathStyle") final PathStyle pathStyle,
             @JsonProperty("paths") final Collection<Path> paths,
             @JsonProperty("properties") final Map<String, String> properties
     ) {
         //do not add port labels first because they are in the wrong format
-        this(ports, labelManager.getInnerLabels(), null, labelManager.getMainLabel(), pathStyle, properties);
+        this(ports, directions, labelManager.getInnerLabels(), null, labelManager.getMainLabel(), pathStyle, properties);
         //but do it more manually here
         for (EdgeLabelManager.PairPort2Labels pair : labelManager.getAllPortLabels()) {
             labelManager.addPortLabels(pair.port, pair.labels);
@@ -96,6 +97,7 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
      * leave value as null if it should be empty initially (e.g. no labels)
      *
      * @param ports
+     * @param directions
      * @param innerLabels
      * @param portLabels
      * @param mainLabel
@@ -103,11 +105,24 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
      * @param properties
      */
     public Edge(
-            Collection<Port> ports, Collection<Label<? extends LabelStyle>> innerLabels, Map<Port,
-            List<Label<? extends LabelStyle>>> portLabels, Label<? extends LabelStyle> mainLabel,
-            PathStyle pathStyle, Map<String, String> properties
+            Collection<Port> ports,
+            Collection<DirAtPort> directions,
+            Collection<Label<? extends LabelStyle>> innerLabels,
+            Map<Port, List<Label<? extends LabelStyle>>> portLabels,
+            Label<? extends LabelStyle> mainLabel,
+            PathStyle pathStyle,
+            Map<String, String> properties
     ) {
         this.ports = newArrayListNullSafe(ports);
+        this.directions = new ArrayList<>(Collections.nCopies(this.ports.size(), Direction.UNDIRECTED));
+        if (directions != null) {
+            for (var entry : directions) {
+                var index = this.ports.indexOf(entry.port);
+                if (index >= 0) {
+                    this.directions.set(index, entry.direction);
+                }
+            }
+        }
         for (Port port : this.ports) {
             port.addEdgeButNotPort(this);
         }
@@ -127,6 +142,12 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
 
     public List<Port> getPorts() {
         return Collections.unmodifiableList(ports);
+    }
+
+    public List<DirAtPort> getDirectedPorts() {
+        return java.util.stream.IntStream.range(0, ports.size())
+                .mapToObj(i -> new DirAtPort(directions.get(i), ports.get(i)))
+                .toList();
     }
 
     public List<Path> getPaths() {
@@ -215,7 +236,11 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
      * is set to an {@link Port} that is already associated with this {@link Edge}.
      */
     public boolean addPort(Port p) {
-        if (addPortButNotEdge(p)) {
+        return addDirectedPort(p, UNDIRECTED);
+    }
+
+    public boolean addDirectedPort(Port p, Direction dir) {
+        if (addPortButNotEdge(p, dir)) {
             if (!p.addEdgeButNotPort(this)) {
                 //TODO: maybe change this construction later (do real throwing methodwise or just use no exception)
                 try {
@@ -241,24 +266,57 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
         return removePortButNotEdge(p);
     }
 
-    protected boolean addPortButNotEdge(Port p) {
-        if (!ports.contains(p)) {
+    protected boolean addPortButNotEdge(Port p, Direction dir) {
+        var index = ports.indexOf(p);
+        if (index == -1) {
             ports.add(p);
+            directions.add(dir);
             return true;
         }
         return false;
     }
 
     protected boolean removePortButNotEdge(Port p) {
-        return ports.remove(p);
+        var index = ports.indexOf(p);
+        if (index > -1) {
+            ports.remove(index);
+            directions.remove(index);
+        }
+        return index != -1;
     }
 
-    public void setDirection(EdgeDirection direction) {
-        this.direction = direction;
+    /*=============
+     * Simple Edge
+     *=============*/
+
+    private boolean isSimple() {
+        return this.ports.size() == 2 && (
+                this.directions.get(0) == UNDIRECTED && this.directions.get(1) == UNDIRECTED
+                        || this.directions.get(0) == OUTGOING && this.directions.get(1) == INCOMING
+                        || this.directions.get(0) == INCOMING && this.directions.get(1) == OUTGOING);
     }
 
-    public EdgeDirection getDirection() {
-        return direction;
+    public Direction simpleEdgeDirection() {
+        assert isSimple();
+        return directions.get(0);
+    }
+
+    public void directSimpleEdge(Direction direction) {
+        assert isSimple();
+        switch (direction) {
+            case UNDIRECTED -> {
+                directions.set(0, UNDIRECTED);
+                directions.set(1, UNDIRECTED);
+            }
+            case INCOMING -> {
+                directions.set(0, INCOMING);
+                directions.set(1, OUTGOING);
+            }
+            case OUTGOING -> {
+                directions.set(1, INCOMING);
+                directions.set(0, OUTGOING);
+            }
+        }
     }
 
     /*==========
@@ -284,4 +342,9 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
                 Objects.equals(reference, edge.reference);
     }
 
+    public record DirAtPort(Direction direction, Port port) {}
+
+    public enum Direction {
+        UNDIRECTED, INCOMING, OUTGOING
+    }
 }

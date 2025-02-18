@@ -112,6 +112,11 @@ public class MainDrawSinglePlan {
                 String targetPath = PATH_RESULTS + File.separator + TARGET_FILE_NAME;
                 bestRun.drawResult(targetPath);
 
+                writeJsonResult(
+                        bestRun,
+                        PATH_RESULTS + File.separator + TARGET_FILE_NAME.replaceAll("\\.svg$", ".json")
+                );
+
                 if (i > 1) {
                     System.out.println();
                     System.out.println("Best run had " + fewestCrossings + " crossings -> to be saved as svg");
@@ -136,6 +141,14 @@ public class MainDrawSinglePlan {
             }
             System.out.println();
             System.out.println();
+        }
+    }
+
+    private static void writeJsonResult(SugiyamaLayouter sl, String path) {
+        try {
+            java.nio.file.Files.writeString( java.nio.file.Paths.get(path), Serialization.writePretty(sl.getGraph()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

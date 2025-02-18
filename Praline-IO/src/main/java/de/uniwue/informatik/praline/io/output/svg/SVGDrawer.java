@@ -887,14 +887,14 @@ public class SVGDrawer {
     }
 
     public void drawEdgeDirection(SVGGraphics2D g2d, Edge edge) {
-        if (!edge.getDirection().equals(EdgeDirection.UNDIRECTED)) {
+        if (!edge.simpleEdgeDirection().equals(Edge.Direction.UNDIRECTED)) {
             Point2D arrowHead = new Point2D.Double(), arrowOrigin = new Point2D.Double();
-            if (edge.getDirection().equals(EdgeDirection.OUTGOING)) {
+            if (edge.simpleEdgeDirection().equals(Edge.Direction.OUTGOING)) {
                 Path path = edge.getPaths().get(edge.getPaths().size() - 1);
                 List<Point2D.Double> tbPoints = ((PolygonalPath) path).getTerminalAndBendPoints();
                 arrowHead = tbPoints.get(tbPoints.size() - 1);
                 arrowOrigin = tbPoints.get(tbPoints.size() - 2);
-            } else if (edge.getDirection().equals(EdgeDirection.INCOMING)) {
+            } else if (edge.simpleEdgeDirection().equals(Edge.Direction.INCOMING)) {
                 Path path = edge.getPaths().get(0);
                 List<Point2D.Double> tbPoints = ((PolygonalPath) path).getTerminalAndBendPoints();
                 arrowHead = tbPoints.get(0);

@@ -118,7 +118,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
                 Label<? extends LabelStyle> mainLabel, Shape shape, Map<String, String> properties) {
         this.edges = newArrayListNullSafe(edges);
         for (Edge edge : this.edges) {
-            edge.addPortButNotEdge(this);
+            edge.addPortButNotEdge(this, Edge.Direction.UNDIRECTED);
         }
         this.labelManager = new LabelManager(this, labels, mainLabel);
         if (shape == null) {
@@ -222,7 +222,7 @@ public class Port implements PortComposition, ShapedObject, LabeledObject, Refer
      */
     public boolean addEdge(Edge e) {
         if (addEdgeButNotPort(e)) {
-            if (!e.addPortButNotEdge(this)) {
+            if (!e.addPortButNotEdge(this, Edge.Direction.UNDIRECTED)) {
                 //TODO: maybe change this construction later (do real throwing methodwise or just use no exception)
                 try {
                     throw new InconsistentStateException("Port " + this + " was already added to Edge " + e + ", but " +
