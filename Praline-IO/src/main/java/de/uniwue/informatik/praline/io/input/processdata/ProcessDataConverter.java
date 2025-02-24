@@ -144,7 +144,7 @@ public class ProcessDataConverter {
                         inPort.getLabelManager().setMainLabel(new TextLabel(""));
                         outPort.getLabelManager().setMainLabel(new TextLabel(""));
                         Edge newEdge = new Edge(Arrays.asList(outPort, inPort));
-                        newEdge.directSimpleEdge(Edge.Direction.OUTGOING);
+                        newEdge.setSimpleEdgeDirection(Edge.Direction.OUTGOING);
                         if (edgeLabelStyle.equals(EdgeLabelStyle.FREQUENCY)) {
                             newEdge.getLabelManager().setMainLabel(
                                     new TextLabel(processEdge.getOccurenceCount() + ""));

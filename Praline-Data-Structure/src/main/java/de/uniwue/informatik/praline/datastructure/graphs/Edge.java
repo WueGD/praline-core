@@ -13,6 +13,7 @@ import de.uniwue.informatik.praline.datastructure.utils.EqualLabeling;
 import de.uniwue.informatik.praline.datastructure.utils.InconsistentStateException;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 import static de.uniwue.informatik.praline.datastructure.utils.GraphUtils.newArrayListNullSafe;
 import static de.uniwue.informatik.praline.datastructure.graphs.Edge.Direction.*;
@@ -114,7 +115,7 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
             Map<String, String> properties
     ) {
         this.ports = newArrayListNullSafe(ports);
-        this.directions = new ArrayList<>(Collections.nCopies(this.ports.size(), Direction.UNDIRECTED));
+        this.directions = new ArrayList<>(Collections.nCopies(this.ports.size(), UNDIRECTED));
         if (directions != null) {
             for (var entry : directions) {
                 var index = this.ports.indexOf(entry.port);
@@ -145,9 +146,23 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
     }
 
     public List<DirAtPort> getDirectedPorts() {
-        return java.util.stream.IntStream.range(0, ports.size())
+        return IntStream.range(0, ports.size())
                 .mapToObj(i -> new DirAtPort(directions.get(i), ports.get(i)))
                 .toList();
+    }
+
+    public Direction getDirectionAt(Port p) {
+        var index = ports.indexOf(p);
+        return index > -1 ? directions.get(index) : null;
+    }
+
+    public boolean setDirectionAt(Port p, Direction dir) {
+        var index = ports.indexOf(p);
+        if (index > -1) {
+            directions.set(index, dir);
+            return true;
+        }
+        return false;
     }
 
     public List<Path> getPaths() {
@@ -259,9 +274,9 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
      * this {@link Edge} is also removed from the list of {@link Edge}s of the passed {@link Port} p
      *
      * @param p
-     * @return
+     * @return the {@link Direction} of the removed port or `null` if p was not a port of this edge
      */
-    public boolean removePort(Port p) {
+    public Direction removePort(Port p) {
         p.removeEdgeButNotPort(this);
         return removePortButNotEdge(p);
     }
@@ -276,13 +291,15 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
         return false;
     }
 
-    protected boolean removePortButNotEdge(Port p) {
+    protected Direction removePortButNotEdge(Port p) {
         var index = ports.indexOf(p);
         if (index > -1) {
+            var result = directions.get(index);
             ports.remove(index);
             directions.remove(index);
+            return result;
         }
-        return index != -1;
+        return null;
     }
 
     /*=============
@@ -296,12 +313,12 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
                         || this.directions.get(0) == INCOMING && this.directions.get(1) == OUTGOING);
     }
 
-    public Direction simpleEdgeDirection() {
+    public Direction getSimpleEdgeDirection() {
         assert isSimple();
         return directions.get(0);
     }
 
-    public void directSimpleEdge(Direction direction) {
+    public void setSimpleEdgeDirection(Direction direction) {
         assert isSimple();
         switch (direction) {
             case UNDIRECTED -> {
@@ -317,6 +334,33 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
                 directions.set(0, OUTGOING);
             }
         }
+    }
+
+    public Port getStartPort() {
+        assert isSimple();
+        return directions.get(0) == INCOMING ? ports.get(1) : ports.get(0);
+    }
+
+    public Port getEndPort() {
+        assert isSimple();
+        return directions.get(0) == INCOMING ? ports.get(0): ports.get(1);
+    }
+
+    public static Edge mkSimple(Port start, Port end, boolean directed) {
+        var ports = List.of(start, end);
+        var dirs = List.of(new DirAtPort(OUTGOING, start), new DirAtPort(INCOMING, end));
+        return directed ? new Edge(ports, dirs, null, null, null, null, null) : new Edge(ports);
+    }
+
+    public static Edge mkSimple(Port start, Port end, Direction dir) {
+        return switch (dir) {
+            case UNDIRECTED -> mkSimple(start, end, false);
+            case OUTGOING -> mkSimple(start, end, true);
+            case INCOMING -> {
+                var dirs = List.of(new DirAtPort(INCOMING, start), new DirAtPort(OUTGOING, end));
+                yield new Edge(List.of(start, end), dirs, null, null, null, null, null);
+            }
+        };
     }
 
     /*==========
@@ -345,6 +389,14 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
     public record DirAtPort(Direction direction, Port port) {}
 
     public enum Direction {
-        UNDIRECTED, INCOMING, OUTGOING
+        UNDIRECTED, INCOMING, OUTGOING;
+
+        public Direction reverse() {
+            return switch (this) {
+                case UNDIRECTED -> UNDIRECTED;
+                case INCOMING -> OUTGOING;
+                case OUTGOING -> INCOMING;
+            };
+        }
     }
 }
