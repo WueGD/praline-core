@@ -18,7 +18,7 @@ public class CycleBreaker {
 
     public void sortFas(SugiyamaLayouter sugy) {
 
-        List<Vertex> vertices = new LinkedList<>(sugy.getGraph().getVertices());
+        List<Vertex> vertices = new ArrayList<>(sugy.getGraph().getVertices());
         LinkedList<Vertex> verticesOrdered = new LinkedList<>();
         List<Edge> edges = new LinkedList<>(sugy.getGraph().getEdges());
         Map<Vertex, List<Vertex>> outgoingEdges = new HashMap<>();
@@ -26,7 +26,7 @@ public class CycleBreaker {
         for (Vertex vertex : vertices)
             outgoingEdges.put(vertex, new ArrayList<>());
         for (Edge edge : edges)
-            outgoingEdges.get(edge.getPorts().get(0).getVertex()).add(edge.getPorts().get(1).getVertex());
+            outgoingEdges.get(edge.getStartPort().getVertex()).add(edge.getEndPort().getVertex());
         linearArrange(vertices, edges);
 
         for (int i = 0; i < vertices.size(); i++) {
@@ -65,8 +65,8 @@ public class CycleBreaker {
 
         // Den Knoten all ihre ein- und ausgehenden Kanten zuordnen
         for (Edge edge : edges) {
-            incomingEdges.get(edge.getPorts().get(1).getVertex()).add(edge);
-            outgoingEdges.get(edge.getPorts().get(0).getVertex()).add(edge);
+            incomingEdges.get(edge.getEndPort().getVertex()).add(edge);
+            outgoingEdges.get(edge.getStartPort().getVertex()).add(edge);
         }
 
         while (hasCycles(vertices, edges, incomingEdges, outgoingEdges)) {
@@ -94,8 +94,8 @@ public class CycleBreaker {
 
             // Den Knoten all ihre ein- und ausgehenden Kanten zuordnen
             for (Edge edge : lgSscEdges) {
-                lgIncomingEdges.get(edge.getPorts().get(1).getVertex()).add(edge);
-                lgOutgoingEdges.get(edge.getPorts().get(0).getVertex()).add(edge);
+                lgIncomingEdges.get(edge.getEndPort().getVertex()).add(edge);
+                lgOutgoingEdges.get(edge.getStartPort().getVertex()).add(edge);
             }
             Map<Vertex, Double> pageRanks = pageRank(lgSscVertices, lgSscEdges, 5,
                     lgIncomingEdges, lgOutgoingEdges);
@@ -116,11 +116,11 @@ public class CycleBreaker {
 
         // Richtungen zuweisen: Richtige für übrige Kanten und umgekehrte für Kanten aus dem fas
         for (Edge edge : edges) {
-            sugy.assignDirection(edge, edge.getPorts().get(0).getVertex(), edge.getPorts().get(1).getVertex());
+            sugy.assignDirection(edge, edge.getStartPort().getVertex(), edge.getEndPort().getVertex());
         }
         //sugy.setSizeOfFas(fas.size());
         for (Edge edge : fas) {
-            sugy.assignDirection(edge, edge.getPorts().get(1).getVertex(), edge.getPorts().get(0).getVertex());
+            sugy.assignDirection(edge, edge.getEndPort().getVertex(), edge.getStartPort().getVertex());
         }
         if (vertices.size() != countVertices) { System.out.println("Size of vertices doesn't fit!"); }
         edges.addAll(fas);
@@ -187,7 +187,7 @@ public class CycleBreaker {
                 // Alle Knoten durchlaufen, die eine Kante zum aktuellen Knoten haben
                 // Deren ausgehende Kanten (#) durch den alten PR dividieren und zum neuen PR addieren
                 for (Edge inEdge : incomingEdges.get(vertex)) {
-                    Vertex inVertex = inEdge.getPorts().get(0).getVertex();
+                    Vertex inVertex = inEdge.getStartPort().getVertex();
                     int inVertexSize = outgoingEdges.get(inVertex).size();
                     pageRankNew += pageRankOld / inVertexSize;
                 }
@@ -212,28 +212,22 @@ public class CycleBreaker {
             if (prevVertex != null) {
                 Port inPort = new Port();
                 Port outPort = new Port();
-                List<Port> ports = new ArrayList<>();
-                ports.add(inPort);
-                ports.add(outPort);
-                Edge e = new Edge(ports);
+                Edge e = Edge.mkSimple(outPort, inPort, true);
                 lgEdges.add(e);
                 z.addPortComposition(inPort);
                 prevVertex.addPortComposition(outPort);
             }
 
-            Vertex u = edge.getPorts().get(1).getVertex();
+            Vertex u = edge.getEndPort().getVertex();
             if (!verticesVisited.get(u)) {
                 getLineGraph(verticesVisited, lgVertices, lgEdges,
                         u, z, outgoingEdges, correspondingVertices);
             } else {
                 for (Vertex k : lgVertices) {
-                    if (k.getPorts().contains(u)) {
+                    if (k.getPorts().stream().anyMatch(p -> p.getVertex().equals(u))) {
                         Port inPort = new Port();
                         Port outPort = new Port();
-                        List<Port> ports = new ArrayList<>();
-                        ports.add(inPort);
-                        ports.add(outPort);
-                        Edge e = new Edge(ports);
+                        Edge e = Edge.mkSimple(outPort, inPort, true);
                         lgEdges.add(e);
                         z.addPortComposition(inPort);
                         k.addPortComposition(outPort);
@@ -247,8 +241,8 @@ public class CycleBreaker {
     public void assignEdgeDirectionsWithoutCycles(SugiyamaLayouter sugy, List<Vertex> vertices, List<Edge> edges) {
         // Weise den Kanten die richtigen Richtungen zu
         for (Edge edge : edges) {
-            Vertex node0 = edge.getPorts().get(0).getVertex();
-            Vertex node1 = edge.getPorts().get(1).getVertex();
+            Vertex node0 = edge.getStartPort().getVertex();
+            Vertex node1 = edge.getEndPort().getVertex();
             if (vertices.indexOf(node0) < vertices.indexOf(node1)) {
                 sugy.assignDirection(edge, node0, node1);
             } else {
@@ -267,7 +261,7 @@ public class CycleBreaker {
         boolean sinksPresent = true;
         boolean sourcesPresent = true;
 
-        // Prüfe, ob der Graph sinks hat
+        // check for sinks in the graph
         while (sinksPresent) {
             Optional<Vertex> sink = findSinkSourceOrMaxDegVertex(vertices, edges, CycleBreakingNodeType.SINK);
             if (sink.isPresent()) {
@@ -275,9 +269,9 @@ public class CycleBreaker {
                 s3.addFirst(presentSink);
                 vertices.remove(presentSink);
 
-                // Entferne alle ausgehenden Kanten der Senke
+                // for the found sink, remove all incoming edges
                 for (Edge edge : edges) {
-                    if (edge.getPorts().get(1).getVertex() == presentSink) {
+                    if (edge.getEndPort().getVertex() == presentSink) {
                         edgesToRemove.add(edge);
                     }
                 }
@@ -301,7 +295,7 @@ public class CycleBreaker {
 
                 // Entferne alle ausgehenden Kanten der Quelle
                 for (Edge edge : edges) {
-                    if (edge.getPorts().get(0).getVertex() == presentSource) {
+                    if (edge.getStartPort().getVertex() == presentSource) {
                         edgesToRemove.add(edge);
                     }
                 }
@@ -316,17 +310,17 @@ public class CycleBreaker {
         }
 
         while (!vertices.isEmpty()) {
-            // Finde den Knoten mit max. Diff. zwischen ein- und ausgehenden Kanten
+            // find the vertex where the difference between indeg and outdeg is highest
             Optional<Vertex> maxDegVertex = findSinkSourceOrMaxDegVertex(vertices, edges, CycleBreakingNodeType.OTHER);
             if (maxDegVertex.isPresent()) {
                 Vertex presentMaxDegVertex = maxDegVertex.get();
                 s2.add(presentMaxDegVertex);
                 vertices.remove(presentMaxDegVertex);
 
-                // Entferne alle aus- und eingehenden Kanten des Knotens
+                // for this vertex, remove all adjacend edges
                 for (Edge edge : edges) {
-                    if (edge.getPorts().get(0).getVertex() == presentMaxDegVertex
-                            || edge.getPorts().get(1).getVertex() == presentMaxDegVertex) {
+                    if (edge.getStartPort().getVertex() == presentMaxDegVertex
+                            || edge.getEndPort().getVertex() == presentMaxDegVertex) {
                         edgesToRemove.add(edge);
                     }
                 }
@@ -358,7 +352,7 @@ public class CycleBreaker {
 
         for (Edge edge : edges) {
             // Zähle eine eingehende Kante für den aktuellen Knoten
-            Vertex inVertex = edge.getPorts().get(1).getVertex();
+            Vertex inVertex = edge.getEndPort().getVertex();
             if (!inDeg.containsKey(inVertex)) {
                 inDeg.put(inVertex, 1);
             } else {
@@ -366,7 +360,7 @@ public class CycleBreaker {
             }
 
             // Zähle eine ausgehende Kante für den aktuellen Knoten
-            Vertex outVertex = edge.getPorts().get(0).getVertex();
+            Vertex outVertex = edge.getStartPort().getVertex();
             if (!outDeg.containsKey(outVertex)) {
                 outDeg.put(outVertex, 1);
             } else {

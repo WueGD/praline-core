@@ -188,14 +188,11 @@ public class GraphPreprocessor {
                 Vertex representative = new Vertex();
                 createMainLabel(("AddNode_HE_" + edge + "_#" + ++indexHE), representative);
                 int indexEdgePart = 0;
-                for (Port port : edge.getPorts()) {
+                for (var diPort : edge.getDirectedPorts()) {
                     Port p = new Port();
                     createMainLabel(("PortRep_HE_#" + indexHE + "-" + indexEdgePart), p);
                     representative.addPortComposition(p);
-                    List<Port> ps = new LinkedList<>();
-                    ps.add(p);
-                    ps.add(port);
-                    Edge e = new Edge(ps);
+                    Edge e = Edge.mkSimple(diPort.port(), p, diPort.direction());
                     createMainLabel(("AddEdge_HE_#" + indexHE + "-" + indexEdgePart++), e);
                     sugy.getGraph().addEdge(e);
                     sugy.getHyperEdgeParts().put(e, representative);
@@ -206,7 +203,7 @@ public class GraphPreprocessor {
             else{
                 //edges of degree 0 or 1 get dummy nodes as endpoints to have degree 2.
                 // In the end these dummy nodes will be removed and only the edge paths remain
-                if (edge.getPorts().size() == 0) {
+                if (edge.getPorts().isEmpty()) {
                     System.out.println("Warning! Edge " + edge + " has no endpoints.");
                 }
                 else if (edge.getPorts().size() == 1) {
@@ -315,8 +312,8 @@ public class GraphPreprocessor {
                                 ("PortRep_R#" + indexVG + "-" + indexPort++ + "_" + port), replacePort);
 
                         for (Edge edge : new ArrayList<>(port.getEdges())) {
-                            edge.removePort(port);
-                            edge.addPort(replacePort);
+                            var dir = edge.removePort(port);
+                            edge.addDirectedPort(replacePort, dir);
                         }
 
 
@@ -430,10 +427,10 @@ public class GraphPreprocessor {
         Map<PortGroup, Port> replaceGroups = new LinkedHashMap<>();
         for (Vertex node : sugy.getGraph().getVertices()) {
             LinkedHashMap<Port, Set<Edge>> toRemove = new LinkedHashMap<>();
-            LinkedHashMap<Port, Edge> toAdd = new LinkedHashMap<>();
+            LinkedHashMap<Port, Map.Entry<Edge, Edge.Direction>> toAdd = new LinkedHashMap<>();
             for (Port port : node.getPorts()) {
                 if (port.getEdges().size() > 1) {
-                    toRemove.put(port,new LinkedHashSet<>());
+                    toRemove.put(port, new LinkedHashSet<>());
                     index1 = 0;
                     // create a PortGroup with one Port for each connected Edge
                     PortGroup repGroup = new PortGroup();
@@ -441,7 +438,7 @@ public class GraphPreprocessor {
                         Port addPort = new Port();
                         repGroup.addPortComposition(addPort);
                         toRemove.get(port).add(edge);
-                        toAdd.put(addPort, edge);
+                        toAdd.put(addPort, Map.entry(edge, edge.getDirectionAt(port)));
                         createMainLabel(("AddPort_for_" + port + "_#" + index1++), addPort);
                         sugy.getReplacedPorts().put(addPort, port);
                     }
@@ -450,15 +447,9 @@ public class GraphPreprocessor {
                 }
             }
             // remove Port from Edges
-            for (Map.Entry<Port, Set<Edge>> entry : toRemove.entrySet()) {
-                for (Edge edge : entry.getValue()) {
-                    edge.removePort(entry.getKey());
-                }
-            }
+            toRemove.forEach((port, edges) -> edges.forEach(edge -> edge.removePort(port)));
             // add new Ports to Edges
-            for (Map.Entry<Port, Edge> entry : toAdd.entrySet()) {
-                entry.getValue().addPort(entry.getKey());
-            }
+            toAdd.forEach((port, edgeAndDir) -> edgeAndDir.getKey().addDirectedPort(port, edgeAndDir.getValue()));
         }
         // replace Ports with PortGroup in each node
         for (Map.Entry<PortGroup, Port> entry : replaceGroups.entrySet()) {

@@ -33,7 +33,7 @@ import static de.uniwue.informatik.praline.datastructure.graphs.Edge.Direction.*
  * You can add {@link Label}s to the interior of an {@link Edge}e or to the end of an {@link Edge} at any of its
  * ports. See {@link EdgeLabelManager}.
  */
-@JsonIgnoreProperties({"edgeBundle", "thickness", "color"})
+@JsonIgnoreProperties({"edgeBundle", "thickness", "color", "simpleEdgeDirection", "startPort", "endPort"})
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")
 public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
 
@@ -79,14 +79,14 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
     @JsonCreator
     protected Edge(
             @JsonProperty("ports") final Collection<Port> ports,
-            @JsonProperty("directions") final Collection<DirAtPort> directions,
+            @JsonProperty("directedPorts") final Collection<DirAtPort> directedPorts,
             @JsonProperty("labelManager") final EdgeLabelManager labelManager,
             @JsonProperty("pathStyle") final PathStyle pathStyle,
             @JsonProperty("paths") final Collection<Path> paths,
             @JsonProperty("properties") final Map<String, String> properties
     ) {
         //do not add port labels first because they are in the wrong format
-        this(ports, directions, labelManager.getInnerLabels(), null, labelManager.getMainLabel(), pathStyle, properties);
+        this(ports, directedPorts, labelManager.getInnerLabels(), null, labelManager.getMainLabel(), pathStyle, properties);
         //but do it more manually here
         for (EdgeLabelManager.PairPort2Labels pair : labelManager.getAllPortLabels()) {
             labelManager.addPortLabels(pair.port, pair.labels);
@@ -98,7 +98,7 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
      * leave value as null if it should be empty initially (e.g. no labels)
      *
      * @param ports
-     * @param directions
+     * @param directedPorts
      * @param innerLabels
      * @param portLabels
      * @param mainLabel
@@ -107,7 +107,7 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
      */
     public Edge(
             Collection<Port> ports,
-            Collection<DirAtPort> directions,
+            Collection<DirAtPort> directedPorts,
             Collection<Label<? extends LabelStyle>> innerLabels,
             Map<Port, List<Label<? extends LabelStyle>>> portLabels,
             Label<? extends LabelStyle> mainLabel,
@@ -116,8 +116,8 @@ public class Edge implements LabeledObject, ReferenceObject, PropertyObject {
     ) {
         this.ports = newArrayListNullSafe(ports);
         this.directions = new ArrayList<>(Collections.nCopies(this.ports.size(), UNDIRECTED));
-        if (directions != null) {
-            for (var entry : directions) {
+        if (directedPorts != null) {
+            for (var entry : directedPorts) {
                 var index = this.ports.indexOf(entry.port);
                 if (index >= 0) {
                     this.directions.set(index, entry.direction);
