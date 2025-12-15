@@ -27,6 +27,7 @@ public class MainDrawSinglePlan {
 //            "Praline-Layouting/data/example-very-small/praline-a0b0b5a2-2c23-43b0-bb87-4ddeb34d5a02.json";
 //            "Praline-Layouting/data/example-very-small/praline-pseudo-plan-0e59d04df679e020.json";
             "Praline-Layouting/data/example-cgta/diagram_0058-praline.json";
+//            "Praline-Layouting/data/diagram_0038-praline_directed.json";
 //            "Praline-Layouting/data/example-cgta/praline-pseudo-plan-4b40acee3123f5b8.json";
 //            "Praline-Layouting/data/example-cgta/praline-pseudo-plan-57b438bed9d27bc8.json";
 //            "Praline-Layouting/data/example-cgta/praline-pseudo-plan-29891a903037261c.json";
@@ -37,7 +38,7 @@ public class MainDrawSinglePlan {
 
     private static final boolean CHECK_COMPLETENESS_OF_GRAPH = true;
 
-    private static final CycleBreakingMethod CYCLE_BREAKING_METHOD = CycleBreakingMethod.IGNORE;
+    private static final CycleBreakingMethod CYCLE_BREAKING_METHOD = CycleBreakingMethod.GREEDY;
 
     private static final DirectionMethod DIRECTION_METHOD = DirectionMethod.FORCE;
 
@@ -112,6 +113,11 @@ public class MainDrawSinglePlan {
                 String targetPath = PATH_RESULTS + File.separator + TARGET_FILE_NAME;
                 bestRun.drawResult(targetPath);
 
+                writeJsonResult(
+                        bestRun,
+                        PATH_RESULTS + File.separator + TARGET_FILE_NAME.replaceAll("\\.svg$", ".json")
+                );
+
                 if (i > 1) {
                     System.out.println();
                     System.out.println("Best run had " + fewestCrossings + " crossings -> to be saved as svg");
@@ -136,6 +142,14 @@ public class MainDrawSinglePlan {
             }
             System.out.println();
             System.out.println();
+        }
+    }
+
+    private static void writeJsonResult(SugiyamaLayouter sl, String path) {
+        try {
+            java.nio.file.Files.writeString( java.nio.file.Paths.get(path), Serialization.writePretty(sl.getGraph()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -215,16 +229,16 @@ public class MainDrawSinglePlan {
          */
         List<Edge> edges = Arrays.asList(
                 //edges adjacent to Joachim (vertex index 1)
-                new Edge(Arrays.asList(ports.get(1).get(1), ports.get(4).get(2))), // 2 to Walter.3
-                new Edge(Arrays.asList(ports.get(1).get(2), ports.get(0).get(0))), // 3 to Alexander.1
-                new Edge(Arrays.asList(ports.get(1).get(3), ports.get(4).get(6))), // 4 to Walter.7
+                Edge.mkSimple(ports.get(1).get(1), ports.get(4).get(2), false), // 2 to Walter.3
+                Edge.mkSimple(ports.get(1).get(2), ports.get(0).get(0), false), // 3 to Alexander.1
+                Edge.mkSimple(ports.get(1).get(3), ports.get(4).get(6), false), // 4 to Walter.7
                 //edges adjacent to Walter (vertex index 4)
-                new Edge(Arrays.asList(ports.get(4).get(0), ports.get(0).get(2))), // 1 to Alexander.3
-                new Edge(Arrays.asList(ports.get(4).get(1), ports.get(2).get(1))), // 2 to Johannes.2
-                new Edge(Arrays.asList(ports.get(4).get(3), ports.get(3).get(0))), // 4 to Julian.1
-                new Edge(Arrays.asList(ports.get(4).get(4), ports.get(0).get(1))), // 5 to Alexander.2
-                new Edge(Arrays.asList(ports.get(4).get(5), ports.get(0).get(3))), // 6 to Alexander.4
-                new Edge(Arrays.asList(ports.get(4).get(7), ports.get(2).get(0)))  // 8 to Johannes.1
+                Edge.mkSimple(ports.get(4).get(0), ports.get(0).get(2), false), // 1 to Alexander.3
+                Edge.mkSimple(ports.get(4).get(1), ports.get(2).get(1), false), // 2 to Johannes.2
+                Edge.mkSimple(ports.get(4).get(3), ports.get(3).get(0), false), // 4 to Julian.1
+                Edge.mkSimple(ports.get(4).get(4), ports.get(0).get(1), false), // 5 to Alexander.2
+                Edge.mkSimple(ports.get(4).get(5), ports.get(0).get(3), false), // 6 to Alexander.4
+                Edge.mkSimple(ports.get(4).get(7), ports.get(2).get(0), false)  // 8 to Johannes.1
         );
 
         /*

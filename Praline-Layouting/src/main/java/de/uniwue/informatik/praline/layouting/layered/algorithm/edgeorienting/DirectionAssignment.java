@@ -26,8 +26,8 @@ public class DirectionAssignment {
             values.put(vertices.get(i), i);
         }
         for (Edge edge : sugy.getGraph().getEdges()) {
-            Vertex node0 = edge.getPorts().get(0).getVertex();
-            Vertex node1 = edge.getPorts().get(1).getVertex();
+            Vertex node0 = edge.getStartPort().getVertex();
+            Vertex node1 = edge.getEndPort().getVertex();
             if (values.get(node0) > values.get(node1)) {
                 // direct edge from 1 to 0
                 sugy.assignDirection(edge, node1, node0);
@@ -66,8 +66,8 @@ public class DirectionAssignment {
             for (Edge edge : sugy.getGraph().getEdges()) {
                 junggraph.addEdge(
                         counter,
-                        nodeToLong.get(edge.getPorts().get(0).getVertex()),
-                        nodeToLong.get(edge.getPorts().get(1).getVertex())
+                        nodeToLong.get(edge.getStartPort().getVertex()),
+                        nodeToLong.get(edge.getEndPort().getVertex())
                 );
                 counter++;
             }
@@ -102,8 +102,8 @@ public class DirectionAssignment {
 
         // assign directions to edges acc. to the best layout (the layout with the fewest crossings)
         for (Edge edge : sugy.getGraph().getEdges()) {
-            Vertex node0 = edge.getPorts().get(0).getVertex();
-            Vertex node1 = edge.getPorts().get(1).getVertex();
+            Vertex node0 = edge.getStartPort().getVertex();
+            Vertex node1 = edge.getEndPort().getVertex();
             if (bestFDLayout.getY(nodeToLongBestFDLayout.get(node0)) > bestFDLayout.getY(nodeToLongBestFDLayout.get(node1))) {
                 // direct edge from 1 to 0
                 sugy.assignDirection(edge, node1, node0);
@@ -137,14 +137,13 @@ public class DirectionAssignment {
             }
             for (Edge edge : edges) {
                 if (sugy.getStartNode(edge) == null) {
-                    Vertex start = currentNode;
                     Vertex end;
-                    if (edge.getPorts().get(0).getVertex().equals(currentNode)) {
-                        end = edge.getPorts().get(1).getVertex();
+                    if (edge.getStartPort().getVertex().equals(currentNode)) {
+                        end = edge.getEndPort().getVertex();
                     } else {
-                        end = edge.getPorts().get(0).getVertex();
+                        end = edge.getStartPort().getVertex();
                     }
-                    sugy.assignDirection(edge, start, end);
+                    sugy.assignDirection(edge, currentNode, end);
                     if (!(queue.contains(end) || doneVertices.contains(end))) {
                         queue.add(end);
                     }

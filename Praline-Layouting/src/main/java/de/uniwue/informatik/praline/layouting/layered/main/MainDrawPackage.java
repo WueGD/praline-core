@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
@@ -81,7 +80,7 @@ public class MainDrawPackage {
      */
     public static void main(String[] args) throws InterruptedException {
         List<File> files = new ArrayList<>();
-        String pathToGraph = args.length > 0 && args[0].length() > 0 ? args[0] : PATH_DATA_SET;
+        String pathToGraph = args.length > 0 && !args[0].isEmpty() ? args[0] : PATH_DATA_SET;
 
         File dir = new File(pathToGraph);
         File[] directoryListing = dir.listFiles();
